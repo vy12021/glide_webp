@@ -132,6 +132,7 @@ subprojects { project ->
                 && project.name != 'pmd'
                 && project.name != 'findbugs') {
             android {
+                buildToolsVersion ANDROID_BUILD_TOOLS_VERSION as String
                 lintOptions {
                     warningsAsErrors true
                     quiet true

@@ -1,7 +1,7 @@
-exec {
-    commandLine "git", "submodule", "update", "--init", "--recursive"
-    ignoreExitValue true
-}
+// exec {
+//     commandLine "git", "submodule", "update", "--init", "--recursive"
+//     ignoreExitValue true
+// }
 include ':library'
 include ':library:pmd'
 include ':library:findbugs'
@@ -12,6 +12,7 @@ include ':annotation:compiler'
 include ':annotation:compiler:test'
 include ':glide'
 include ':third_party:gif_decoder'
+include ':third_party:webp_decoder'
 include ':third_party:disklrucache'
 include ':samples:flickr'
 include ':samples:giphy'
