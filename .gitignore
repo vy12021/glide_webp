@@ -2,6 +2,7 @@
 local.properties
 *.keystore
 *.DS_Store
+.externalNativeBuild
 
 # Gradle
 .gradle

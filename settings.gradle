@@ -1,7 +1,3 @@
-// exec {
-//     commandLine "git", "submodule", "update", "--init", "--recursive"
-//     ignoreExitValue true
-// }
 include ':library'
 include ':library:pmd'
 include ':library:findbugs'
