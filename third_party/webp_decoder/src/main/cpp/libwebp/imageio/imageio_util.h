@@ -14,7 +14,7 @@
 #define WEBP_IMAGEIO_IMAGEIO_UTIL_H_
 
 #include <stdio.h>
-#include "webp/types.h"
+#include "src/webp/types.h"
 
 #ifdef __cplusplus
 extern "C" {

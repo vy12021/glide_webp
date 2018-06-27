@@ -2,8 +2,6 @@ package com.bumptech.glide.webpdecoder;
 
 import android.support.annotation.ColorInt;
 
-import com.bumptech.glide.webpdecoder.WebpDecoder;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,8 +10,6 @@ import java.util.List;
  * metadata like width and height that can be used to decode each individual frame of the GIF. Can
  * be shared by one or more {@link com.bumptech.glide.webpdecoder.WebpDecoder}s to play the same
  * animated WEBP in multiple views.
- *
- * @see <a href="https://www.w3.org/Graphics/GIF/spec-gif89a.txt">GIF 89a Specification</a>
  */
 public class WebpHeader {
 

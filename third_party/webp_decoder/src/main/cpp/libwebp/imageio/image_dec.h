@@ -14,10 +14,10 @@
 #ifndef WEBP_IMAGEIO_IMAGE_DEC_H_
 #define WEBP_IMAGEIO_IMAGE_DEC_H_
 
-#include "webp/types.h"
+#include "src/webp/types.h"
 
 #ifdef HAVE_CONFIG_H
-#include "webp/config.h"
+#include "src/webp/config.h"
 #endif
 
 #include "./metadata.h"

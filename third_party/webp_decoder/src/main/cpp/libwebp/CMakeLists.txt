@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 2.8.7)
-
 project(libwebp C)
 
 set(WEBP_DEP_LIBRARIES)
@@ -18,30 +16,20 @@ if(WEBP_ENABLE_SWAP_16BIT_CSP)
 endif()
 
 ################################################################################
-# Android only.
-if(ANDROID)
-  include_directories(${ANDROID_NDK}/sources/android/cpufeatures)
-  add_library(cpufeatures STATIC
-    ${ANDROID_NDK}/sources/android/cpufeatures/cpu-features.c
-  )
-  target_link_libraries(cpufeatures dl)
-  set(WEBP_DEP_LIBRARIES ${WEBP_DEP_LIBRARIES} cpufeatures)
-  set(WEBP_DEP_INCLUDE_DIRS ${WEBP_DEP_INCLUDE_DIRS}
-    ${ANDROID_NDK}/sources/android/cpufeatures
-  )
-  add_definitions(-DHAVE_CPU_FEATURES_H=1)
-  set(HAVE_CPU_FEATURES_H 1)
-else()
-  set(HAVE_CPU_FEATURES_H 0)
-endif()
+# cpu neon支持
+include_directories(${ANDROID_NDK}/sources/android/cpufeatures)
+add_library(cpufeatures STATIC
+${ANDROID_NDK}/sources/android/cpufeatures/cpu-features.c)
+target_link_libraries(cpufeatures dl)
+set(WEBP_DEP_LIBRARIES ${WEBP_DEP_LIBRARIES} cpufeatures)
+set(WEBP_DEP_INCLUDE_DIRS ${WEBP_DEP_INCLUDE_DIRS}
+${ANDROID_NDK}/sources/android/cpufeatures
+)
+add_definitions(-DHAVE_CPU_FEATURES_H=1)
+set(HAVE_CPU_FEATURES_H 1)
 
 ################################################################################
 # WebP source files.
-
-# We expect the Makefiles to define the sources as defined in
-# the first regex. E.g.:
-# libimagedec_la_SOURCES  = image_dec.c image_dec.h
-
 set(WEBP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 ### Define the mandatory libraries.
@@ -49,38 +37,74 @@ set(WEBP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_definitions(-Wall)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${WEBP_DEP_INCLUDE_DIRS})
+#add_definitions(-DHAVE_CONFIG_H)
+
+# 引入源文件定义
+include(SourceFiles.txt)
+
+# 解码
 add_library(webpdecode OBJECT
             ${WEBP_DEC_SRCS})
 add_library(webpdspdecode OBJECT
-            ${WEBP_DSP_COMMON_SRCS}
             ${WEBP_DSP_DEC_SRCS})
 add_library(webputilsdecode OBJECT
-            ${WEBP_UTILS_COMMON_SRCS}
             ${WEBP_UTILS_DEC_SRCS})
 add_library(webpdecoder
             $<TARGET_OBJECTS:webpdecode>
             $<TARGET_OBJECTS:webpdspdecode>
             $<TARGET_OBJECTS:webputilsdecode>)
+# 解码器链接 cpu 特性库
 target_link_libraries(webpdecoder
             ${WEBP_DEP_LIBRARIES})
 
-# Build the webp library.
+# 编码 start
+add_library(webpdspencode OBJECT
+            ${WEBP_DSP_ENC_SRCS})
 add_library(webpencode OBJECT
             ${WEBP_ENC_SRCS})
+add_library(webpencoder
+            $<TARGET_OBJECTS:webpencode>
+            $<TARGET_OBJECTS:webpdspencode>)
+# 编码 链接 cpu 特性库
+target_link_libraries(webpencoder ${WEBP_DEP_LIBRARIES})
+
+add_library(webpmuxer OBJECT
+            ${WEBP_MUX_SRCS}
+            ${WEBP_DEMUX_SRCS})
+
+# dsp 模式编码+解码
 add_library(webpdsp OBJECT
-            ${WEBP_DSP_COMMON_SRCS}
             ${WEBP_DSP_DEC_SRCS}
             ${WEBP_DSP_ENC_SRCS})
+
+# 工具库
 add_library(webputils OBJECT
-            ${WEBP_UTILS_COMMON_SRCS}
             ${WEBP_UTILS_DEC_SRCS}
             ${WEBP_UTILS_ENC_SRCS})
-add_library(webp
+
+add_library(webpimageio OBJECT ${WEBP_IMAGEIO_SRCS})
+add_library(webpextras OBJECT ${WEBP_EXTRA_SRCS})
+add_library(webptools OBJECT ${WEBP_TOOLS_SRCS})
+
+# 聚合库
+add_library(webp SHARED
             $<TARGET_OBJECTS:webpdecode>
             $<TARGET_OBJECTS:webpdsp>
             $<TARGET_OBJECTS:webpencode>
-            $<TARGET_OBJECTS:webputils>)
+            $<TARGET_OBJECTS:webpmuxer>
+            $<TARGET_OBJECTS:webputils>
+            $<TARGET_OBJECTS:webpimageio>
+            $<TARGET_OBJECTS:webpextras>
+            $<TARGET_OBJECTS:webptools>)
+
 target_link_libraries(webp ${WEBP_DEP_LIBRARIES})
 
-set_target_properties(webpdecode webpdspdecode webputilsdecode
-  webpencode webpdsp webputils PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(webpdecode
+                      webpencode
+                      webpdsp
+                      webpmuxer
+                      webputils
+                      webpimageio
+                      webpextras
+                      webptools
+                      PROPERTIES POSITION_INDEPENDENT_CODE ON)

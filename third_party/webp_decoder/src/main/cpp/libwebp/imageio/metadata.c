@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "webp/types.h"
+#include "src/webp/types.h"
 
 void MetadataInit(Metadata* const metadata) {
   if (metadata == NULL) return;

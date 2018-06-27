@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "webp/encode.h"
+#include "src/webp/encode.h"
 #include "imageio/image_dec.h"
 #include "imageio/imageio_util.h"
 

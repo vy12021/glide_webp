@@ -13,7 +13,7 @@
 #ifndef WEBP_IMAGEIO_METADATA_H_
 #define WEBP_IMAGEIO_METADATA_H_
 
-#include "webp/types.h"
+#include "src/webp/types.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -11,7 +11,7 @@
 //
 
 #include "extras/extras.h"
-#include "webp/format_constants.h"
+#include "src/webp/format_constants.h"
 
 #include <assert.h>
 #include <string.h>

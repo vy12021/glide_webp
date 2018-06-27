@@ -12,7 +12,7 @@
 #include "./pngdec.h"
 
 #ifdef HAVE_CONFIG_H
-#include "webp/config.h"
+#include "src/webp/config.h"
 #endif
 
 #include <stdio.h>
@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "webp/encode.h"
+#include "src/webp/encode.h"
 #include "./imageio_util.h"
 #include "./metadata.h"
 

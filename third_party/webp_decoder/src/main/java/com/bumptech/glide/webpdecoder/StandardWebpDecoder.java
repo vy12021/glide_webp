@@ -848,4 +848,10 @@ public class StandardWebpDecoder implements WebpDecoder {
     return result;
   }
 
+  private native static void jniMethod();
+
+  public native static void webpDemux(String file);
+
+  private native static void webpMux();
+
 }

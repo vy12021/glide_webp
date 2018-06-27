@@ -12,7 +12,7 @@
 #include "./tiffdec.h"
 
 #ifdef HAVE_CONFIG_H
-#include "webp/config.h"
+#include "src/webp/config.h"
 #endif
 
 #include <limits.h>

@@ -28,11 +28,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 # 编译类型 Debug, Release
 #set(CMAKE_BUILD_TYPE Debug)
 
+
 # enable_language(ASM_NASM)
 
 set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-set(LIBRARY_OUTPUT_PATH ${CURRENT_DIR}/output/${ANDROID_ABI})
+# set(LIBRARY_OUTPUT_PATH ${CURRENT_DIR}/output/${ANDROID_ABI})
 
 # 设置输出目录
 # set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Lib)
@@ -41,17 +42,18 @@ set(LIBRARY_OUTPUT_PATH ${CURRENT_DIR}/output/${ANDROID_ABI})
 
 # 指定头文件搜索目录
 if (${ANDROID_ABI} STREQUAL armeabi-v7a)
-set(ARCH_DIR arch-arm)
+    set(ARCH_DIR arch-arm)
 elseif (${ANDROID_ABI} STREQUAL arm64-v8a)
-set(ARCH_DIR arch-arm64)
+    set(ARCH_DIR arch-arm64)
 endif ()
 include_directories(${ANDROID_NDK}/platforms/${ANDROID_PLATFORM}/${ARCH_DIR}/usr/include
-                    ${ANDROID_NDK}/sysroot/usr/include)
+                    ${ANDROID_NDK}/sysroot/usr/include
+                    ${CURRENT_DIR}
+                    ${CURRENT_DIR}/libwebp)
 
 # 搜索编译子目录CMakeLists.txt
 add_subdirectory(libwebp)
 
-# 动态库的链接行为才会触发静态库编译行为
-# add_library(linker_trigger SHARED linker_trigger.c)
+add_library(webpjni SHARED jni_declare.c)
 
-# target_link_libraries(linker_trigger)
+target_link_libraries(webpjni android jnigraphics log)

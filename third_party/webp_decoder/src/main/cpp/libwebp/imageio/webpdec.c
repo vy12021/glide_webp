@@ -14,8 +14,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "webp/decode.h"
-#include "webp/encode.h"
+#include "src/webp/decode.h"
+#include "src/webp/encode.h"
 #include "./imageio_util.h"
 #include "./metadata.h"
 

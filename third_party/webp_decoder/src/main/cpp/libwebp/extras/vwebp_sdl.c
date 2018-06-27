@@ -17,13 +17,13 @@
 #include <stdio.h>
 
 #ifdef HAVE_CONFIG_H
-#include "webp/config.h"
+#include "src/webp/config.h"
 #endif
 
 #if defined(WEBP_HAVE_SDL)
 
 #include "webp_to_sdl.h"
-#include "webp/decode.h"
+#include "src/webp/decode.h"
 #include "imageio/imageio_util.h"
 
 #if defined(WEBP_HAVE_JUST_SDL_H)

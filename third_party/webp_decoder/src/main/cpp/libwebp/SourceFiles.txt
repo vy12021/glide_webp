@@ -1,0 +1,106 @@
+# 各模块的源文件清单
+
+aux_source_directory(src/dec WEBP_DEC_SRCS)
+aux_source_directory(src/demux WEBP_DEMUX_SRCS)
+aux_source_directory(src/mux WEBP_MUX_SRCS)
+aux_source_directory(src/enc WEBP_ENC_SRCS)
+
+set(WEBP_DSP_DEC_SRCS
+    src/dsp/alpha_processing.c
+    src/dsp/alpha_processing_mips_dsp_r2.c
+    src/dsp/alpha_processing_neon.c
+    src/dsp/alpha_processing_sse2.c
+    src/dsp/alpha_processing_sse41.c
+    src/dsp/cpu.c
+    src/dsp/dec.c
+    src/dsp/dec_clip_tables.c
+    src/dsp/dec_mips32.c
+    src/dsp/dec_mips_dsp_r2.c
+    src/dsp/dec_msa.c
+    src/dsp/dec_neon.c
+    src/dsp/dec_sse2.c
+    src/dsp/dec_sse41.c
+    src/dsp/filters.c
+    src/dsp/filters_mips_dsp_r2.c
+    src/dsp/filters_msa.c
+    src/dsp/filters_neon.c
+    src/dsp/filters_sse2.c
+    src/dsp/lossless.c
+    src/dsp/lossless_mips_dsp_r2.c
+    src/dsp/lossless_msa.c
+    src/dsp/lossless_neon.c
+    src/dsp/lossless_sse2.c
+    src/dsp/rescaler.c
+    src/dsp/rescaler_mips32.c
+    src/dsp/rescaler_mips_dsp_r2.c
+    src/dsp/rescaler_msa.c
+    src/dsp/rescaler_neon.c
+    src/dsp/rescaler_sse2.c
+    src/dsp/upsampling.c
+    src/dsp/upsampling_mips_dsp_r2.c
+    src/dsp/upsampling_msa.c
+    src/dsp/upsampling_neon.c
+    src/dsp/upsampling_sse2.c
+    src/dsp/yuv.c
+    src/dsp/yuv_mips32.c
+    src/dsp/yuv_mips_dsp_r2.c
+    src/dsp/yuv_neon.c
+    src/dsp/yuv_sse2.c
+)
+
+set(WEBP_DSP_ENC_SRCS
+    src/dsp/cost.c
+    src/dsp/cost_mips32.c
+    src/dsp/cost_mips_dsp_r2.c
+    src/dsp/cost_sse2.c
+    src/dsp/enc.c
+    src/dsp/enc_avx2.c
+    src/dsp/enc_mips32.c
+    src/dsp/enc_mips_dsp_r2.c
+    src/dsp/enc_msa.c
+    src/dsp/enc_neon.c
+    src/dsp/enc_sse2.c
+    src/dsp/enc_sse41.c
+    src/dsp/lossless_enc.c
+    src/dsp/lossless_enc_mips32.c
+    src/dsp/lossless_enc_mips_dsp_r2.c
+    src/dsp/lossless_enc_msa.c
+    src/dsp/lossless_enc_neon.c
+    src/dsp/lossless_enc_sse2.c
+    src/dsp/lossless_enc_sse41.c
+    src/dsp/ssim.c
+    src/dsp/ssim_sse2.c
+)
+
+set(WEBP_UTILS_DEC_SRCS
+    src/utils/bit_reader_utils.c
+    src/utils/color_cache_utils.c
+    src/utils/filters_utils.c
+    src/utils/huffman_utils.c
+    src/utils/quant_levels_dec_utils.c
+    src/utils/random_utils.c
+    src/utils/rescaler_utils.c
+    src/utils/thread_utils.c
+    src/utils/utils.c
+)
+
+set(WEBP_UTILS_ENC_SRCS
+    src/utils/bit_writer_utils.c
+    src/utils/huffman_encode_utils.c
+    src/utils/quant_levels_utils.c
+)
+
+aux_source_directory(imageio WEBP_IMAGEIO_SRCS)
+
+set(WEBP_EXTRA_SRCS
+    extras/extras.c
+    extras/quality_estimate.c
+    extras/quality_estimate.c
+)
+
+set(WEBP_TOOLS_SRCS
+    tools/anim_util.c
+    tools/example_util.c
+    tools/webpinfo.c
+    tools/webpmux.c
+)
