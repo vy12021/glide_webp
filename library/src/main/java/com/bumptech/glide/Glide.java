@@ -71,6 +71,11 @@ import com.bumptech.glide.load.resource.transcode.BitmapBytesTranscoder;
 import com.bumptech.glide.load.resource.transcode.BitmapDrawableTranscoder;
 import com.bumptech.glide.load.resource.transcode.DrawableBytesTranscoder;
 import com.bumptech.glide.load.resource.transcode.GifDrawableBytesTranscoder;
+import com.bumptech.glide.load.resource.webp.ByteBufferWebpDecoder;
+import com.bumptech.glide.load.resource.webp.StreamWebpDecoder;
+import com.bumptech.glide.load.resource.webp.WebpDrawable;
+import com.bumptech.glide.load.resource.webp.WebpDrawableEncoder;
+import com.bumptech.glide.load.resource.webp.WebpFrameResourceDecoder;
 import com.bumptech.glide.manager.ConnectivityMonitorFactory;
 import com.bumptech.glide.manager.RequestManagerRetriever;
 import com.bumptech.glide.module.ManifestParser;
@@ -79,6 +84,8 @@ import com.bumptech.glide.request.target.ImageViewTargetFactory;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.util.Preconditions;
 import com.bumptech.glide.util.Util;
+import com.bumptech.glide.webpdecoder.WebpDecoder;
+
 import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -335,6 +342,8 @@ public class Glide implements ComponentCallbacks2 {
 
     Downsampler downsampler = new Downsampler(registry.getImageHeaderParsers(),
         resources.getDisplayMetrics(), bitmapPool, arrayPool);
+    ByteBufferWebpDecoder byteBufferWebpDecoder =
+        new ByteBufferWebpDecoder(context, registry.getImageHeaderParsers(), bitmapPool, arrayPool);
     ByteBufferGifDecoder byteBufferGifDecoder =
         new ByteBufferGifDecoder(context, registry.getImageHeaderParsers(), bitmapPool, arrayPool);
     ResourceDecoder<ParcelFileDescriptor, Bitmap> parcelFileDescriptorVideoDecoder =
@@ -395,6 +404,21 @@ public class Glide implements ComponentCallbacks2 {
             BitmapDrawable.class,
             new BitmapDrawableDecoder<>(resources, parcelFileDescriptorVideoDecoder))
         .append(BitmapDrawable.class, new BitmapDrawableEncoder(bitmapPool, bitmapEncoder))
+        /* WEBPs */
+        .append(
+                Registry.BUCKET_WEBP,
+                InputStream.class,
+                WebpDrawable.class,
+                new StreamWebpDecoder(registry.getImageHeaderParsers(), byteBufferWebpDecoder, arrayPool))
+        .append(Registry.BUCKET_WEBP, ByteBuffer.class, WebpDrawable.class, byteBufferWebpDecoder)
+        .append(WebpDrawable.class, new WebpDrawableEncoder())
+        /* WEBP Frames */
+        .append(WebpDecoder.class, WebpDecoder.class, UnitModelLoader.Factory.<WebpDecoder>getInstance())
+        .append(
+                Registry.BUCKET_WEBP,
+                WebpDecoder.class,
+                Bitmap.class,
+                new WebpFrameResourceDecoder(bitmapPool))
         /* GIFs */
         .append(
             Registry.BUCKET_GIF,

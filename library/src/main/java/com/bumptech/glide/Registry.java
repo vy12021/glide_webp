@@ -38,6 +38,7 @@ import java.util.List;
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class Registry {
   public static final String BUCKET_GIF = "Gif";
+  public static final String BUCKET_WEBP = "Webp";
   public static final String BUCKET_BITMAP = "Bitmap";
   public static final String BUCKET_BITMAP_DRAWABLE = "BitmapDrawable";
   private static final String BUCKET_PREPEND_ALL = "legacy_prepend_all";
@@ -65,7 +66,7 @@ public class Registry {
     this.transcoderRegistry = new TranscoderRegistry();
     this.imageHeaderParserRegistry = new ImageHeaderParserRegistry();
     setResourceDecoderBucketPriorityList(
-        Arrays.asList(BUCKET_GIF, BUCKET_BITMAP, BUCKET_BITMAP_DRAWABLE));
+        Arrays.asList(BUCKET_WEBP, BUCKET_GIF, BUCKET_BITMAP, BUCKET_BITMAP_DRAWABLE));
   }
 
   /**

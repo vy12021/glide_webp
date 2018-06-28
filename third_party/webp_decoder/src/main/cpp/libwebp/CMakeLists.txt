@@ -37,6 +37,7 @@ set(WEBP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_definitions(-Wall)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${WEBP_DEP_INCLUDE_DIRS})
+
 #add_definitions(-DHAVE_CONFIG_H)
 
 # 引入源文件定义

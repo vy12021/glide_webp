@@ -1,6 +1,4 @@
-package com.bumptech.glide.load.resource.gif;
-
-import static com.bumptech.glide.gifdecoder.GifDecoder.TOTAL_ITERATION_COUNT_FOREVER;
+package com.bumptech.glide.load.resource.webp;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -15,17 +13,21 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.view.Gravity;
+
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.gifdecoder.GifDecoder;
 import com.bumptech.glide.load.Transformation;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.util.Preconditions;
+import com.bumptech.glide.webpdecoder.WebpDecoder;
+
 import java.nio.ByteBuffer;
 
+import static com.bumptech.glide.webpdecoder.WebpDecoder.TOTAL_ITERATION_COUNT_FOREVER;
+
 /**
- * An animated {@link android.graphics.drawable.Drawable} that plays the frames of an animated GIF.
+ * An animated {@link Drawable} that plays the frames of an animated WEBP.
  */
-public class GifDrawable extends Drawable implements GifFrameLoader.FrameCallback, Animatable {
+public class WebpDrawable extends Drawable implements WebpFrameLoader.FrameCallback, Animatable {
   /**
    * A constant indicating that an animated drawable should loop continuously.
    */
@@ -34,7 +36,7 @@ public class GifDrawable extends Drawable implements GifFrameLoader.FrameCallbac
   public static final int LOOP_FOREVER = -1;
   /**
    * A constant indicating that an animated drawable should loop for its default number of times.
-   * For animated GIFs, this constant indicates the GIF should use the netscape loop count if
+   * For animated WEBPs, this constant indicates the WEBP should use the netscape loop count if
    * present.
    */
   // Public API.
@@ -42,7 +44,7 @@ public class GifDrawable extends Drawable implements GifFrameLoader.FrameCallbac
   public static final int LOOP_INTRINSIC = 0;
   private static final int GRAVITY = Gravity.FILL;
 
-  private final GifState state;
+  private final WebpState state;
   /**
    * True if the drawable is currently animating.
    */
@@ -57,17 +59,17 @@ public class GifDrawable extends Drawable implements GifFrameLoader.FrameCallbac
   private boolean isRecycled;
   /**
    * True if the drawable is currently visible. Default to true because on certain platforms (at
-   * least 4.1.1), setVisible is not called on {@link android.graphics.drawable.Drawable Drawables}
-   * during {@link android.widget.ImageView#setImageDrawable(android.graphics.drawable.Drawable)}.
+   * least 4.1.1), setVisible is not called on {@link Drawable Drawables}
+   * during {@link android.widget.ImageView#setImageDrawable(Drawable)}.
    * See issue #130.
    */
   private boolean isVisible = true;
   /**
-   * The number of times we've looped over all the frames in the GIF.
+   * The number of times we've looped over all the frames in the WEBP.
    */
   private int loopCount;
   /**
-   * The number of times to loop through the GIF animation.
+   * The number of times to loop through the WEBP animation.
    */
   private int maxLoopCount = LOOP_FOREVER;
 
@@ -76,11 +78,11 @@ public class GifDrawable extends Drawable implements GifFrameLoader.FrameCallbac
   private Rect destRect;
 
   /**
-   * Constructor for GifDrawable.
+   * Constructor for WebpDrawable.
    *
    * @param context             A context.
    * @param bitmapPool          Ignored, see deprecation note.
-   * @param frameTransformation An {@link com.bumptech.glide.load.Transformation} that can be
+   * @param frameTransformation An {@link Transformation} that can be
    *                            applied to each frame.
    * @param targetFrameWidth    The desired width of the frames displayed by this drawable (the
    *                            width of the view or
@@ -90,30 +92,30 @@ public class GifDrawable extends Drawable implements GifFrameLoader.FrameCallbac
    *                            height of the view or
    *                            {@link com.bumptech.glide.request.target.Target}
    *                            this drawable is being loaded into).
-   * @param gifDecoder          The decoder to use to decode GIF data.
-   * @param firstFrame          The decoded and transformed first frame of this GIF.
-   * @see #setFrameTransformation(com.bumptech.glide.load.Transformation, android.graphics.Bitmap)
+   * @param webpDecoder         The decoder to use to decode WEBP data.
+   * @param firstFrame          The decoded and transformed first frame of this WEBP.
+   * @see #setFrameTransformation(Transformation, Bitmap)
    *
-   * @deprecated Use {@link #GifDrawable(Context, GifDecoder, Transformation, int, int, Bitmap)}
+   * @deprecated Use {@link #WebpDrawable(Context, WebpDecoder, Transformation, int, int, Bitmap)}
    */
   @SuppressWarnings("deprecation")
   @Deprecated
-  public GifDrawable(
+  public WebpDrawable(
       Context context,
-      GifDecoder gifDecoder,
+      WebpDecoder webpDecoder,
       @SuppressWarnings("unused") BitmapPool bitmapPool,
       Transformation<Bitmap> frameTransformation,
       int targetFrameWidth,
       int targetFrameHeight,
       Bitmap firstFrame) {
-    this(context, gifDecoder, frameTransformation, targetFrameWidth, targetFrameHeight, firstFrame);
+    this(context, webpDecoder, frameTransformation, targetFrameWidth, targetFrameHeight, firstFrame);
   }
 
    /**
-   * Constructor for GifDrawable.
+   * Constructor for WebpDrawable.
    *
    * @param context             A context.
-   * @param frameTransformation An {@link com.bumptech.glide.load.Transformation} that can be
+   * @param frameTransformation An {@link Transformation} that can be
    *                            applied to each frame.
    * @param targetFrameWidth    The desired width of the frames displayed by this drawable (the
    *                            width of the view or
@@ -123,36 +125,36 @@ public class GifDrawable extends Drawable implements GifFrameLoader.FrameCallbac
    *                            height of the view or
    *                            {@link com.bumptech.glide.request.target.Target}
    *                            this drawable is being loaded into).
-   * @param gifDecoder          The decoder to use to decode GIF data.
-   * @param firstFrame          The decoded and transformed first frame of this GIF.
-   * @see #setFrameTransformation(com.bumptech.glide.load.Transformation, android.graphics.Bitmap)
+   * @param webpDecoder         The decoder to use to decode WEBP data.
+   * @param firstFrame          The decoded and transformed first frame of this WEBP.
+   * @see #setFrameTransformation(Transformation, Bitmap)
    */
-  public GifDrawable(
+  public WebpDrawable(
       Context context,
-      GifDecoder gifDecoder,
+      WebpDecoder webpDecoder,
       Transformation<Bitmap> frameTransformation,
       int targetFrameWidth,
       int targetFrameHeight,
       Bitmap firstFrame) {
     this(
-        new GifState(
-            new GifFrameLoader(
+        new WebpState(
+            new WebpFrameLoader(
                 // TODO(b/27524013): Factor out this call to Glide.get()
                 Glide.get(context),
-                gifDecoder,
+                webpDecoder,
                 targetFrameWidth,
                 targetFrameHeight,
                 frameTransformation,
                 firstFrame)));
   }
 
-  GifDrawable(GifState state) {
+  WebpDrawable(WebpState state) {
     this.state = Preconditions.checkNotNull(state);
   }
 
   @VisibleForTesting
-  GifDrawable(GifFrameLoader frameLoader, Paint paint) {
-    this(new GifState(frameLoader));
+  WebpDrawable(WebpFrameLoader frameLoader, Paint paint) {
+    this(new WebpState(frameLoader));
     this.paint = paint;
   }
 
@@ -389,11 +391,11 @@ public class GifDrawable extends Drawable implements GifFrameLoader.FrameCallbac
     }
   }
 
-  static final class GifState extends ConstantState {
+  static final class WebpState extends ConstantState {
     @VisibleForTesting
-    final GifFrameLoader frameLoader;
+    final WebpFrameLoader frameLoader;
 
-    GifState(GifFrameLoader frameLoader) {
+    WebpState(WebpFrameLoader frameLoader) {
       this.frameLoader = frameLoader;
     }
 
@@ -406,7 +408,7 @@ public class GifDrawable extends Drawable implements GifFrameLoader.FrameCallbac
     @NonNull
     @Override
     public Drawable newDrawable() {
-      return new GifDrawable(this);
+      return new WebpDrawable(this);
     }
 
     @Override

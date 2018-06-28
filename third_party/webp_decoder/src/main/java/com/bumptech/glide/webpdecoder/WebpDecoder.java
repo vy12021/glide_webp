@@ -10,7 +10,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.nio.ByteBuffer;
 
 /**
- * Shared interface for GIF decoders.
+ * Shared interface for WEBP decoders.
  */
 public interface WebpDecoder {
 
@@ -25,7 +25,7 @@ public interface WebpDecoder {
   /** The total iteration count which means repeat forever. */
   int TOTAL_ITERATION_COUNT_FOREVER = 0;
 
-  /** Android Lint annotation for status codes that can be used with a GIF decoder. */
+  /** Android Lint annotation for status codes that can be used with a WEBP decoder. */
   @Retention(RetentionPolicy.SOURCE)
   @IntDef(value = {STATUS_OK, STATUS_FORMAT_ERROR, STATUS_OPEN_ERROR, STATUS_PARTIAL_DECODE})
   @interface WebpDecodeStatus {
@@ -176,7 +176,7 @@ public interface WebpDecoder {
    * </p>
    *
    * @see <a href="https://bugs.chromium.org/p/chromium/issues/detail?id=592735#c5">Discussion about
-   *      the iteration count of animated GIFs (Chromium Issue 592735)</a>
+   *      the iteration count of animated WEBPs (Chromium Issue 592735)</a>
    *
    * @return total iteration count calculated from "Netscape" loop count.
    */
@@ -197,9 +197,9 @@ public interface WebpDecoder {
   Bitmap getNextFrame();
 
   /**
-   * Reads GIF image from stream.
+   * Reads WEBP image from stream.
    *
-   * @param is containing GIF file.
+   * @param is containing WEBP file.
    * @return read status code (0 = no errors).
    */
   @WebpDecodeStatus
@@ -214,17 +214,16 @@ public interface WebpDecoder {
   void setData(@NonNull WebpHeader header, @NonNull ByteBuffer buffer, int sampleSize);
 
   /**
-   * Reads GIF image from byte array.
+   * Reads WEBP image from byte array.
    *
-   * @param data containing GIF file.
+   * @param data containing WEBP file.
    * @return read status code (0 = no errors).
    */
   @WebpDecodeStatus
   int read(@Nullable byte[] data);
 
-
   /**
-   * Sets the default {@link android.graphics.Bitmap.Config} to use when decoding frames of a GIF.
+   * Sets the default {@link android.graphics.Bitmap.Config} to use when decoding frames of a WEBP.
    *
    * <p>Valid options are {@link android.graphics.Bitmap.Config#ARGB_8888} and
    * {@link android.graphics.Bitmap.Config#RGB_565}.
@@ -234,7 +233,7 @@ public interface WebpDecoder {
    * <p>Defaults to {@link android.graphics.Bitmap.Config#ARGB_8888}
    *
    * <p>This value is not a guarantee. For example if set to
-   * {@link android.graphics.Bitmap.Config#RGB_565} and the GIF contains transparent pixels,
+   * {@link android.graphics.Bitmap.Config#RGB_565} and the WEBP contains transparent pixels,
    * {@link android.graphics.Bitmap.Config#ARGB_8888} will be used anyway to support the
    * transparency.
    */

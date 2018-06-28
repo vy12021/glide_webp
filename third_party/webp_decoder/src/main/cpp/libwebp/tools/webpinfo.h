@@ -37,13 +37,13 @@ typedef enum ChunkID {
 typedef struct {
     size_t start_;
     size_t end_;
-    const uint8_t* buf_;
+    const uint8_t *buf_;
 } MemBuffer;
 
 typedef struct {
     size_t offset_;
     size_t size_;
-    const uint8_t* payload_;
+    const uint8_t *payload_;
     ChunkID id_;
 } ChunkData;
 
@@ -70,7 +70,7 @@ typedef struct WebPInfo {
  * init
  * @param webp_info
  */
-static void WebPInfoInit(WebPInfo* const webp_info);
+void WebPInfoInit(WebPInfo *const webp_info);
 
 /**
  * read data from file
@@ -78,66 +78,68 @@ static void WebPInfoInit(WebPInfo* const webp_info);
  * @param webp_data
  * @return
  */
-static int ReadFileToWebPData(const char* const filename,
-                              WebPData* const webp_data);
+int ReadFileToWebPData(const char *const filename,
+                       WebPData *const webp_data);
 
-static WebPInfoStatus ParseLossySegmentHeader(const WebPInfo* const webp_info,
-                                              const uint8_t* const data,
-                                              size_t data_size,
-                                              uint64_t* const bit_pos);
+WebPInfoStatus ParseLossySegmentHeader(const WebPInfo *const webp_info,
+                                       const uint8_t *const data,
+                                       size_t data_size,
+                                       uint64_t *const bit_pos);
 
-static WebPInfoStatus ParseLossyFilterHeader(const WebPInfo* const webp_info,
-                                             const uint8_t* const data,
-                                             size_t data_size,
-                                             uint64_t* const bit_pos);
+WebPInfoStatus ParseLossyFilterHeader(const WebPInfo *const webp_info,
+                                      const uint8_t *const data,
+                                      size_t data_size,
+                                      uint64_t *const bit_pos);
 
-static WebPInfoStatus ParseLossyHeader(const ChunkData* const chunk_data,
-                                       const WebPInfo* const webp_info);
+WebPInfoStatus ParseLossyHeader(const ChunkData *const chunk_data,
+                                const WebPInfo *const webp_info);
 
-static WebPInfoStatus ParseLosslessTransform(WebPInfo* const webp_info,
-                                             const uint8_t* const data,
-                                             size_t data_size,
-                                             uint64_t* const  bit_pos);
+WebPInfoStatus ParseLosslessTransform(WebPInfo *const webp_info,
+                                      const uint8_t *const data,
+                                      size_t data_size,
+                                      uint64_t *const bit_pos);
 
-static WebPInfoStatus ParseLosslessHeader(const ChunkData* const chunk_data,
-                                          WebPInfo* const webp_info);
+WebPInfoStatus ParseLosslessHeader(const ChunkData *const chunk_data,
+                                   WebPInfo *const webp_info);
 
-static WebPInfoStatus ParseAlphaHeader(const ChunkData* const chunk_data,
-                                       WebPInfo* const webp_info);
+WebPInfoStatus ParseAlphaHeader(const ChunkData *const chunk_data,
+                                WebPInfo *const webp_info);
 
-static WebPInfoStatus ParseRIFFHeader(const WebPInfo* const webp_info,
-                                      MemBuffer* const mem);
+WebPInfoStatus ParseRIFFHeader(const WebPInfo *const webp_info,
+                               MemBuffer *const mem);
 
-static WebPInfoStatus ParseChunk(const WebPInfo* const webp_info,
-                                 MemBuffer* const mem,
-                                 ChunkData* const chunk_data);
+WebPInfoStatus ParseChunk(const WebPInfo *const webp_info,
+                          MemBuffer *const mem,
+                          ChunkData *const chunk_data);
 
-static WebPInfoStatus ProcessVP8XChunk(const ChunkData* const chunk_data,
-                                       WebPInfo* const webp_info);
+WebPInfoStatus ProcessVP8XChunk(const ChunkData *const chunk_data,
+                                WebPInfo *const webp_info);
 
-static WebPInfoStatus ProcessANIMChunk(const ChunkData* const chunk_data,
-                                       WebPInfo* const webp_info);
+WebPInfoStatus ProcessANIMChunk(const ChunkData *const chunk_data,
+                                WebPInfo *const webp_info);
 
-static WebPInfoStatus ProcessANMFChunk(const ChunkData* const chunk_data,
-                                       WebPInfo* const webp_info);
+WebPInfoStatus ProcessANMFChunk(const ChunkData *const chunk_data,
+                                WebPInfo *const webp_info);
 
-static WebPInfoStatus ProcessImageChunk(const ChunkData* const chunk_data,
-                                        WebPInfo* const webp_info);
+WebPInfoStatus ProcessImageChunk(const ChunkData *const chunk_data,
+                                 WebPInfo *const webp_info);
 
-static WebPInfoStatus ProcessALPHChunk(const ChunkData* const chunk_data,
-                                       WebPInfo* const webp_info);
+WebPInfoStatus ProcessALPHChunk(const ChunkData *const chunk_data,
+                                WebPInfo *const webp_info);
 
-static WebPInfoStatus ProcessICCPChunk(const ChunkData* const chunk_data,
-                                       WebPInfo* const webp_info);
+WebPInfoStatus ProcessICCPChunk(const ChunkData *const chunk_data,
+                                WebPInfo *const webp_info);
 
-static WebPInfoStatus ProcessChunk(const ChunkData* const chunk_data,
-                                   WebPInfo* const webp_info);
+WebPInfoStatus ProcessChunk(const ChunkData *const chunk_data,
+                            WebPInfo *const webp_info);
 
-static WebPInfoStatus Validate(const WebPInfo* const webp_info);
+WebPInfoStatus Validate(const WebPInfo *const webp_info);
 
-static void ShowSummary(const WebPInfo* const webp_info);
+void ShowSummary(const WebPInfo *const webp_info);
 
-static WebPInfoStatus AnalyzeWebP(WebPInfo* const webp_info,
-                                  const WebPData* webp_data);
+WebPInfoStatus AnalyzeWebP(WebPInfo *const webp_info,
+                           const WebPData *webp_data);
+
+const char* GetWebPInfoDesc(WebPInfo *const webp_info, char* info);
 
 #endif //GLIDE_PARENT_WEBPINFO_H

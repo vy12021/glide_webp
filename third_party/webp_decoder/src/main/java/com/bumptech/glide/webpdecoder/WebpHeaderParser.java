@@ -15,9 +15,7 @@ import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_UNSPECIFIED;
 
 /**
  * A class responsible for creating {@link WebpHeader}s from data
- * representing animated GIFs.
- *
- * @see <a href="https://www.w3.org/Graphics/GIF/spec-gif89a.txt">GIF 89a Specification</a>
+ * representing animated WEBPs.
  */
 public class WebpHeaderParser {
   private static final String TAG = "WebpHeaderParser";
@@ -28,7 +26,7 @@ public class WebpHeaderParser {
   private static final int IMAGE_SEPARATOR = 0x2C;
   /** Identifies the beginning of an extension block. */
   private static final int EXTENSION_INTRODUCER = 0x21;
-  /** This block is a single-field block indicating the end of the GIF Data Stream. */
+  /** This block is a single-field block indicating the end of the WEBP Data Stream. */
   private static final int TRAILER = 0x3B;
   // Possible labels that identify the current extension block.
   private static final int LABEL_GRAPHIC_CONTROL_EXTENSION = 0xF9;
@@ -50,7 +48,7 @@ public class WebpHeaderParser {
   private static final int GCE_DISPOSAL_METHOD_SHIFT = 2;
   /**
    * Mask (bit 0) to extract Transparent Color Flag of the current frame.
-   * <p><b>GIF89a</b>: <i>Indicates whether a transparency index is given
+   * Indicates whether a transparency index is given
    * in the Transparent Index field.</i></p>
    * Possible values are:<ul>
    * <li>0 - Transparent Index is not given.</li>
@@ -63,14 +61,14 @@ public class WebpHeaderParser {
 
   /**
    * Mask (bit 7) to extract Local Color Table Flag of the current image.
-   * <p><b>GIF89a</b>: <i>Indicates the presence of a Local Color Table
-   * immediately following this Image Descriptor.</i></p>
+   * Indicates the presence of a Local Color Table
+   * immediately following this Image Descriptor.
    */
   private static final int DESCRIPTOR_MASK_LCT_FLAG = 0b10000000;
   /**
    * Mask (bit 6) to extract Interlace Flag of the current image.
-   * <p><b>GIF89a</b>: <i>Indicates if the image is interlaced.
-   * An image is interlaced in a four-pass interlace pattern.</i></p>
+   * Indicates if the image is interlaced.
+   * An image is interlaced in a four-pass interlace pattern.
    * Possible values are:<ul>
    * <li>0 - Image is not interlaced.</li>
    * <li>1 - Image is interlaced.</li>
@@ -79,10 +77,10 @@ public class WebpHeaderParser {
   private static final int DESCRIPTOR_MASK_INTERLACE_FLAG = 0b01000000;
   /**
    * Mask (bits 2-0) to extract Size of the Local Color Table of the current image.
-   * <p><b>GIF89a</b>: <i>If the Local Color Table Flag is set to 1, the value in this
+   * If the Local Color Table Flag is set to 1, the value in this
    * field is used to calculate the number of bytes contained in the Local Color Table.
    * To determine that actual size of the color table, raise 2 to [the value of the field + 1].
-   * This value should be 0 if there is no Local Color Table specified.</i></p>
+   * This value should be 0 if there is no Local Color Table specified.
    */
   private static final int DESCRIPTOR_MASK_LCT_SIZE = 0b00000111;
 
@@ -90,8 +88,8 @@ public class WebpHeaderParser {
 
   /**
    * Mask (bit 7) to extract Global Color Table Flag of the current image.
-   * <p><b>GIF89a</b>: <i>Indicates the presence of a Global Color Table
-   * immediately following this Image Descriptor.</i></p>
+   * Indicates the presence of a Global Color Table
+   * immediately following this Image Descriptor.
    * Possible values are:<ul>
    * <li>0 - No Global Color Table follows, the Background Color Index field is meaningless.</li>
    * <li>1 - A Global Color Table will immediately follow,
@@ -101,11 +99,11 @@ public class WebpHeaderParser {
   private static final int LSD_MASK_GCT_FLAG = 0b10000000;
   /**
    * Mask (bits 2-0) to extract Size of the Global Color Table of the current image.
-   * <p><b>GIF89a</b>: <i>If the Global Color Table Flag is set to 1, the value in this
+   * If the Global Color Table Flag is set to 1, the value in this
    * field is used to calculate the number of bytes contained in the Global Color Table.
    * To determine that actual size of the color table, raise 2 to [the value of the field + 1].
    * Even if there is no Global Color Table specified, set this field according to the above
-   * formula so that decoders can choose the best graphics mode to display the stream in.</i></p>
+   * formula so that decoders can choose the best graphics mode to display the stream in.
    */
   private static final int LSD_MASK_GCT_SIZE = 0b00000111;
 
@@ -113,7 +111,7 @@ public class WebpHeaderParser {
   static final int MIN_FRAME_DELAY = 2;
   /**
    * The default frame delay in hundredths of a second.
-   * This is used for GIFs with frame delays less than the minimum.
+   * This is used for WEBPs with frame delays less than the minimum.
    */
   static final int DEFAULT_FRAME_DELAY = 10;
 
@@ -176,7 +174,7 @@ public class WebpHeaderParser {
   }
 
   /**
-   * Determines if the GIF is animated by trying to read in the first 2 frames
+   * Determines if the WEBP is animated by trying to read in the first 2 frames
    * This method re-parses the data even if the header has already been read.
    */
   public boolean isAnimated() {
@@ -188,17 +186,17 @@ public class WebpHeaderParser {
   }
 
   /**
-   * Main file parser. Reads GIF content blocks.
+   * Main file parser. Reads WEBP content blocks.
    */
   private void readContents() {
     readContents(Integer.MAX_VALUE /* maxFrames */);
   }
 
   /**
-   * Main file parser. Reads GIF content blocks. Stops after reading maxFrames
+   * Main file parser. Reads WEBP content blocks. Stops after reading maxFrames
    */
   private void readContents(int maxFrames) {
-    // Read GIF file content blocks.
+    // Read WEBP file content blocks.
     boolean done = false;
     while (!(done || err() || header.frameCount > maxFrames)) {
       int code = read();
@@ -246,7 +244,7 @@ public class WebpHeaderParser {
           }
           break;
         case TRAILER:
-          // This block is a single-field block indicating the end of the GIF Data Stream.
+          // This block is a single-field block indicating the end of the WEBP Data Stream.
           done = true;
           break;
         // Bad byte, but keep going and see what happens
@@ -361,14 +359,14 @@ public class WebpHeaderParser {
 
 
   /**
-   * Reads GIF file header information.
+   * Reads WEBP file header information.
    */
   private void readHeader() {
     StringBuilder id = new StringBuilder();
     for (int i = 0; i < 6; i++) {
       id.append((char) read());
     }
-    if (!id.toString().startsWith("GIF")) {
+    if (!id.toString().startsWith("WEBP")) {
       header.status = STATUS_FORMAT_ERROR;
       return;
     }

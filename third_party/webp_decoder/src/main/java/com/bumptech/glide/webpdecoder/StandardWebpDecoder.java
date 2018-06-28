@@ -1,41 +1,11 @@
 package com.bumptech.glide.webpdecoder;
 
-/*
- * Copyright (c) 2013 Xcellent Creations, Inc.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
-import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_BACKGROUND;
-import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_NONE;
-import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_PREVIOUS;
-import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_UNSPECIFIED;
-
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
-
-import com.bumptech.glide.webpdecoder.WebpHeader;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -44,8 +14,13 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
+import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_BACKGROUND;
+import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_NONE;
+import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_PREVIOUS;
+import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_UNSPECIFIED;
+
 /**
- * Reads frame data from a GIF image source and decodes it into individual frames for animation
+ * Reads frame data from a WEBP image source and decodes it into individual frames for animation
  * purposes.  Image data can be read from either and InputStream source or a byte[].
  *
  * <p>This class is optimized for running animations with the frames, there are no methods to get
@@ -59,8 +34,6 @@ import java.util.Arrays;
  *
  * <p>Implementation adapted from sample code published in Lyons. (2004). <em>Java for
  * Programmers</em>, republished under the MIT Open Source License
- *
- * @see <a href="https://www.w3.org/Graphics/GIF/spec-gif89a.txt">GIF 89a Specification</a>
  */
 public class StandardWebpDecoder implements WebpDecoder {
   private static final String TAG = StandardWebpDecoder.class.getSimpleName();
@@ -92,7 +65,7 @@ public class StandardWebpDecoder implements WebpDecoder {
 
   private final WebpDecoder.BitmapProvider bitmapProvider;
 
-  /** Raw GIF data from input source. */
+  /** Raw WEBP data from input source. */
   private ByteBuffer rawData;
 
   /** Raw data read working array. */
@@ -124,22 +97,20 @@ public class StandardWebpDecoder implements WebpDecoder {
 
   // Public API.
   @SuppressWarnings("unused")
-  public StandardWebpDecoder(
-      @NonNull WebpDecoder.BitmapProvider provider, WebpHeader gifHeader, ByteBuffer rawData) {
-    this(provider, gifHeader, rawData, 1 /*sampleSize*/);
+  public StandardWebpDecoder(@NonNull WebpDecoder.BitmapProvider provider,
+                             WebpHeader webpHeader, ByteBuffer rawData) {
+    this(provider, webpHeader, rawData, 1);
   }
 
-  public StandardWebpDecoder(
-      @NonNull WebpDecoder.BitmapProvider provider, WebpHeader gifHeader, ByteBuffer rawData,
-      int sampleSize) {
+  public StandardWebpDecoder(@NonNull WebpDecoder.BitmapProvider provider,
+                             WebpHeader webpHeader, ByteBuffer rawData, int sampleSize) {
     this(provider);
-    setData(gifHeader, rawData, sampleSize);
+    setData(webpHeader, rawData, sampleSize);
   }
 
-  public StandardWebpDecoder(
-      @NonNull WebpDecoder.BitmapProvider provider) {
+  public StandardWebpDecoder(@NonNull WebpDecoder.BitmapProvider provider) {
     this.bitmapProvider = provider;
-    header = new WebpHeader();
+    this.header = new WebpHeader();
   }
 
   @Override
@@ -452,7 +423,7 @@ public class StandardWebpDecoder implements WebpDecoder {
         } else if (framePointer == 0) {
           // TODO: We should check and see if all individual pixels are replaced. If they are, the
           // first frame isn't actually transparent. For now, it's simpler and safer to assume
-          // drawing a transparent background means the GIF contains transparency.
+          // drawing a transparent background means the WEBP contains transparency.
           isFirstFrameTransparent = true;
         }
         // The area used by the graphic must be restored to the background color.
@@ -719,7 +690,7 @@ public class StandardWebpDecoder implements WebpDecoder {
     }
     byte[] pixelStack = this.pixelStack;
 
-    // Initialize GIF data stream decoder.
+    // Initialize WEBP data stream decoder.
     dataSize = readByte();
     clear = 1 << dataSize;
     endOfInformation = clear + 1;
@@ -734,7 +705,7 @@ public class StandardWebpDecoder implements WebpDecoder {
       suffix[code] = (byte) code;
     }
     byte[] block = this.block;
-    // Decode GIF pixel stream.
+    // Decode WEBP pixel stream.
     i = datum = bits = count = first = top = pi = bi = 0;
     while (i < npix) {
       // Read a new data block.
@@ -846,6 +817,10 @@ public class StandardWebpDecoder implements WebpDecoder {
     Bitmap result = bitmapProvider.obtain(downsampledWidth, downsampledHeight, config);
     result.setHasAlpha(true);
     return result;
+  }
+
+  static {
+    System.loadLibrary("webpjni");
   }
 
   private native static void jniMethod();

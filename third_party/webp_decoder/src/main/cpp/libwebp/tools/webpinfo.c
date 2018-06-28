@@ -59,7 +59,7 @@ static const char* const kAlphaFilterMethods[4] = {
   "Gradient"
 };
 
-static void WebPInfoInit(WebPInfo* const webp_info) {
+void WebPInfoInit(WebPInfo* const webp_info) {
   memset(webp_info, 0, sizeof(*webp_info));
 }
 
@@ -108,8 +108,7 @@ static uint32_t ReadLE32(const uint8_t** data) {
   return val;
 }
 
-static int ReadFileToWebPData(const char* const filename,
-                              WebPData* const webp_data) {
+int ReadFileToWebPData(const char* const filename, WebPData* const webp_data) {
   const uint8_t* data;
   size_t size;
   if (!ImgIoUtilReadFile(filename, &data, &size)) return 0;
@@ -190,7 +189,7 @@ static int GetSignedBits(const uint8_t* const data, size_t data_size, size_t nb,
     }                                                        \
   } while (0)
 
-static WebPInfoStatus ParseLossySegmentHeader(const WebPInfo* const webp_info,
+WebPInfoStatus ParseLossySegmentHeader(const WebPInfo* const webp_info,
                                               const uint8_t* const data,
                                               size_t data_size,
                                               uint64_t* const bit_pos) {
@@ -240,7 +239,7 @@ static WebPInfoStatus ParseLossySegmentHeader(const WebPInfo* const webp_info,
   return WEBP_INFO_OK;
 }
 
-static WebPInfoStatus ParseLossyFilterHeader(const WebPInfo* const webp_info,
+WebPInfoStatus ParseLossyFilterHeader(const WebPInfo* const webp_info,
                                              const uint8_t* const data,
                                              size_t data_size,
                                              uint64_t* const bit_pos) {
@@ -269,7 +268,7 @@ static WebPInfoStatus ParseLossyFilterHeader(const WebPInfo* const webp_info,
   return WEBP_INFO_OK;
 }
 
-static WebPInfoStatus ParseLossyHeader(const ChunkData* const chunk_data,
+WebPInfoStatus ParseLossyHeader(const ChunkData* const chunk_data,
                                        const WebPInfo* const webp_info) {
   const uint8_t* data = chunk_data->payload_;
   size_t data_size = chunk_data->size_ - CHUNK_HEADER_SIZE;
@@ -411,7 +410,7 @@ static int LLGetBits(const uint8_t* const data, size_t data_size, size_t nb,
     }                                                    \
   } while (0)
 
-static WebPInfoStatus ParseLosslessTransform(WebPInfo* const webp_info,
+WebPInfoStatus ParseLosslessTransform(WebPInfo* const webp_info,
                                              const uint8_t* const data,
                                              size_t data_size,
                                              uint64_t* const  bit_pos) {
@@ -440,7 +439,7 @@ static WebPInfoStatus ParseLosslessTransform(WebPInfo* const webp_info,
   return WEBP_INFO_OK;
 }
 
-static WebPInfoStatus ParseLosslessHeader(const ChunkData* const chunk_data,
+WebPInfoStatus ParseLosslessHeader(const ChunkData* const chunk_data,
                                           WebPInfo* const webp_info) {
   const uint8_t* data = chunk_data->payload_;
   size_t data_size = chunk_data->size_ - CHUNK_HEADER_SIZE;
@@ -476,7 +475,7 @@ static WebPInfoStatus ParseLosslessHeader(const ChunkData* const chunk_data,
   return WEBP_INFO_OK;
 }
 
-static WebPInfoStatus ParseAlphaHeader(const ChunkData* const chunk_data,
+WebPInfoStatus ParseAlphaHeader(const ChunkData* const chunk_data,
                                        WebPInfo* const webp_info) {
   const uint8_t* data = chunk_data->payload_;
   size_t data_size = chunk_data->size_ - CHUNK_HEADER_SIZE;
@@ -520,7 +519,7 @@ static WebPInfoStatus ParseAlphaHeader(const ChunkData* const chunk_data,
 // -----------------------------------------------------------------------------
 // Chunk parsing.
 
-static WebPInfoStatus ParseRIFFHeader(const WebPInfo* const webp_info,
+WebPInfoStatus ParseRIFFHeader(const WebPInfo* const webp_info,
                                       MemBuffer* const mem) {
   const size_t min_size = RIFF_HEADER_SIZE + CHUNK_HEADER_SIZE;
   size_t riff_size;
@@ -559,7 +558,7 @@ static WebPInfoStatus ParseRIFFHeader(const WebPInfo* const webp_info,
   return WEBP_INFO_OK;
 }
 
-static WebPInfoStatus ParseChunk(const WebPInfo* const webp_info,
+WebPInfoStatus ParseChunk(const WebPInfo* const webp_info,
                                  MemBuffer* const mem,
                                  ChunkData* const chunk_data) {
   memset(chunk_data, 0, sizeof(*chunk_data));
@@ -605,7 +604,7 @@ static WebPInfoStatus ParseChunk(const WebPInfo* const webp_info,
 // -----------------------------------------------------------------------------
 // Chunk analysis.
 
-static WebPInfoStatus ProcessVP8XChunk(const ChunkData* const chunk_data,
+WebPInfoStatus ProcessVP8XChunk(const ChunkData* const chunk_data,
                                        WebPInfo* const webp_info) {
   const uint8_t* data = chunk_data->payload_;
   if (webp_info->chunk_counts_[CHUNK_VP8] ||
@@ -646,7 +645,7 @@ static WebPInfoStatus ProcessVP8XChunk(const ChunkData* const chunk_data,
   return WEBP_INFO_OK;
 }
 
-static WebPInfoStatus ProcessANIMChunk(const ChunkData* const chunk_data,
+WebPInfoStatus ProcessANIMChunk(const ChunkData* const chunk_data,
                                        WebPInfo* const webp_info) {
   const uint8_t* data = chunk_data->payload_;
   if (!webp_info->chunk_counts_[CHUNK_VP8X]) {
@@ -674,7 +673,7 @@ static WebPInfoStatus ProcessANIMChunk(const ChunkData* const chunk_data,
   return WEBP_INFO_OK;
 }
 
-static WebPInfoStatus ProcessANMFChunk(const ChunkData* const chunk_data,
+WebPInfoStatus ProcessANMFChunk(const ChunkData* const chunk_data,
                                        WebPInfo* const webp_info) {
   const uint8_t* data = chunk_data->payload_;
   int offset_x, offset_y, width, height, duration, blend, dispose, temp;
@@ -727,7 +726,7 @@ static WebPInfoStatus ProcessANMFChunk(const ChunkData* const chunk_data,
   return WEBP_INFO_OK;
 }
 
-static WebPInfoStatus ProcessImageChunk(const ChunkData* const chunk_data,
+WebPInfoStatus ProcessImageChunk(const ChunkData* const chunk_data,
                                         WebPInfo* const webp_info) {
   const uint8_t* data = chunk_data->payload_ - CHUNK_HEADER_SIZE;
   WebPBitstreamFeatures features;
@@ -805,7 +804,7 @@ static WebPInfoStatus ProcessImageChunk(const ChunkData* const chunk_data,
   return WEBP_INFO_OK;
 }
 
-static WebPInfoStatus ProcessALPHChunk(const ChunkData* const chunk_data,
+WebPInfoStatus ProcessALPHChunk(const ChunkData* const chunk_data,
                                        WebPInfo* const webp_info) {
   if (webp_info->is_processing_anim_frame_) {
     ++webp_info->anmf_subchunk_counts_[2];
@@ -848,7 +847,7 @@ static WebPInfoStatus ProcessALPHChunk(const ChunkData* const chunk_data,
   return WEBP_INFO_OK;
 }
 
-static WebPInfoStatus ProcessICCPChunk(const ChunkData* const chunk_data,
+WebPInfoStatus ProcessICCPChunk(const ChunkData* const chunk_data,
                                        WebPInfo* const webp_info) {
   (void)chunk_data;
   if (!webp_info->chunk_counts_[CHUNK_VP8X]) {
@@ -865,7 +864,7 @@ static WebPInfoStatus ProcessICCPChunk(const ChunkData* const chunk_data,
   return WEBP_INFO_OK;
 }
 
-static WebPInfoStatus ProcessChunk(const ChunkData* const chunk_data,
+WebPInfoStatus ProcessChunk(const ChunkData* const chunk_data,
                                    WebPInfo* const webp_info) {
   WebPInfoStatus status = WEBP_INFO_OK;
   ChunkID id = chunk_data->id_;
@@ -927,7 +926,7 @@ static WebPInfoStatus ProcessChunk(const ChunkData* const chunk_data,
   return status;
 }
 
-static WebPInfoStatus Validate(const WebPInfo* const webp_info) {
+WebPInfoStatus Validate(const WebPInfo* const webp_info) {
   if (webp_info->num_frames_ < 1) {
     LOG_ERROR("No image/frame detected.");
     return WEBP_INFO_MISSING_DATA;
@@ -984,7 +983,7 @@ static WebPInfoStatus Validate(const WebPInfo* const webp_info) {
   return WEBP_INFO_OK;
 }
 
-static void ShowSummary(const WebPInfo* const webp_info) {
+void ShowSummary(const WebPInfo* const webp_info) {
   int i;
   printf("Summary:\n");
   printf("Number of frames: %d\n", webp_info->num_frames_);
@@ -1003,8 +1002,7 @@ static void ShowSummary(const WebPInfo* const webp_info) {
   printf("\n");
 }
 
-static WebPInfoStatus AnalyzeWebP(WebPInfo* const webp_info,
-                                  const WebPData* webp_data) {
+WebPInfoStatus AnalyzeWebP(WebPInfo* const webp_info, const WebPData* webp_data) {
   ChunkData chunk_data;
   MemBuffer mem_buffer;
   WebPInfoStatus webp_info_status = WEBP_INFO_OK;
@@ -1034,6 +1032,59 @@ static WebPInfoStatus AnalyzeWebP(WebPInfo* const webp_info,
     }
   }
   return webp_info_status;
+}
+
+const char* GetWebPInfoDesc(WebPInfo *const webp_info, char* info) {
+    if (NULL == webp_info) {
+        return info;
+    }
+    if (NULL == info) {
+        char str[1024] = {};
+        info = str;
+    }
+    asprintf(&info, "\nanim_frame_data_size: %d\n"
+                     "anmf_subchunk_counts_[0]: %d\n"
+                     "anmf_subchunk_counts_[1]: %d\n"
+                     "anmf_subchunk_counts_[2]: %d\n"
+                     "bgcolor_: %d\n"
+                     "canvas_height_: %d\n"
+                     "canvas_width_: %d\n"
+                     "feature_flags_: %d\n"
+                     "frame_height_: %d\n"
+                     "frame_width_: %d\n"
+                     "has_alpha_: %d\n"
+                     "is_processing_anim_frame_: %d\n"
+                     "loop_count_: %d\n"
+                     "num_frames_: %d\n"
+                     "parse_bitstream_: %d\n"
+                     "quiet_: %d\n"
+                     "seen_alpha_subchunk_: %d\n"
+                     "seen_image_subchunk_: %d\n"
+                     "show_diagnosis_: %d\n"
+                     "show_summary_: %d\n"
+            ,
+             webp_info->anim_frame_data_size_,
+             webp_info->anmf_subchunk_counts_[0],
+             webp_info->anmf_subchunk_counts_[1],
+             webp_info->anmf_subchunk_counts_[2],
+             webp_info->bgcolor_,
+             webp_info->canvas_height_,
+             webp_info->canvas_width_,
+             webp_info->feature_flags_,
+             webp_info->frame_height_,
+             webp_info->frame_width_,
+             webp_info->has_alpha_,
+             webp_info->is_processing_anim_frame_,
+             webp_info->loop_count_,
+             webp_info->num_frames_,
+             webp_info->parse_bitstream_,
+             webp_info->quiet_,
+             webp_info->seen_alpha_subchunk_,
+             webp_info->seen_image_subchunk_,
+             webp_info->show_diagnosis_,
+             webp_info->show_summary_
+    );
+    return info;
 }
 
 static void HelpShort(void) {

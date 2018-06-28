@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A header object containing the number of frames in an animated GIF image as well as basic
- * metadata like width and height that can be used to decode each individual frame of the GIF. Can
+ * A header object containing the number of frames in an animated WEBP image as well as basic
+ * metadata like width and height that can be used to decode each individual frame of the WEBP. Can
  * be shared by one or more {@link com.bumptech.glide.webpdecoder.WebpDecoder}s to play the same
  * animated WEBP in multiple views.
  */
@@ -62,7 +62,7 @@ public class WebpHeader {
   }
 
   /**
-   * Global status code of GIF data parsing.
+   * Global status code of WEBP data parsing.
    */
   @WebpDecoder.WebpDecodeStatus
   public int getStatus() {

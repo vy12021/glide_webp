@@ -24,7 +24,7 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, webpDemux, void)(JNIEnv *en
     in_file = (*env)->GetStringUTFChars(env, file, &flag);
     int quiet = 0, show_diag = 0, show_summary = 0;
     int parse_bitstream = 0;
-    WebPInfoStatus webp_info_status = WEBP_INFO_OK;
+    WebPInfoStatus webp_info_status;
     WebPInfo webp_info;
     WebPData webp_data;
     WebPInfoInit(&webp_info);
@@ -34,12 +34,17 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, webpDemux, void)(JNIEnv *en
     webp_info.parse_bitstream_ = parse_bitstream;
     if (in_file == NULL || !ReadFileToWebPData(in_file, &webp_data)) {
         webp_info_status = WEBP_INFO_INVALID_COMMAND;
-        fprintf(stderr, "Failed to open input file %s.\n", in_file);
+        LOGE(TO_STRING(PACKAGE_ROOT), "Failed to open input file %s.\n", in_file);
     }
     if (!webp_info.quiet_) printf("File: %s\n", in_file);
     webp_info_status = AnalyzeWebP(&webp_info, &webp_data);
+    switch (webp_info_status) {
+        case WEBP_INFO_OK:
+            LOGE(TO_STRING(PACKAGE_ROOT), "webp parse complete: %s", GetWebPInfoDesc(&webp_info, NULL));
+            break;
+    }
     WebPDataClear(&webp_data);
-    LOGE(PACKAGE_ROOT, "输入文件: %s", in_file);
+    LOGE(TO_STRING(PACKAGE_ROOT), "输入文件: %s", in_file);
 }
 
 

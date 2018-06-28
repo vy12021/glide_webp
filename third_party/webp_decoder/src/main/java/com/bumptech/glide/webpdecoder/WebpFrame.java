@@ -10,33 +10,28 @@ import java.lang.annotation.RetentionPolicy;
  */
 class WebpFrame {
   /**
-   * GIF Disposal Method meaning take no action.
-   * <p><b>GIF89a</b>: <i>No disposal specified.
+   * WEBP Disposal Method meaning take no action.
    * The decoder is not required to take any action.</i></p>
    */
   static final int DISPOSAL_UNSPECIFIED = 0;
   /**
-   * GIF Disposal Method meaning leave canvas from previous frame.
-   * <p><b>GIF89a</b>: <i>Do not dispose.
+   * WEBP Disposal Method meaning leave canvas from previous frame.
    * The graphic is to be left in place.</i></p>
    */
   static final int DISPOSAL_NONE = 1;
   /**
-   * GIF Disposal Method meaning clear canvas to background color.
-   * <p><b>GIF89a</b>: <i>Restore to background color.
+   * WEBP Disposal Method meaning clear canvas to background color.
    * The area used by the graphic must be restored to the background color.</i></p>
    */
   static final int DISPOSAL_BACKGROUND = 2;
   /**
-   * GIF Disposal Method meaning clear canvas to frame before last.
-   * <p><b>GIF89a</b>: <i>Restore to previous.
+   * WEBP Disposal Method meaning clear canvas to frame before last.
    * The decoder is required to restore the area overwritten by the graphic
    * with what was there prior to rendering the graphic.</i></p>
    */
   static final int DISPOSAL_PREVIOUS = 3;
 
   /**
-   * <p><b>GIF89a</b>:
    * <i>Indicates the way in which the graphic is to be treated after being displayed.</i></p>
    * Disposal methods 0-3 are defined, 4-7 are reserved for future use.
    *

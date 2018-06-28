@@ -28,8 +28,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 # 编译类型 Debug, Release
 #set(CMAKE_BUILD_TYPE Debug)
 
-
 # enable_language(ASM_NASM)
+
+# 定义宏
+add_definitions(-DHAVE_LOG)
 
 set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -46,6 +48,7 @@ if (${ANDROID_ABI} STREQUAL armeabi-v7a)
 elseif (${ANDROID_ABI} STREQUAL arm64-v8a)
     set(ARCH_DIR arch-arm64)
 endif ()
+
 include_directories(${ANDROID_NDK}/platforms/${ANDROID_PLATFORM}/${ARCH_DIR}/usr/include
                     ${ANDROID_NDK}/sysroot/usr/include
                     ${CURRENT_DIR}
@@ -56,4 +59,4 @@ add_subdirectory(libwebp)
 
 add_library(webpjni SHARED jni_declare.c)
 
-target_link_libraries(webpjni android jnigraphics log)
+target_link_libraries(webpjni webp android jnigraphics log)

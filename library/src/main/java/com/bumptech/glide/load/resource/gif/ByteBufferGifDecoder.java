@@ -33,7 +33,7 @@ import java.util.Queue;
  * com.bumptech.glide.load.resource.gif.GifDrawable} from {@link java.io.InputStream} data.
  */
 public class ByteBufferGifDecoder implements ResourceDecoder<ByteBuffer, GifDrawable> {
-  private static final String TAG = "BufferGifDecoder";
+  private static final String TAG = "ByteBufferGifDecoder";
   private static final GifDecoderFactory GIF_DECODER_FACTORY = new GifDecoderFactory();
   private static final GifHeaderParserPool PARSER_POOL = new GifHeaderParserPool();
 

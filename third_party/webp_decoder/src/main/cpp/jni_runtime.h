@@ -9,8 +9,9 @@
 #include "jni_log.h"
 
 #define PACKAGE_ROOT com_bumptech_glide_webpdecoder
+#define TO_STRING(ANY) #ANY
 
-#define _JNI_METHOD(Package, Class, Name, Return)    JNIEXPORT Return JNICALL Java_##Package##_##Class##_native_1##Name
+#define _JNI_METHOD(Package, Class, Name, Return)    JNIEXPORT Return JNICALL Java_##Package##_##Class##_##Name
 
 #define _JNI_STATIC_METHOD(Package, Class, Name, Return)    JNIEXPORT Return JNICALL Java_##Package##_##Class##_##Name
 

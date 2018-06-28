@@ -28,7 +28,8 @@ android {
                         "-DANDROID_TOOLCHAIN=clang",            // 编译器
                         "-DANDROID_PLATFORM=android-19",        // 编译目标系统版本
                         "-DANDROID_NATIVE_API_LEVEL=19",        // native api 级别
-                        "-DANDROID_STL=gnustl_static",          // stl库类型
+                        // "-DANDROID_STL=gnustl_static",          // stl库类型
+                        "-DLIBCXX_FORCE_REBUILD=TRUE",          // llvm libc++库类型
                         "-DANDROID_ABI=armeabi-v7a",            // 编译目标平台
                         // "-DANDROID_ABI=arm64-v8a",              // 编译目标平台
                         // "-G=Android Gradle - Ninja",         // cmake指定构建系统
