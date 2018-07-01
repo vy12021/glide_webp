@@ -166,10 +166,10 @@ public class StandardGifDecoder implements GifDecoder {
   }
 
   @Override
-  public int getDelay(int n) {
+  public int getDelay(int index) {
     int delay = -1;
-    if ((n >= 0) && (n < header.frameCount)) {
-      delay = header.frames.get(n).delay;
+    if ((index >= 0) && (index < header.frameCount)) {
+      delay = header.frames.get(index).delay;
     }
     return delay;
   }
