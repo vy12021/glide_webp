@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.Button;
 
 import com.bumptech.glide.webpdecoder.StandardWebpDecoder;
+import com.bumptech.glide.webpdecoder.WebpHeader;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -41,7 +42,8 @@ public class MainActivity extends Activity {
     new Thread(new Runnable() {
       @Override
       public void run() {
-        StandardWebpDecoder.webpDemux(dir + "/test_3.webp");
+        WebpHeader header = StandardWebpDecoder.getWebpInfo(dir + "/test_3.webp");
+        Log.e("WebpHeader", header.toString());
       }
     }).start();
   }

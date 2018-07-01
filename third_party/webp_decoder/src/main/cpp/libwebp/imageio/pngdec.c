@@ -12,7 +12,7 @@
 #include "./pngdec.h"
 
 #ifdef HAVE_CONFIG_H
-#include "src/webp/config.h"
+#include "webp/config.h"
 #endif
 
 #include <stdio.h>
@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "src/webp/encode.h"
+#include "webp/encode.h"
 #include "./imageio_util.h"
 #include "./metadata.h"
 
@@ -185,7 +185,6 @@ static int ExtractMetadataFromPNG(png_structp png,
       }
     }
   }
-
   return 1;
 }
 
@@ -263,6 +262,16 @@ int ReadPNG(const uint8_t* const data, size_t data_size,
     has_alpha = 1;
   } else {
     has_alpha = !!(color_type & PNG_COLOR_MASK_ALPHA);
+  }
+
+  // Apply gamma correction if needed.
+  {
+    double image_gamma = 1 / 2.2, screen_gamma = 2.2;
+    int srgb_intent;
+    if (png_get_sRGB(png, info, &srgb_intent) ||
+        png_get_gAMA(png, info, &image_gamma)) {
+      png_set_gamma(png, screen_gamma, image_gamma);
+    }
   }
 
   if (!keep_alpha) {

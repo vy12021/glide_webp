@@ -157,7 +157,7 @@ static int GetBits(const uint8_t* const data, size_t data_size, size_t nb,
     if ((p >> 3) >= data_size) {
       return 0;
     } else {
-      const int bit = !!(data[p >> 3] & (128 >> ((p & 7))));
+      const int bit = (data[p >> 3] & (128 >> ((p & 7)))) != 0;
       *val = (*val << 1) | bit;
     }
   }
@@ -475,8 +475,7 @@ WebPInfoStatus ParseLosslessHeader(const ChunkData* const chunk_data,
   return WEBP_INFO_OK;
 }
 
-WebPInfoStatus ParseAlphaHeader(const ChunkData* const chunk_data,
-                                       WebPInfo* const webp_info) {
+WebPInfoStatus ParseAlphaHeader(const ChunkData* const chunk_data, WebPInfo* const webp_info) {
   const uint8_t* data = chunk_data->payload_;
   size_t data_size = chunk_data->size_ - CHUNK_HEADER_SIZE;
   if (data_size <= ALPHA_HEADER_LEN) {
@@ -519,8 +518,7 @@ WebPInfoStatus ParseAlphaHeader(const ChunkData* const chunk_data,
 // -----------------------------------------------------------------------------
 // Chunk parsing.
 
-WebPInfoStatus ParseRIFFHeader(const WebPInfo* const webp_info,
-                                      MemBuffer* const mem) {
+WebPInfoStatus ParseRIFFHeader(const WebPInfo* const webp_info, MemBuffer* const mem) {
   const size_t min_size = RIFF_HEADER_SIZE + CHUNK_HEADER_SIZE;
   size_t riff_size;
 
@@ -559,8 +557,8 @@ WebPInfoStatus ParseRIFFHeader(const WebPInfo* const webp_info,
 }
 
 WebPInfoStatus ParseChunk(const WebPInfo* const webp_info,
-                                 MemBuffer* const mem,
-                                 ChunkData* const chunk_data) {
+                          MemBuffer* const mem,
+                          ChunkData* const chunk_data) {
   memset(chunk_data, 0, sizeof(*chunk_data));
   if (MemDataSize(mem) < CHUNK_HEADER_SIZE) {
     LOG_ERROR("Truncated data detected when parsing chunk header.");
@@ -865,17 +863,17 @@ WebPInfoStatus ProcessICCPChunk(const ChunkData* const chunk_data,
 }
 
 WebPInfoStatus ProcessChunk(const ChunkData* const chunk_data,
-                                   WebPInfo* const webp_info) {
+                            WebPInfo* const webp_info) {
   WebPInfoStatus status = WEBP_INFO_OK;
   ChunkID id = chunk_data->id_;
-  if (chunk_data->id_ == CHUNK_UNKNOWN) {
+  if (id == CHUNK_UNKNOWN) {
     char error_message[50];
     snprintf(error_message, 50, "Unknown chunk at offset %6d, length %6d",
             (int)chunk_data->offset_, (int)chunk_data->size_);
     LOG_WARN(error_message);
   } else {
     if (!webp_info->quiet_) {
-      const char* tag = kWebPChunkTags[chunk_data->id_];
+      const char* tag = kWebPChunkTags[id];
       printf("Chunk %c%c%c%c at offset %6d, length %6d\n",
              tag[0], tag[1], tag[2], tag[3], (int)chunk_data->offset_,
              (int)chunk_data->size_);
@@ -932,11 +930,11 @@ WebPInfoStatus Validate(const WebPInfo* const webp_info) {
     return WEBP_INFO_MISSING_DATA;
   }
   if (webp_info->chunk_counts_[CHUNK_VP8X]) {
-    const int iccp = !!(webp_info->feature_flags_ & ICCP_FLAG);
-    const int exif = !!(webp_info->feature_flags_ & EXIF_FLAG);
-    const int xmp = !!(webp_info->feature_flags_ & XMP_FLAG);
-    const int animation = !!(webp_info->feature_flags_ & ANIMATION_FLAG);
-    const int alpha = !!(webp_info->feature_flags_ & ALPHA_FLAG);
+    const int iccp = (webp_info->feature_flags_ & ICCP_FLAG) != 1;
+    const int exif = (webp_info->feature_flags_ & EXIF_FLAG) != 1;
+    const int xmp = (webp_info->feature_flags_ & XMP_FLAG) != 1;
+    const int animation = (webp_info->feature_flags_ & ANIMATION_FLAG) != 1;
+    const int alpha = (webp_info->feature_flags_ & ALPHA_FLAG) != 1;
     if (!alpha && webp_info->has_alpha_) {
       LOG_ERROR("Unexpected alpha data detected.");
       return WEBP_INFO_PARSE_ERROR;
@@ -981,25 +979,6 @@ WebPInfoStatus Validate(const WebPInfo* const webp_info) {
     }
   }
   return WEBP_INFO_OK;
-}
-
-void ShowSummary(const WebPInfo* const webp_info) {
-  int i;
-  printf("Summary:\n");
-  printf("Number of frames: %d\n", webp_info->num_frames_);
-  printf("Chunk type  :  VP8 VP8L VP8X ALPH ANIM ANMF(VP8 /VP8L/ALPH) ICCP "
-      "EXIF  XMP\n");
-  printf("Chunk counts: ");
-  for (i = 0; i < CHUNK_TYPES; ++i) {
-    printf("%4d ", webp_info->chunk_counts_[i]);
-    if (i == CHUNK_ANMF) {
-      printf("%4d %4d %4d  ",
-             webp_info->anmf_subchunk_counts_[0],
-             webp_info->anmf_subchunk_counts_[1],
-             webp_info->anmf_subchunk_counts_[2]);
-    }
-  }
-  printf("\n");
 }
 
 WebPInfoStatus AnalyzeWebP(WebPInfo* const webp_info, const WebPData* webp_data) {
@@ -1085,6 +1064,25 @@ const char* GetWebPInfoDesc(WebPInfo *const webp_info, char* info) {
              webp_info->show_summary_
     );
     return info;
+}
+
+void ShowSummary(const WebPInfo* const webp_info) {
+  int i;
+  printf("Summary:\n");
+  printf("Number of frames: %d\n", webp_info->num_frames_);
+  printf("Chunk type  :  VP8 VP8L VP8X ALPH ANIM ANMF(VP8 /VP8L/ALPH) ICCP "
+                 "EXIF  XMP\n");
+  printf("Chunk counts: ");
+  for (i = 0; i < CHUNK_TYPES; ++i) {
+    printf("%4d ", webp_info->chunk_counts_[i]);
+    if (i == CHUNK_ANMF) {
+      printf("%4d %4d %4d  ",
+             webp_info->anmf_subchunk_counts_[0],
+             webp_info->anmf_subchunk_counts_[1],
+             webp_info->anmf_subchunk_counts_[2]);
+    }
+  }
+  printf("\n");
 }
 
 static void HelpShort(void) {

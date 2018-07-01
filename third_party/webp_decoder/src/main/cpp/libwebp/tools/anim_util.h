@@ -16,11 +16,16 @@
 #include "webp/config.h"
 #endif
 
-#include "src/webp/types.h"
+#include "webp/types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef enum {
+  ANIM_GIF,
+  ANIM_WEBP
+} AnimatedFileFormat;
 
 typedef struct {
   uint8_t* rgba;         // Decoded and reconstructed full frame.
@@ -29,6 +34,7 @@ typedef struct {
 } DecodedFrame;
 
 typedef struct {
+  AnimatedFileFormat format;
   uint32_t canvas_width;
   uint32_t canvas_height;
   uint32_t bgcolor;
@@ -55,6 +61,10 @@ int ReadAnimatedImage(const char filename[], AnimatedImage* const image,
 void GetDiffAndPSNR(const uint8_t rgba1[], const uint8_t rgba2[],
                     uint32_t width, uint32_t height, int premultiply,
                     int* const max_diff, double* const psnr);
+
+// Return library versions used by anim_util.
+void GetAnimatedImageVersions(int* const decoder_version,
+                              int* const demux_version);
 
 #ifdef __cplusplus
 }    // extern "C"

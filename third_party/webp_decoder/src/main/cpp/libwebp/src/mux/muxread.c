@@ -59,6 +59,7 @@ static WebPMuxError ChunkVerifyAndAssign(WebPChunk* chunk,
   // Sanity checks.
   if (data_size < CHUNK_HEADER_SIZE) return WEBP_MUX_NOT_ENOUGH_DATA;
   chunk_size = GetLE32(data + TAG_SIZE);
+  if (chunk_size > MAX_CHUNK_PAYLOAD) return WEBP_MUX_BAD_DATA;
 
   {
     const size_t chunk_disk_size = SizeWithPadding(chunk_size);
@@ -137,6 +138,7 @@ static int MuxImageParse(const WebPChunk* const chunk, int copy_data,
         wpi->is_partial_ = 1;  // Waiting for a VP8 chunk.
         break;
       case WEBP_CHUNK_IMAGE:
+        if (wpi->img_ != NULL) goto Fail;  // Only 1 image chunk allowed.
         if (ChunkSetNth(&subchunk, &wpi->img_, 1) != WEBP_MUX_OK) goto Fail;
         if (!MuxImageFinalize(wpi)) goto Fail;
         wpi->is_partial_ = 0;  // wpi is completely filled.
@@ -187,7 +189,7 @@ WebPMux* WebPMuxCreateInternal(const WebPData* bitstream, int copy_data,
   size = bitstream->size;
 
   if (data == NULL) return NULL;
-  if (size < RIFF_HEADER_SIZE) return NULL;
+  if (size < RIFF_HEADER_SIZE + CHUNK_HEADER_SIZE) return NULL;
   if (GetLE32(data + 0) != MKFOURCC('R', 'I', 'F', 'F') ||
       GetLE32(data + CHUNK_HEADER_SIZE) != MKFOURCC('W', 'E', 'B', 'P')) {
     return NULL;
@@ -196,8 +198,6 @@ WebPMux* WebPMuxCreateInternal(const WebPData* bitstream, int copy_data,
   mux = WebPMuxNew();
   if (mux == NULL) return NULL;
 
-  if (size < RIFF_HEADER_SIZE + TAG_SIZE) goto Err;
-
   tag = GetLE32(data + RIFF_HEADER_SIZE);
   if (tag != kChunks[IDX_VP8].tag &&
       tag != kChunks[IDX_VP8L].tag &&
@@ -205,13 +205,17 @@ WebPMux* WebPMuxCreateInternal(const WebPData* bitstream, int copy_data,
     goto Err;  // First chunk should be VP8, VP8L or VP8X.
   }
 
-  riff_size = SizeWithPadding(GetLE32(data + TAG_SIZE));
-  if (riff_size > MAX_CHUNK_PAYLOAD || riff_size > size) {
-    goto Err;
-  } else {
-    if (riff_size < size) {  // Redundant data after last chunk.
-      size = riff_size;  // To make sure we don't read any data beyond mux_size.
-    }
+  riff_size = GetLE32(data + TAG_SIZE);
+  if (riff_size > MAX_CHUNK_PAYLOAD) goto Err;
+
+  // Note this padding is historical and differs from demux.c which does not
+  // pad the file size.
+  riff_size = SizeWithPadding(riff_size);
+  if (riff_size < CHUNK_HEADER_SIZE) goto Err;
+  if (riff_size > size) goto Err;
+  // There's no point in reading past the end of the RIFF chunk.
+  if (size > riff_size + CHUNK_HEADER_SIZE) {
+    size = riff_size + CHUNK_HEADER_SIZE;
   }
 
   end = data + size;

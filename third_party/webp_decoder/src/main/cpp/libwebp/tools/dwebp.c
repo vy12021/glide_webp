@@ -17,12 +17,12 @@
 #include <string.h>
 
 #ifdef HAVE_CONFIG_H
-#include "src/webp/config.h"
+#include "webp/config.h"
 #endif
 
-#include "examples/example_util.h"
-#include "imageio/image_enc.h"
-#include "imageio/webpdec.h"
+#include "../examples/example_util.h"
+#include "../imageio/image_enc.h"
+#include "../imageio/webpdec.h"
 #include "./stopwatch.h"
 
 static int verbose = 0;

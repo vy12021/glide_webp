@@ -12,7 +12,7 @@
 #include "./wicdec.h"
 
 #ifdef HAVE_CONFIG_H
-#include "src/webp/config.h"
+#include "webp/config.h"
 #endif
 
 #include <assert.h>
@@ -32,7 +32,7 @@
 #include <windows.h>
 #include <wincodec.h>
 
-#include "src/webp/encode.h"
+#include "webp/encode.h"
 #include "./imageio_util.h"
 #include "./metadata.h"
 

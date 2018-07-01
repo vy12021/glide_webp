@@ -18,11 +18,9 @@ public class WebpHeader {
   /** Indicates that this header has no "Netscape" loop count. */
   public static final int NETSCAPE_LOOP_COUNT_DOES_NOT_EXIST = -1;
 
-  @ColorInt
-  int[] gct = null;
   @WebpDecoder.WebpDecodeStatus
   int status = WebpDecoder.STATUS_OK;
-  int frameCount = 0;
+  int frameCount;
 
   WebpFrame currentFrame;
   final List<WebpFrame> frames = new ArrayList<>();
@@ -31,15 +29,10 @@ public class WebpHeader {
   /** Logical screen size: Full image height. */
   int height;
 
-  // 1 : global color table flag.
-  boolean gctFlag;
-  /**
-   * Size of Global Color Table.
-   * The value is already computed to be a regular number, this field doesn't store the exponent.
-   */
-  int gctSize;
-  /** Background color index into the Global/Local color table. */
-  int bgIndex;
+  // Alpha channel.
+  boolean hasAlpha;
+  // Chunk type ANMF
+  boolean hasAnim;
   /**
    * Pixel aspect ratio.
    * Factor used to compute an approximation of the aspect ratio of the pixel in the original image.
@@ -67,5 +60,20 @@ public class WebpHeader {
   @WebpDecoder.WebpDecodeStatus
   public int getStatus() {
     return status;
+  }
+
+  @Override
+  public String toString() {
+    return "WebpHeader{" +
+            "status=" + status +
+            ", frameCount=" + frameCount +
+            ", width=" + width +
+            ", height=" + height +
+            ", hasAlpha=" + hasAlpha +
+            ", hasAnim=" + hasAnim +
+            ", pixelAspect=" + pixelAspect +
+            ", bgColor=" + bgColor +
+            ", loopCount=" + loopCount +
+            '}';
   }
 }

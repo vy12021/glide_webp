@@ -1,7 +1,7 @@
 package com.bumptech.glide.webpdecoder;
 
-import android.support.annotation.ColorInt;
 import android.support.annotation.IntDef;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
@@ -45,11 +45,10 @@ class WebpFrame {
   private @interface WebpDisposalMethod {
   }
 
-  int ix, iy, iw, ih;
   /**
-   * Control Flag.
+   * size, position
    */
-  boolean interlace;
+  int ix, iy, iw, ih;
   /**
    * Control Flag.
    */
@@ -71,9 +70,4 @@ class WebpFrame {
    * Index in the raw buffer where we need to start reading to decode.
    */
   int bufferFrameStart;
-  /**
-   * Local Color Table.
-   */
-  @ColorInt
-  int[] lct;
 }

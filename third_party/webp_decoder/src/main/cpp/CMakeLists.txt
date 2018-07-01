@@ -51,12 +51,15 @@ endif ()
 
 include_directories(${ANDROID_NDK}/platforms/${ANDROID_PLATFORM}/${ARCH_DIR}/usr/include
                     ${ANDROID_NDK}/sysroot/usr/include
-                    ${CURRENT_DIR}
-                    ${CURRENT_DIR}/libwebp)
+                    ${CURRENT_DIR}/libwebp
+                    ${CURRENT_DIR}/libwebp/include/webp)
 
 # 搜索编译子目录CMakeLists.txt
 add_subdirectory(libwebp)
 
-add_library(webpjni SHARED jni_declare.c)
+add_library(webpparser SHARED
+webp_parser.c
+jni_runtime.c
+)
 
-target_link_libraries(webpjni webp android jnigraphics log)
+target_link_libraries(webpparser webp android jnigraphics log)

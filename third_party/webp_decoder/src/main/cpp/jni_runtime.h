@@ -18,4 +18,5 @@
 #define JNI_METHOD(Package, Class, Name, Return)    _JNI_METHOD(Package, Class, Name, Return)
 #define JNI_STATIC_METHOD(Package, Class, Name, Return)    _JNI_STATIC_METHOD(Package, Class, Name, Return)
 
+
 #endif //ANDROID_JNIRUNTIME_H

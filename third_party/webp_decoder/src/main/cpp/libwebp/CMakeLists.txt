@@ -35,7 +35,8 @@ set(WEBP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 ### Define the mandatory libraries.
 # Build the webpdecoder library.
 add_definitions(-Wall)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}
+include_directories(${WEBP_SRC_DIR}
+                    ${CMAKE_CURRENT_SOURCE_DIR}
                     ${WEBP_DEP_INCLUDE_DIRS})
 
 #add_definitions(-DHAVE_CONFIG_H)
@@ -89,6 +90,7 @@ add_library(webptools OBJECT ${WEBP_TOOLS_SRCS})
 
 # 聚合库
 add_library(webp SHARED
+            libwebp_java_wrap.c
             $<TARGET_OBJECTS:webpdecode>
             $<TARGET_OBJECTS:webpdsp>
             $<TARGET_OBJECTS:webpencode>

@@ -17,11 +17,11 @@
 #include <stdio.h>
 
 #ifdef HAVE_CONFIG_H
-#include "src/webp/config.h"
+#include "webp/config.h"
 #endif
 
-#include "src/webp/types.h"
-#include "src/webp/decode.h"
+#include "webp/types.h"
+#include "webp/decode.h"
 
 #ifdef __cplusplus
 extern "C" {
