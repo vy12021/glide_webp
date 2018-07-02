@@ -19,7 +19,6 @@ import java.util.Arrays;
 
 import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_NONE;
 import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_PREVIOUS;
-import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_UNSPECIFIED;
 
 /**
  * Reads frame data from a WEBP image source and decodes it into individual frames for animation
@@ -33,9 +32,6 @@ import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_UNSPECIFIED;
  * <p>The animation must be manually moved forward using {@link #advance()} before requesting the
  * next frame.  This method must also be called before you request the first frame or an error
  * will occur.
- *
- * <p>Implementation adapted from sample code published in Lyons. (2004). <em>Java for
- * Programmers</em>, republished under the MIT Open Source License
  */
 public class StandardWebpDecoder implements WebpDecoder {
   private static final String TAG = StandardWebpDecoder.class.getSimpleName();
@@ -203,9 +199,9 @@ public class StandardWebpDecoder implements WebpDecoder {
             + ", framePointer=" + framePointer
         );
       }
-      status = STATUS_FORMAT_ERROR;
+      status = STATUS_PARSE_ERROR;
     }
-    if (status == STATUS_FORMAT_ERROR || status == STATUS_OPEN_ERROR) {
+    if (status == STATUS_PARSE_ERROR || status == STATUS_OPEN_ERROR) {
       if (Log.isLoggable(TAG, Log.DEBUG)) {
         Log.d(TAG, "Unable to decode frame, status=" + status);
       }
@@ -370,8 +366,7 @@ public class StandardWebpDecoder implements WebpDecoder {
     // Decode pixels for this frame into the global pixels[] scratch.
     decodeBitmapData(currentFrame);
     // Copy pixels into previous image
-    if (savePrevious && (currentFrame.dispose == DISPOSAL_UNSPECIFIED
-        || currentFrame.dispose == DISPOSAL_NONE)) {
+    if (savePrevious && currentFrame.dispose == DISPOSAL_NONE) {
       if (previousImage == null) {
         previousImage = getNextBitmap();
       }

@@ -16,18 +16,23 @@ public interface WebpDecoder {
 
   /** File read status: No errors. */
   int STATUS_OK = 0;
-  /** File read status: Error decoding file (may be partially decoded). */
-  int STATUS_FORMAT_ERROR = 1;
   /** File read status: Unable to open source. */
-  int STATUS_OPEN_ERROR = 2;
+  int STATUS_OPEN_ERROR = 1;
+  /** File read status: Error decoding file (may be partially decoded). */
+  int STATUS_PARSE_ERROR = 2;
+  /** File read status: Unable to open source. */
+  int STATUS_INVALID_PARAM = 3;
   /** Unable to fully decode the current frame. */
-  int STATUS_PARTIAL_DECODE = 3;
+  int STATUS_TRUNCATED_DATA = 4;
+  /** File read status: Unable to open source. */
+  int STATUS_BITSTREAM_ERROR = 5;
   /** The total iteration count which means repeat forever. */
   int TOTAL_ITERATION_COUNT_FOREVER = 0;
 
   /** Android Lint annotation for status codes that can be used with a WEBP decoder. */
   @Retention(RetentionPolicy.SOURCE)
-  @IntDef(value = {STATUS_OK, STATUS_FORMAT_ERROR, STATUS_OPEN_ERROR, STATUS_PARTIAL_DECODE})
+  @IntDef(value = {STATUS_OK, STATUS_OPEN_ERROR, STATUS_PARSE_ERROR,
+          STATUS_INVALID_PARAM, STATUS_TRUNCATED_DATA, STATUS_BITSTREAM_ERROR})
   @interface WebpDecodeStatus {
   }
 

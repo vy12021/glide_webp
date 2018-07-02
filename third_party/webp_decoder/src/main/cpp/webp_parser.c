@@ -37,9 +37,28 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, getWebpInfo, jobject)
     }
     if (!webp_info.quiet_) printf("File: %s\n", in_file);
     webp_info_status = AnalyzeWebP(&webp_info, &webp_data);
+
     switch (webp_info_status) {
         case WEBP_INFO_OK:
             LOGE(TO_STRING(PACKAGE_ROOT), "webp parse complete: %s", GetWebPInfoDesc(&webp_info, NULL));
+            break;
+        case WEBP_INFO_PARSE_ERROR:
+            LOGE(TO_STRING(PACKAGE_ROOT), "webp PARSE_ERROR");
+            break;
+        case WEBP_INFO_BITSTREAM_ERROR:
+            LOGE(TO_STRING(PACKAGE_ROOT), "webp parse BITSTREAM_ERROR");
+            break;
+        case WEBP_INFO_INVALID_COMMAND:
+            LOGE(TO_STRING(PACKAGE_ROOT), "webp parse INVALID_COMMAND");
+            break;
+        case WEBP_INFO_INVALID_PARAM:
+            LOGE(TO_STRING(PACKAGE_ROOT), "webp parse INVALID_PARAM");
+            break;
+        case WEBP_INFO_MISSING_DATA:
+            LOGE(TO_STRING(PACKAGE_ROOT), "webp parse MISSING_DATA");
+            break;
+        case WEBP_INFO_TRUNCATED_DATA:
+            LOGE(TO_STRING(PACKAGE_ROOT), "webp parse TRUNCATED_DATA");
             break;
     }
     WebPDataClear(&webp_data);

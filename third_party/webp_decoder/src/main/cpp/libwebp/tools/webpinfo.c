@@ -14,6 +14,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <android/log.h>
 
 #ifdef HAVE_CONFIG_H
 #include "src/webp/config.h"
@@ -58,6 +59,13 @@ static const char* const kAlphaFilterMethods[4] = {
   "Vertical",
   "Gradient"
 };
+
+#define _LOGE(...)          \
+ do {                       \
+    char * pre;             \
+    sprintf(pre, "func: %s; line: %d; msg: ", __FUNCTION__, __LINE__); \
+    __android_log_print(ANDROID_LOG_ERROR, pre, __VA_ARGS__);   \
+ } while(0)
 
 void WebPInfoInit(WebPInfo* const webp_info) {
   memset(webp_info, 0, sizeof(*webp_info));
@@ -190,9 +198,9 @@ static int GetSignedBits(const uint8_t* const data, size_t data_size, size_t nb,
   } while (0)
 
 WebPInfoStatus ParseLossySegmentHeader(const WebPInfo* const webp_info,
-                                              const uint8_t* const data,
-                                              size_t data_size,
-                                              uint64_t* const bit_pos) {
+                                       const uint8_t* const data,
+                                       size_t data_size,
+                                       uint64_t* const bit_pos) {
   int use_segment;
   GET_BITS(use_segment, 1);
   printf("  Use segment:      %d\n", use_segment);
@@ -269,7 +277,7 @@ WebPInfoStatus ParseLossyFilterHeader(const WebPInfo* const webp_info,
 }
 
 WebPInfoStatus ParseLossyHeader(const ChunkData* const chunk_data,
-                                       const WebPInfo* const webp_info) {
+                                const WebPInfo* const webp_info) {
   const uint8_t* data = chunk_data->payload_;
   size_t data_size = chunk_data->size_ - CHUNK_HEADER_SIZE;
   const uint32_t bits = (uint32_t)data[0] | (data[1] << 8) | (data[2] << 16);
@@ -411,9 +419,9 @@ static int LLGetBits(const uint8_t* const data, size_t data_size, size_t nb,
   } while (0)
 
 WebPInfoStatus ParseLosslessTransform(WebPInfo* const webp_info,
-                                             const uint8_t* const data,
-                                             size_t data_size,
-                                             uint64_t* const  bit_pos) {
+                                      const uint8_t* const data,
+                                      size_t data_size,
+                                      uint64_t* const  bit_pos) {
   int use_transform, block_size, n_colors;
   LL_GET_BITS(use_transform, 1);
   printf("  Use transform:    %s\n", use_transform ? "Yes" : "No");
@@ -440,7 +448,7 @@ WebPInfoStatus ParseLosslessTransform(WebPInfo* const webp_info,
 }
 
 WebPInfoStatus ParseLosslessHeader(const ChunkData* const chunk_data,
-                                          WebPInfo* const webp_info) {
+                                   WebPInfo* const webp_info) {
   const uint8_t* data = chunk_data->payload_;
   size_t data_size = chunk_data->size_ - CHUNK_HEADER_SIZE;
   uint64_t bit_position = 0;
@@ -475,7 +483,8 @@ WebPInfoStatus ParseLosslessHeader(const ChunkData* const chunk_data,
   return WEBP_INFO_OK;
 }
 
-WebPInfoStatus ParseAlphaHeader(const ChunkData* const chunk_data, WebPInfo* const webp_info) {
+WebPInfoStatus ParseAlphaHeader(const ChunkData* const chunk_data,
+                                WebPInfo* const webp_info) {
   const uint8_t* data = chunk_data->payload_;
   size_t data_size = chunk_data->size_ - CHUNK_HEADER_SIZE;
   if (data_size <= ALPHA_HEADER_LEN) {
@@ -518,7 +527,8 @@ WebPInfoStatus ParseAlphaHeader(const ChunkData* const chunk_data, WebPInfo* con
 // -----------------------------------------------------------------------------
 // Chunk parsing.
 
-WebPInfoStatus ParseRIFFHeader(const WebPInfo* const webp_info, MemBuffer* const mem) {
+WebPInfoStatus ParseRIFFHeader(const WebPInfo* const webp_info,
+                               MemBuffer* const mem) {
   const size_t min_size = RIFF_HEADER_SIZE + CHUNK_HEADER_SIZE;
   size_t riff_size;
 
@@ -565,6 +575,7 @@ WebPInfoStatus ParseChunk(const WebPInfo* const webp_info,
     return WEBP_INFO_TRUNCATED_DATA;
   } else {
     const size_t chunk_start_offset = mem->start_;
+    // tag
     const uint32_t fourcc = ReadMemBufLE32(mem);
     const uint32_t payload_size = ReadMemBufLE32(mem);
     const uint32_t payload_size_padded = payload_size + (payload_size & 1);
@@ -574,7 +585,7 @@ WebPInfoStatus ParseChunk(const WebPInfo* const webp_info,
       LOG_ERROR("Size of chunk payload is over limit.");
       return WEBP_INFO_INVALID_PARAM;
     }
-    if (payload_size_padded > MemDataSize(mem)){
+    if (payload_size_padded > MemDataSize(mem)) {
       LOG_ERROR("Truncated data detected when parsing chunk payload.");
       return WEBP_INFO_TRUNCATED_DATA;
     }
@@ -644,7 +655,7 @@ WebPInfoStatus ProcessVP8XChunk(const ChunkData* const chunk_data,
 }
 
 WebPInfoStatus ProcessANIMChunk(const ChunkData* const chunk_data,
-                                       WebPInfo* const webp_info) {
+                                WebPInfo* const webp_info) {
   const uint8_t* data = chunk_data->payload_;
   if (!webp_info->chunk_counts_[CHUNK_VP8X]) {
     LOG_ERROR("ANIM chunk detected before VP8X chunk.");
@@ -672,7 +683,7 @@ WebPInfoStatus ProcessANIMChunk(const ChunkData* const chunk_data,
 }
 
 WebPInfoStatus ProcessANMFChunk(const ChunkData* const chunk_data,
-                                       WebPInfo* const webp_info) {
+                                WebPInfo* const webp_info) {
   const uint8_t* data = chunk_data->payload_;
   int offset_x, offset_y, width, height, duration, blend, dispose, temp;
   if (webp_info->is_processing_anim_frame_) {
@@ -725,7 +736,7 @@ WebPInfoStatus ProcessANMFChunk(const ChunkData* const chunk_data,
 }
 
 WebPInfoStatus ProcessImageChunk(const ChunkData* const chunk_data,
-                                        WebPInfo* const webp_info) {
+                                 WebPInfo* const webp_info) {
   const uint8_t* data = chunk_data->payload_ - CHUNK_HEADER_SIZE;
   WebPBitstreamFeatures features;
   const VP8StatusCode vp8_status =
