@@ -23,6 +23,7 @@ public class HeaderParserTest {
                 byteBuffer.put(buffer, 0, readLength);
             }
             parser.setData(byteBuffer);
+            parser.parseHeader();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

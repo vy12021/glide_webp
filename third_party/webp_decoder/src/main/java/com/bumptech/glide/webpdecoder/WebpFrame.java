@@ -90,4 +90,20 @@ class WebpFrame {
    * Index in the raw buffer where we need to start reading to decode.
    */
   int bufferFrameStart;
+
+  @Override
+  public String toString() {
+    return "WebpFrame{" +
+            "ix=" + ix +
+            ", iy=" + iy +
+            ", iw=" + iw +
+            ", ih=" + ih +
+            ", transparency=" + transparency +
+            ", dispose=" + dispose +
+            ", blend=" + blend +
+            ", transIndex=" + transIndex +
+            ", delay=" + delay +
+            ", bufferFrameStart=" + bufferFrameStart +
+            '}';
+  }
 }

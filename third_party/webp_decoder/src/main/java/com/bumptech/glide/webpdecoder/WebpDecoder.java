@@ -26,15 +26,18 @@ public interface WebpDecoder {
   int STATUS_TRUNCATED_DATA = 4;
   /** File read status: Unable to open source. */
   int STATUS_BITSTREAM_ERROR = 5;
-  /** The total iteration count which means repeat forever. */
-  int TOTAL_ITERATION_COUNT_FOREVER = 0;
+  /** MISS DATA */
+  int STATUS_MISS_DATA = 6;
 
   /** Android Lint annotation for status codes that can be used with a WEBP decoder. */
   @Retention(RetentionPolicy.SOURCE)
-  @IntDef(value = {STATUS_OK, STATUS_OPEN_ERROR, STATUS_PARSE_ERROR,
+  @IntDef(value = {STATUS_OK, STATUS_OPEN_ERROR, STATUS_PARSE_ERROR, STATUS_MISS_DATA,
           STATUS_INVALID_PARAM, STATUS_TRUNCATED_DATA, STATUS_BITSTREAM_ERROR})
   @interface WebpDecodeStatus {
   }
+
+  /** The total iteration count which means repeat forever. */
+  int TOTAL_ITERATION_COUNT_FOREVER = 0;
 
   /**
    * An interface that can be used to provide reused {@link android.graphics.Bitmap}s to avoid GCs

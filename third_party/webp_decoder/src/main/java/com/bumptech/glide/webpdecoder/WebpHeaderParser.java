@@ -120,7 +120,6 @@ public class WebpHeaderParser {
 
   private ByteBuffer rawData;
   private WebpHeader header;
-  private int blockSize = 0;
 
   public WebpHeaderParser setData(@NonNull ByteBuffer data) {
     reset();
@@ -149,7 +148,6 @@ public class WebpHeaderParser {
     rawData = null;
     Arrays.fill(block, (byte) 0);
     header = new WebpHeader();
-    blockSize = 0;
   }
 
   @NonNull
@@ -172,10 +170,6 @@ public class WebpHeaderParser {
    * This method re-parses the data even if the header has already been read.
    */
   public boolean isAnimated() {
-    readHeader();
-    if (!err()) {
-      readContents(2 /* maxFrames */);
-    }
     return header.frameCount > 1;
   }
 
@@ -241,8 +235,15 @@ public class WebpHeaderParser {
    * Reads WEBP file header information.
    */
   private void readHeader() {
-    reset();
     parseRIFFHeader();
+    while (STATUS_OK == this.header.status && this.rawData.remaining() > 0) {
+        ChunkData chunkData = parseChunk();
+        if (STATUS_OK == this.header.status) {
+            processChunk(chunkData);
+        }
+    }
+    validate();
+    loge("webp header info: " + this.header.toString());
   }
 
   /**
@@ -329,12 +330,125 @@ public class WebpHeaderParser {
     }
   }
 
+  private void processChunk(ChunkData chunkData) {
+      if (chunkData.id == ChunkId.UNKNOWN) {
+          logw("Unknown chunk at offset " + chunkData.start + ", length " + chunkData.size);
+      } else {
+          loge("Chunk " + chunkData.id + " at offset " + chunkData.start + " length " + chunkData.size);
+      }
+      switch (chunkData.id) {
+          case VP8:
+          case VP8L:
+              processImageChunk(chunkData);
+              break;
+          case VP8X:
+              processVP8XChunk(chunkData);
+              break;
+          case ALPHA:
+              processALPHChunk(chunkData);
+              break;
+          case ANIM:
+              processANIMChunk(chunkData);
+              break;
+          case ANMF:
+              processANMFChunk(chunkData);
+              break;
+          case ICCP:
+              processICCPChunk(chunkData);
+              break;
+          case EXIF:
+          case XMP:
+              this.header.chunksMark[chunkData.id.ordinal()] = true;
+              break;
+          case UNKNOWN:
+          default:
+              break;
+      }
+      if (this.header.isProcessingAnimFrame && chunkData.id != ChunkId.ANMF) {
+          if (this.header.animFrameSize == chunkData.size) {
+              if (!this.header.foundImageSubchunk) {
+                  loge("No VP8/VP8L chunk detected in an ANMF chunk.");
+                  this.header.status = STATUS_PARSE_ERROR;
+                  return;
+              }
+              this.header.isProcessingAnimFrame = false;
+          } else if (this.header.animFrameSize > chunkData.size) {
+              this.header.animFrameSize = chunkData.size;
+          } else {
+              loge("Truncated data detected when parsing ANMF chunk.");
+              this.header.status = STATUS_TRUNCATED_DATA;
+          }
+      }
+  }
+
+  private void validate() {
+      if (this.header.frameCount < 1) {
+          loge("No image/frame detected.");
+          this.header.status = STATUS_MISS_DATA;
+          return;
+      }
+      if (this.header.chunksMark[ChunkId.VP8X.ordinal()]) {
+          boolean iccp = (this.header.featureFlags & ICCP_FLAG) != 1;
+          boolean exif = (this.header.featureFlags & EXIF_FLAG) != 1;
+          boolean xmp = (this.header.featureFlags & XMP_FLAG) != 1;
+          boolean animation = (this.header.featureFlags & ANIMATION_FLAG) != 1;
+          boolean alpha = (this.header.featureFlags & ALPHA_FLAG) != 1;
+          if (!alpha && this.header.hasAlpha) {
+              loge("Unexpected alpha data detected.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          if (alpha && !this.header.hasAlpha) {
+              logw("Alpha flag is set with no alpha data present.");
+          }
+          if (exif && !this.header.chunksMark[ChunkId.EXIF.ordinal()]) {
+              loge("Missing EXIF chunk.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          if (xmp && !this.header.chunksMark[ChunkId.XMP.ordinal()]) {
+              loge("Missing XMP chunk.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          if (iccp && this.header.chunksMark[ChunkId.ICCP.ordinal()]) {
+              loge( "Unexpected ICCP chunk detected.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          if (!exif && this.header.chunksMark[ChunkId.EXIF.ordinal()]) {
+              loge("Unexpected EXIF chunk detected.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          if (!xmp && this.header.chunksMark[ChunkId.XMP.ordinal()]) {
+              loge("Unexpected XMP chunk detected.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          // Incomplete animation frame
+          if (this.header.isProcessingAnimFrame) {
+              this.header.status = STATUS_MISS_DATA;
+              return;
+          }
+          if (!animation && this.header.frameCount > 1) {
+              loge("More than 1 frame detected in non-animation file.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          if (animation && (!this.header.chunksMark[ChunkId.ANIM.ordinal()] || !this.header.chunksMark[ChunkId.ANMF.ordinal()])) {
+              loge("No ANIM/ANMF chunk detected in animation file.");
+              this.header.status = STATUS_PARSE_ERROR;
+          }
+      }
+  }
+
   private void processVP8XChunk(ChunkData chunkData) {
     // reset buffer to start position
     chunkData.reset();
-    if (this.header.chunkCounts[ChunkId.VP8.ordinal()] ||
-            this.header.chunkCounts[ChunkId.VP8L.ordinal()] ||
-            this.header.chunkCounts[ChunkId.VP8X.ordinal()]) {
+    if (this.header.chunksMark[ChunkId.VP8.ordinal()] ||
+            this.header.chunksMark[ChunkId.VP8L.ordinal()] ||
+            this.header.chunksMark[ChunkId.VP8X.ordinal()]) {
       loge("Already seen a VP8/VP8L/VP8X chunk when parsing VP8X chunk.");
       this.header.status = STATUS_PARSE_ERROR;
       return;
@@ -345,13 +459,218 @@ public class WebpHeaderParser {
       return;
     }
     // mark parsed
-    this.header.chunkCounts[ChunkId.VP8X.ordinal()] = true;
+    this.header.chunksMark[ChunkId.VP8X.ordinal()] = true;
     this.header.featureFlags = readIntFrom(chunkData.start + chunkData.payloadOffset);
     this.header.canvasWidth = 1 + readInt(3);
     this.header.canvasHeight = 1 + readInt(3);
     if (this.header.canvasWidth > MAX_CANVAS_SIZE) {
-      logw("");
+      logw("Canvas width is out of range in VP8X chunk.");
     }
+    if (this.header.canvasHeight > MAX_CANVAS_SIZE) {
+      logw("Canvas height is out of range in VP8X chunk.");
+    }
+    if (this.header.canvasHeight * this.header.canvasWidth > MAX_IMAGE_AREA) {
+      logw("Canvas area is out of range in VP8X chunk.");
+    }
+  }
+
+  private void processANIMChunk(ChunkData chunkData) {
+    // reset buffer to start position
+      chunkData.reset();
+      if (this.header.chunksMark[ChunkId.VP8X.ordinal()]) {
+          loge("ANIM chunk detected before VP8X chunk.");
+          this.header.status = STATUS_PARSE_ERROR;
+          return;
+      }
+      if (chunkData.size != ANIM_CHUNK_SIZE + CHUNK_HEADER_SIZE) {
+          loge("Corrupted ANIM chunk.");
+          this.header.status = STATUS_PARSE_ERROR;
+          return;
+      }
+      this.header.bgColor = readIntFrom(chunkData.start + chunkData.payloadOffset);
+      this.header.loopCount = readInt(16);
+      this.header.chunksMark[ChunkId.ANIM.ordinal()] = true;
+      if (this.header.loopCount > MAX_LOOP_COUNT) {
+          logw("Loop count is out of range in ANIM chunk.");
+      }
+  }
+
+  private void processANMFChunk(ChunkData chunkData) {
+      int offsetX, offsetY, width, height, duration, blend, dispose;
+      if (this.header.isProcessingAnimFrame) {
+          loge("ANMF chunk detected within another ANMF chunk.");
+          this.header.status = STATUS_PARSE_ERROR;
+          return;
+      }
+      if (this.header.chunksMark[ChunkId.ANIM.ordinal()]) {
+          loge("ANMF chunk detected before ANIM chunk.");
+          this.header.status = STATUS_PARSE_ERROR;
+          return;
+      }
+      if (chunkData.size <= CHUNK_HEADER_SIZE + ANMF_CHUNK_SIZE) {
+          loge("Truncated data detected when parsing ANMF chunk.");
+          this.header.status = STATUS_TRUNCATED_DATA;
+          return;
+      }
+      offsetX = 2 * readInt(3);
+      offsetY = 2 * readInt(3);
+      width = 1 + readInt(3);
+      height = 1 + readInt(3);
+      duration = readInt(3);
+      dispose = getInt() & 1;
+      blend = (getInt() >> 1) & 1;
+      this.header.chunksMark[ChunkId.ANMF.ordinal()] = true;
+      if (duration > MAX_DURATION) {
+          loge("Invalid duration parameter in ANMF chunk.");
+          this.header.status = STATUS_PARSE_ERROR;
+          return;
+      }
+      if (offsetX > MAX_POSITION_OFFSET || offsetY > MAX_POSITION_OFFSET) {
+          loge("Invalid offset parameters in ANMF chunk.");
+          this.header.status = STATUS_INVALID_PARAM;
+          return;
+      }
+      if (offsetX + width > this.header.canvasWidth ||
+              offsetY + height > this.header.canvasHeight) {
+          loge("Frame exceeds canvas in ANMF chunk.");
+          this.header.status = STATUS_INVALID_PARAM;
+          return;
+      }
+      this.header.isProcessingAnimFrame = true;
+      this.header.foundAlphaSubchunk = false;
+      this.header.foundImageSubchunk = false;
+      this.header.frameWidth = width;
+      this.header.frameHeight = height;
+      this.header.animFrameSize = chunkData.size - CHUNK_HEADER_SIZE - ANMF_CHUNK_SIZE;
+  }
+
+  private void processImageChunk(ChunkData chunkData) {
+      Vp8Info vp8Info = processVp8Bitstream(chunkData);
+      if (vp8Info.status != Vp8Info.VP8_STATUS_OK) {
+          loge("VP8/VP8L bitstream error.");
+          this.header.status = STATUS_BITSTREAM_ERROR;
+      }
+      if (this.header.isProcessingAnimFrame) {
+          this.header.anmfSubchunksMark[chunkData.id == ChunkId.VP8 ? 0 : 1] = true;
+          if (chunkData.id == ChunkId.VP8L && this.header.foundAlphaSubchunk) {
+              loge("Both VP8L and ALPH sub-chunks are present in an ANMF chunk.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          if (this.header.frameWidth != vp8Info.width ||
+                  this.header.frameHeight != vp8Info.height) {
+              loge("Frame size in VP8/VP8L sub-chunk differs from ANMF header.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          if (this.header.foundImageSubchunk) {
+              loge("Consecutive VP8/VP8L sub-chunks in an ANMF chunk.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          this.header.foundImageSubchunk = true;
+      } else {
+          if (this.header.chunksMark[ChunkId.VP8.ordinal()] ||
+                  this.header.chunksMark[ChunkId.VP8L.ordinal()]) {
+              loge("Multiple VP8/VP8L chunks detected.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          if (chunkData.id == ChunkId.VP8L && this.header.chunksMark[ChunkId.ALPHA.ordinal()]) {
+              logw("Both VP8L and ALPH chunks are detected.");
+          }
+          if (this.header.chunksMark[ChunkId.ANIM.ordinal()] ||
+                  this.header.chunksMark[ChunkId.ANMF.ordinal()]) {
+              loge("VP8/VP8L chunk and ANIM/ANMF chunk are both detected.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          if (this.header.chunksMark[ChunkId.VP8X.ordinal()]) {
+              if (this.header.canvasWidth != vp8Info.width ||
+                      this.header.canvasHeight != vp8Info.height) {
+                  loge("Image size in VP8/VP8L chunk differs from VP8X chunk.");
+                  this.header.status = STATUS_PARSE_ERROR;
+              }
+          } else {
+              this.header.canvasWidth = vp8Info.width;
+              this.header.canvasHeight = vp8Info.height;
+              if (this.header.canvasWidth < 1 || this.header.canvasHeight < 1 ||
+                      this.header.canvasWidth > MAX_CANVAS_SIZE || this.header.canvasHeight > MAX_CANVAS_SIZE ||
+                      this.header.canvasWidth * this.header.canvasHeight > MAX_IMAGE_AREA) {
+                  logw("Invalid parameters in VP8/VP8L chunk. Out range of image size");
+              }
+          }
+          this.header.chunksMark[chunkData.id.ordinal()] = true;
+      }
+      this.header.frameCount++;
+      this.header.hasAlpha |= vp8Info.hasAlpha;
+      // FIXME: 2018/7/2 parse lossy or lossless header
+  }
+
+    // FIXME: 2018/7/2 none impl
+  private Vp8Info processVp8Bitstream(ChunkData data) {
+      Vp8Info info = new Vp8Info();
+      return info;
+  }
+
+  private void processALPHChunk(ChunkData chunkData) {
+      chunkData.reset();
+      if (this.header.isProcessingAnimFrame) {
+          this.header.anmfSubchunksMark[2] = true;
+          if (this.header.foundAlphaSubchunk) {
+              loge("Consecutive ALPH sub-chunks in an ANMF chunk.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          this.header.foundAlphaSubchunk = true;
+          if (this.header.foundImageSubchunk) {
+              loge("ALPHA sub-chunk detected after VP8 sub-chunk in an ANMF chunk.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+      } else {
+          if (this.header.chunksMark[ChunkId.ANIM.ordinal()] ||
+                  this.header.chunksMark[ChunkId.ANMF.ordinal()]) {
+              loge("ALPHA chunk and ANIM/ANMF chunk are both detected.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          if (!this.header.chunksMark[ChunkId.VP8X.ordinal()]) {
+              loge("ALPHA chunk detected before VP8X chunk.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          if (this.header.chunksMark[ChunkId.VP8.ordinal()]) {
+              loge("ALPHA chunk detected after VP8 chunk.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          if (this.header.chunksMark[ChunkId.ALPHA.ordinal()]) {
+              loge("Multiple ALPHA chunks detected.");
+              this.header.status = STATUS_PARSE_ERROR;
+              return;
+          }
+          this.header.chunksMark[chunkData.id.ordinal()] = true;
+      }
+      this.header.hasAlpha = true;
+      // FIXME: 2018/7/2 parse alpha subtrunk
+  }
+
+  private void processICCPChunk(ChunkData chunkData) {
+      chunkData.reset();
+      if (this.header.chunksMark[ChunkId.VP8X.ordinal()]) {
+          loge("ICCP chunk detected before VP8X chunk.");
+          this.header.status = STATUS_PARSE_ERROR;
+          return;
+      }
+      if (this.header.chunksMark[ChunkId.VP8.ordinal()] ||
+              this.header.chunksMark[ChunkId.VP8L.ordinal()] ||
+              this.header.chunksMark[ChunkId.ANIM.ordinal()]) {
+          loge("ICCP chunk detected after image data.");
+          this.header.status = STATUS_PARSE_ERROR;
+          return;
+      }
+      this.header.chunksMark[ChunkId.ICCP.ordinal()] = true;
   }
 
   /**
@@ -374,30 +693,6 @@ public class WebpHeaderParser {
       int newPosition = Math.min(rawData.position() + blockSize, rawData.limit());
       rawData.position(newPosition);
     } while (blockSize > 0);
-  }
-
-  /**
-   * Reads next variable length block from input.
-   */
-  private void readBlock() {
-    blockSize = read();
-    int n = 0;
-    if (blockSize > 0) {
-      int count = 0;
-      try {
-        while (n < blockSize) {
-          count = blockSize - n;
-          rawData.get(block, n, count);
-          n += count;
-        }
-      } catch (Exception e) {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-          Log.d(TAG,
-              "Error Reading Block n: " + n + " count: " + count + " blockSize: " + blockSize, e);
-        }
-        header.status = STATUS_BITSTREAM_ERROR;
-      }
-    }
   }
 
   /**

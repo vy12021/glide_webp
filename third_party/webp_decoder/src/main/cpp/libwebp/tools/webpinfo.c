@@ -814,7 +814,7 @@ WebPInfoStatus ProcessImageChunk(const ChunkData* const chunk_data,
 }
 
 WebPInfoStatus ProcessALPHChunk(const ChunkData* const chunk_data,
-                                       WebPInfo* const webp_info) {
+                                WebPInfo* const webp_info) {
   if (webp_info->is_processing_anim_frame_) {
     ++webp_info->anmf_subchunk_counts_[2];
     if (webp_info->seen_alpha_subchunk_) {
@@ -857,7 +857,7 @@ WebPInfoStatus ProcessALPHChunk(const ChunkData* const chunk_data,
 }
 
 WebPInfoStatus ProcessICCPChunk(const ChunkData* const chunk_data,
-                                       WebPInfo* const webp_info) {
+                                WebPInfo* const webp_info) {
   (void)chunk_data;
   if (!webp_info->chunk_counts_[CHUNK_VP8X]) {
     LOG_ERROR("ICCP chunk detected before VP8X chunk.");

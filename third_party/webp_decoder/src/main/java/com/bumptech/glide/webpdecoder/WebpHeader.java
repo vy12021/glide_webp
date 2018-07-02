@@ -3,6 +3,7 @@ package com.bumptech.glide.webpdecoder;
 import android.support.annotation.ColorInt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.bumptech.glide.webpdecoder.WebpHeaderParser.ALL_VALID_FLAGS;
@@ -52,9 +53,14 @@ public class WebpHeader {
   int featureFlags = ALL_VALID_FLAGS;
 
   // chunk flag for mark tag parsed
-  boolean chunkCounts[] = new boolean[ChunkId.CHUNK_ID_TYPES];
+  boolean chunksMark[] = new boolean[ChunkId.CHUNK_ID_TYPES];
+  // anim chunk process flag
+  boolean isProcessingAnimFrame;
+  boolean foundAlphaSubchunk;
+  boolean foundImageSubchunk;
+  int animFrameSize;
   // anmf subchunk flag for mark tag parsed
-  int anmfSubchunkCounts[] = new int[3];  // 0 VP8; 1 VP8L; 2 ALPH.
+  boolean anmfSubchunksMark[] = new boolean[3];  // 0 VP8; 1 VP8L; 2 ALPH.
 
   public int getHeight() {
     return height;
@@ -79,14 +85,22 @@ public class WebpHeader {
   @Override
   public String toString() {
     return "WebpHeader{" +
-            "status=" + status +
-            ", frameCount=" + frameCount +
-            ", width=" + width +
-            ", height=" + height +
+            "frames=" + frames +
+            ", status=" + status +
             ", hasAlpha=" + hasAlpha +
             ", hasAnim=" + hasAnim +
             ", bgColor=" + bgColor +
+            ", frameCount=" + frameCount +
+            ", width=" + width +
+            ", height=" + height +
             ", loopCount=" + loopCount +
+            ", frameWidth=" + frameWidth +
+            ", frameHeight=" + frameHeight +
+            ", canvasWidth=" + canvasWidth +
+            ", canvasHeight=" + canvasHeight +
+            ", featureFlags=" + featureFlags +
+            ", chunksMark=" + Arrays.toString(chunksMark) +
+            ", animFrameSize=" + animFrameSize +
             '}';
   }
 }
