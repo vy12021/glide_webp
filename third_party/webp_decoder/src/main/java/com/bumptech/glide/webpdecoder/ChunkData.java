@@ -22,4 +22,8 @@ public class ChunkData {
         this.rawBuffer.position(start);
     }
 
+    public void resetData() {
+        this.rawBuffer.position(start + payloadOffset);
+    }
+
 }

@@ -29,6 +29,8 @@ public class WebpHeader {
   // decode status
   @WebpDecoder.WebpDecodeStatus
   int status = WebpDecoder.STATUS_OK;
+  // riff chunk size
+  int riffSize;
   // Alpha channel.
   boolean hasAlpha;
   // Chunk type ANMF

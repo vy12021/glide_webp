@@ -3,14 +3,20 @@ package com.bumptech.glide.webpdecoder;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
-import static com.bumptech.glide.webpdecoder.WebpDecoder.*;
+
+import static com.bumptech.glide.webpdecoder.WebpDecoder.STATUS_BITSTREAM_ERROR;
+import static com.bumptech.glide.webpdecoder.WebpDecoder.STATUS_INVALID_PARAM;
+import static com.bumptech.glide.webpdecoder.WebpDecoder.STATUS_MISS_DATA;
+import static com.bumptech.glide.webpdecoder.WebpDecoder.STATUS_OK;
+import static com.bumptech.glide.webpdecoder.WebpDecoder.STATUS_PARSE_ERROR;
+import static com.bumptech.glide.webpdecoder.WebpDecoder.STATUS_TRUNCATED_DATA;
 
 /**
  * A class responsible for creating {@link WebpHeader}s from data
@@ -42,6 +48,24 @@ import static com.bumptech.glide.webpdecoder.WebpDecoder.*;
  */
 public class WebpHeaderParser {
   private static final String TAG = "WebpHeaderParser";
+
+    // VP8 related constants.
+    static final int VP8_SIGNATURE              = 0x9d012a;    // Signature in VP8 data.
+    static final int VP8_MAX_PARTITION0_SIZE    = (1 << 19);   // max size of mode partition
+    static final int VP8_MAX_PARTITION_SIZE     = (1 << 24);   // max size for token partition
+    static final int VP8_FRAME_HEADER_SIZE      = 10;  // Size of the frame header within VP8 data.
+
+    // VP8L related constants.
+    static final int VP8L_MAX_NUM_BIT_READ      = 24;     // maximum number of bits (inclusive) the bit-reader can handle:
+    static final int VP8L_LBITS                 = 64;     // Number of bits prefetched (= bit-size of vp8l_val_t).
+    static final int VP8L_WBITS                 = 32;     // Minimum number of bytes ready after VP8LFillBitWindow.
+    static final int VP8L_SIGNATURE_SIZE        = 1;      // VP8L signature size.
+    static final int VP8L_MAGIC_BYTE            = 0x2f;   // VP8L signature byte.
+    static final int VP8L_IMAGE_SIZE_BITS       = 14;     // Number of bits used to store
+    // width and height.
+    static final int VP8L_VERSION_BITS          = 3;      // 3 bits reserved for version.
+    static final int VP8L_VERSION               = 0;      // version 0
+    static final int VP8L_FRAME_HEADER_SIZE     = 5;      // Size of the VP8L frame header.
 
   // Alpha related constants.
   static final int ALPHA_HEADER_LEN           = 1;
@@ -187,7 +211,7 @@ public class WebpHeaderParser {
     // Read WEBP file content blocks.
     boolean done = false;
     while (!(done || err() || header.frameCount > maxFrames)) {
-      int code = read();
+      int code = 0;
       switch (code) {
         case 0:
           // The Graphic Control Extension is optional, but will always come first if it exists.
@@ -219,9 +243,6 @@ public class WebpHeaderParser {
     // Save this as the decoding position pointer.
     header.currentFrame.bufferFrameStart = rawData.position();
 
-    // False decode pixel data to advance buffer.
-    skipImageData();
-
     if (err()) {
       return;
     }
@@ -238,13 +259,77 @@ public class WebpHeaderParser {
     parseRIFFHeader();
     while (STATUS_OK == this.header.status && this.rawData.remaining() > 0) {
         ChunkData chunkData = parseChunk();
+        int mark = chunkData.rawBuffer.position();
         if (STATUS_OK == this.header.status) {
             processChunk(chunkData);
         }
+        rawData.position(mark);
     }
     validate();
     loge("webp header info: " + this.header.toString());
   }
+
+    private void validate() {
+        if (this.header.frameCount < 1) {
+            loge("No image/frame detected.");
+            this.header.status = STATUS_MISS_DATA;
+            return;
+        }
+        if (this.header.chunksMark[ChunkId.VP8X.ordinal()]) {
+            boolean iccp = (this.header.featureFlags & ICCP_FLAG) != 1;
+            boolean exif = (this.header.featureFlags & EXIF_FLAG) != 1;
+            boolean xmp = (this.header.featureFlags & XMP_FLAG) != 1;
+            boolean animation = (this.header.featureFlags & ANIMATION_FLAG) != 1;
+            boolean alpha = (this.header.featureFlags & ALPHA_FLAG) != 1;
+            if (!alpha && this.header.hasAlpha) {
+                loge("Unexpected alpha data detected.");
+                this.header.status = STATUS_PARSE_ERROR;
+                return;
+            }
+            if (alpha && !this.header.hasAlpha) {
+                logw("Alpha flag is set with no alpha data present.");
+            }
+            if (exif && !this.header.chunksMark[ChunkId.EXIF.ordinal()]) {
+                loge("Missing EXIF chunk.");
+                this.header.status = STATUS_PARSE_ERROR;
+                return;
+            }
+            if (xmp && !this.header.chunksMark[ChunkId.XMP.ordinal()]) {
+                loge("Missing XMP chunk.");
+                this.header.status = STATUS_PARSE_ERROR;
+                return;
+            }
+            if (iccp && this.header.chunksMark[ChunkId.ICCP.ordinal()]) {
+                loge( "Unexpected ICCP chunk detected.");
+                this.header.status = STATUS_PARSE_ERROR;
+                return;
+            }
+            if (!exif && this.header.chunksMark[ChunkId.EXIF.ordinal()]) {
+                loge("Unexpected EXIF chunk detected.");
+                this.header.status = STATUS_PARSE_ERROR;
+                return;
+            }
+            if (!xmp && this.header.chunksMark[ChunkId.XMP.ordinal()]) {
+                loge("Unexpected XMP chunk detected.");
+                this.header.status = STATUS_PARSE_ERROR;
+                return;
+            }
+            // Incomplete animation frame
+            if (this.header.isProcessingAnimFrame) {
+                this.header.status = STATUS_MISS_DATA;
+                return;
+            }
+            if (!animation && this.header.frameCount > 1) {
+                loge("More than 1 frame detected in non-animation file.");
+                this.header.status = STATUS_PARSE_ERROR;
+                return;
+            }
+            if (animation && (!this.header.chunksMark[ChunkId.ANIM.ordinal()] || !this.header.chunksMark[ChunkId.ANMF.ordinal()])) {
+                loge("No ANIM/ANMF chunk detected in animation file.");
+                this.header.status = STATUS_PARSE_ERROR;
+            }
+        }
+    }
 
   /**
    * 解析riff头部区
@@ -272,7 +357,7 @@ public class WebpHeaderParser {
       this.header.status = STATUS_PARSE_ERROR;
     }
     // should be equals file size
-    riffSize += CHUNK_HEADER_SIZE;
+    this.header.riffSize = (riffSize += CHUNK_HEADER_SIZE);
     if (riffSize < rawData.limit()) {
       logw("RIFF size is smaller than the file size.");
     } else if (riffSize > rawData.limit()) {
@@ -293,8 +378,8 @@ public class WebpHeaderParser {
     } else {
       ChunkData chunkData = new ChunkData();
       int chunkStartOffset = rawData.position();
-      //
-      String tag = readString(4);
+      // chunk id
+      String chunkTag = readString(4);
       int payloadSize = readInt();
       // even format, trim bytes
       int payloadSizePadded = payloadSize + (payloadSize & 1);
@@ -309,7 +394,7 @@ public class WebpHeaderParser {
         this.header.status = STATUS_TRUNCATED_DATA;
         return chunkData;
       }
-      chunkData.id = ChunkId.getByName(tag);
+      chunkData.id = ChunkId.getByName(chunkTag);
       chunkData.start = chunkStartOffset;
       chunkData.size = chunkSize;
       chunkData.payloadOffset = this.rawData.position() - chunkStartOffset;
@@ -322,7 +407,7 @@ public class WebpHeaderParser {
           return chunkData;
         }
         // There are sub-chunks to be parsed in an ANMF chunk.
-        skip(ANIM_CHUNK_SIZE);
+        skip(ANMF_CHUNK_SIZE);
       } else {
         skip(payloadSizePadded);
       }
@@ -381,68 +466,6 @@ public class WebpHeaderParser {
       }
   }
 
-  private void validate() {
-      if (this.header.frameCount < 1) {
-          loge("No image/frame detected.");
-          this.header.status = STATUS_MISS_DATA;
-          return;
-      }
-      if (this.header.chunksMark[ChunkId.VP8X.ordinal()]) {
-          boolean iccp = (this.header.featureFlags & ICCP_FLAG) != 1;
-          boolean exif = (this.header.featureFlags & EXIF_FLAG) != 1;
-          boolean xmp = (this.header.featureFlags & XMP_FLAG) != 1;
-          boolean animation = (this.header.featureFlags & ANIMATION_FLAG) != 1;
-          boolean alpha = (this.header.featureFlags & ALPHA_FLAG) != 1;
-          if (!alpha && this.header.hasAlpha) {
-              loge("Unexpected alpha data detected.");
-              this.header.status = STATUS_PARSE_ERROR;
-              return;
-          }
-          if (alpha && !this.header.hasAlpha) {
-              logw("Alpha flag is set with no alpha data present.");
-          }
-          if (exif && !this.header.chunksMark[ChunkId.EXIF.ordinal()]) {
-              loge("Missing EXIF chunk.");
-              this.header.status = STATUS_PARSE_ERROR;
-              return;
-          }
-          if (xmp && !this.header.chunksMark[ChunkId.XMP.ordinal()]) {
-              loge("Missing XMP chunk.");
-              this.header.status = STATUS_PARSE_ERROR;
-              return;
-          }
-          if (iccp && this.header.chunksMark[ChunkId.ICCP.ordinal()]) {
-              loge( "Unexpected ICCP chunk detected.");
-              this.header.status = STATUS_PARSE_ERROR;
-              return;
-          }
-          if (!exif && this.header.chunksMark[ChunkId.EXIF.ordinal()]) {
-              loge("Unexpected EXIF chunk detected.");
-              this.header.status = STATUS_PARSE_ERROR;
-              return;
-          }
-          if (!xmp && this.header.chunksMark[ChunkId.XMP.ordinal()]) {
-              loge("Unexpected XMP chunk detected.");
-              this.header.status = STATUS_PARSE_ERROR;
-              return;
-          }
-          // Incomplete animation frame
-          if (this.header.isProcessingAnimFrame) {
-              this.header.status = STATUS_MISS_DATA;
-              return;
-          }
-          if (!animation && this.header.frameCount > 1) {
-              loge("More than 1 frame detected in non-animation file.");
-              this.header.status = STATUS_PARSE_ERROR;
-              return;
-          }
-          if (animation && (!this.header.chunksMark[ChunkId.ANIM.ordinal()] || !this.header.chunksMark[ChunkId.ANMF.ordinal()])) {
-              loge("No ANIM/ANMF chunk detected in animation file.");
-              this.header.status = STATUS_PARSE_ERROR;
-          }
-      }
-  }
-
   private void processVP8XChunk(ChunkData chunkData) {
     // reset buffer to start position
     chunkData.reset();
@@ -477,7 +500,7 @@ public class WebpHeaderParser {
   private void processANIMChunk(ChunkData chunkData) {
     // reset buffer to start position
       chunkData.reset();
-      if (this.header.chunksMark[ChunkId.VP8X.ordinal()]) {
+      if (!this.header.chunksMark[ChunkId.VP8X.ordinal()]) {
           loge("ANIM chunk detected before VP8X chunk.");
           this.header.status = STATUS_PARSE_ERROR;
           return;
@@ -488,7 +511,7 @@ public class WebpHeaderParser {
           return;
       }
       this.header.bgColor = readIntFrom(chunkData.start + chunkData.payloadOffset);
-      this.header.loopCount = readInt(16);
+      this.header.loopCount = readInt(2);
       this.header.chunksMark[ChunkId.ANIM.ordinal()] = true;
       if (this.header.loopCount > MAX_LOOP_COUNT) {
           logw("Loop count is out of range in ANIM chunk.");
@@ -496,13 +519,14 @@ public class WebpHeaderParser {
   }
 
   private void processANMFChunk(ChunkData chunkData) {
+      chunkData.reset();
       int offsetX, offsetY, width, height, duration, blend, dispose;
       if (this.header.isProcessingAnimFrame) {
           loge("ANMF chunk detected within another ANMF chunk.");
           this.header.status = STATUS_PARSE_ERROR;
           return;
       }
-      if (this.header.chunksMark[ChunkId.ANIM.ordinal()]) {
+      if (!this.header.chunksMark[ChunkId.ANIM.ordinal()]) {
           loge("ANMF chunk detected before ANIM chunk.");
           this.header.status = STATUS_PARSE_ERROR;
           return;
@@ -512,6 +536,7 @@ public class WebpHeaderParser {
           this.header.status = STATUS_TRUNCATED_DATA;
           return;
       }
+      chunkData.resetData();
       offsetX = 2 * readInt(3);
       offsetY = 2 * readInt(3);
       width = 1 + readInt(3);
@@ -536,6 +561,9 @@ public class WebpHeaderParser {
           this.header.status = STATUS_INVALID_PARAM;
           return;
       }
+      this.header.currentFrame = new WebpFrame();
+      this.header.currentFrame.dispose = dispose;
+      this.header.currentFrame.blend = blend;
       this.header.isProcessingAnimFrame = true;
       this.header.foundAlphaSubchunk = false;
       this.header.foundImageSubchunk = false;
@@ -607,10 +635,195 @@ public class WebpHeaderParser {
       // FIXME: 2018/7/2 parse lossy or lossless header
   }
 
-    // FIXME: 2018/7/2 none impl
-  private Vp8Info processVp8Bitstream(ChunkData data) {
+    /**
+     * FIXME: 2018/7/2 none impl
+     * Only parse enough of the data to retrieve the features.
+     * line 222 in file webp_dec.c
+     * Fetch '*width', '*height', '*has_alpha' and fill out 'headers' based on
+     * 'data'. All the output parameters may be NULL. If 'headers' is NULL only the
+     * minimal amount will be read to fetch the remaining parameters.
+     * If 'headers' is non-NULL this function will attempt to locate both alpha
+     * data (with or without a VP8X chunk) and the bitstream chunk (VP8/VP8L).
+     * Note: The following chunk sequences (before the raw VP8/VP8L data) are
+     * considered valid by this function:
+     * RIFF + VP8(L)
+     * RIFF + VP8X + (optional chunks) + VP8(L)
+     * ALPH + VP8 <-- Not a valid WebP format: only allowed for internal purpose.
+     * VP8(L)     <-- Not a valid WebP format: only allowed for internal purpose.
+     *
+     * Validates the VP8/VP8L Header ("VP8 nnnn" or "VP8L nnnn") and skips over it.
+     * Returns VP8_STATUS_BITSTREAM_ERROR for invalid (chunk larger than
+     *         riff_size) VP8/VP8L header,
+     *         VP8_STATUS_NOT_ENOUGH_DATA in case of insufficient data, and
+     *         VP8_STATUS_OK otherwise.
+     * If a VP8/VP8L chunk is found, *chunk_size is set to the total number of bytes
+     * extracted from the VP8/VP8L chunk header.
+     * The flag '*is_lossless' is set to 1 in case of VP8L chunk / raw VP8L data.
+     */
+  private Vp8Info processVp8Bitstream(ChunkData chunkData) {
       Vp8Info info = new Vp8Info();
+      chunkData.reset();
+      int width = 0, height = 0;
+      boolean hasAlpha = false;
+      // ParseVP8Header
+      {
+          int minSize = TAG_SIZE + CHUNK_HEADER_SIZE;
+          if (chunkData.size < CHUNK_HEADER_SIZE) {
+              loge("processVp8Bitstream: Not enough data.");
+              info.status = Vp8Info.VP8_STATUS_NOT_ENOUGH_DATA;
+              return info;
+          }
+          if (chunkData.id == ChunkId.VP8 || chunkData.id == ChunkId.VP8L) {
+              int size = getIntFrom(chunkData.start + TAG_SIZE);
+              if (this.header.riffSize > size && size > this.header.riffSize - minSize) {
+                  loge("processVp8Bitstream: Inconsistent size information.");
+                  info.status = Vp8Info.VP8_STATUS_BITSTREAM_ERROR;
+                  return info;
+              }
+              if (size > chunkData.rawBuffer.remaining() - CHUNK_HEADER_SIZE) {
+                  loge("processVp8Bitstream: Truncated bitstream.");
+                  info.status = Vp8Info.VP8_STATUS_NOT_ENOUGH_DATA;
+                  return info;
+              }
+              info.format = ChunkId.VP8L == chunkData.id ? Vp8Format.Lossless : Vp8Format.Lossy;
+              chunkData.resetData();
+          } else {
+              // Raw VP8/VP8L bitstream (no header).
+              if (getByte() == VP8L_MAGIC_BYTE && (getByteFrom(chunkData.start + 4) >> 5) == 0) {
+                  info.format = Vp8Format.Lossless;
+              }
+          }
+      }
+      if (chunkData.size > MAX_CHUNK_PAYLOAD) {
+          loge("processVp8Bitstream: Chunk size large than max chunk payload");
+          info.status = Vp8Info.VP8_STATUS_BITSTREAM_ERROR;
+          return info;
+      }
+      if (info.format != Vp8Format.Lossless) {
+          // vp8 chunk
+          if (chunkData.size < VP8_FRAME_HEADER_SIZE) {
+              loge("processVp8Bitstream: Not enough data");
+              info.status = Vp8Info.VP8_STATUS_NOT_ENOUGH_DATA;
+              return info;
+          }
+          // Validates raw VP8 data.
+          byte[] bytes = getBytesFrom(chunkData.rawBuffer.position() + 3, 3);
+          if (!(bytes[0] == (byte) 0x9d && bytes[1] == (byte) 0x01 && bytes[2] == (byte) 0x2a)) {
+              loge("processVp8Bitstream: Bad VP8 signature");
+              info.status = Vp8Info.VP8_STATUS_INVALID_PARAM;
+              return info;
+          }
+          bytes = getBytes(10);
+          int bits = getIntWithLen(bytes, 3);
+          boolean keyFrame = (bits & 1) == 0;
+          width = (((bytes[7] & 0xff) << 8) | (bytes[6] & 0xff)) & 0x3fff;
+          height = (((bytes[9] & 0xff) << 8) | (bytes[8] & 0xff)) & 0x3fff;
+          if (!keyFrame) {
+              loge("processVp8Bitstream: Not a keyframe.");
+              info.status = Vp8Info.VP8_STATUS_INVALID_PARAM;
+              return info;
+          }
+          if (((bits >> 1) & 7) > 3) {
+              loge("processVp8Bitstream: unknown profile.");
+              info.status = Vp8Info.VP8_STATUS_INVALID_PARAM;
+              return info;
+          }
+          if (((bits >> 4) & 1) == 0) {
+              loge("processVp8Bitstream: first frame is invisible!");
+              info.status = Vp8Info.VP8_STATUS_INVALID_PARAM;
+              return info;
+          }
+          if (((bits >> 5) >= chunkData.size)) {
+              loge("processVp8Bitstream: inconsistent size information.");
+              info.status = Vp8Info.VP8_STATUS_INVALID_PARAM;
+              return info;
+          }
+          if (width * height == 0) {
+              loge("processVp8Bitstream: Don't support both width and height to be zero.");
+              info.status = Vp8Info.VP8_STATUS_INVALID_PARAM;
+              return info;
+          }
+      } else {
+          if (chunkData.size < VP8L_FRAME_HEADER_SIZE) {
+              loge("processVp8Bitstream: No enough data");
+              info.status = Vp8Info.VP8_STATUS_NOT_ENOUGH_DATA;
+              return info;
+          }
+          // Validates raw VP8L data.
+          if (!(getByte() == VP8L_MAGIC_BYTE && (getByteFrom(chunkData.start + 4) >> 5) == 0)) {
+              loge("processVp8Bitstream: Bad VP8L signature");
+              info.status = Vp8Info.VP8_STATUS_INVALID_PARAM;
+              return info;
+          }
+          VP8LBitsReader br = new VP8LBitsReader(chunkData);
+          if (readVP8LBits(br, 8) == VP8L_MAGIC_BYTE) {
+              width = readVP8LBits(br, VP8L_IMAGE_SIZE_BITS) + 1;
+              height = readVP8LBits(br, VP8L_IMAGE_SIZE_BITS) + 1;
+              hasAlpha = readVP8LBits(br, 1) != 0;
+              if (readVP8LBits(br, VP8L_VERSION_BITS) != 0) {
+                  loge("processVp8Bitstream: Incompat version.");
+                  info.status = Vp8Info.VP8_STATUS_BITSTREAM_ERROR;
+                  return info;
+              }
+              if (br.eos) {
+                  loge("processVp8Bitstream: Invalid VP8LBitsReader eos state.");
+                  info.status = Vp8Info.VP8_STATUS_BITSTREAM_ERROR;
+                  return info;
+              }
+          }
+      }
+      if (this.header.canvasWidth != width || this.header.canvasHeight != height) {
+          loge("processVp8Bitstream:  Validates image size coherency failed!");
+          info.status = Vp8Info.VP8_STATUS_BITSTREAM_ERROR;
+          return info;
+      }
+      info.width = width;
+      info.height = height;
+      info.hasAlpha = hasAlpha && this.header.hasAlpha;
       return info;
+  }
+
+  private class VP8LBitsReader {
+
+      BigInteger val = BigInteger.valueOf(0);
+      int len;
+      int offset;
+      int pos;
+      boolean eos;
+      ByteBuffer bytes;
+
+      private VP8LBitsReader(ChunkData chunkData) {
+          len = chunkData.size;
+          int size = Math.min(8, chunkData.size);
+          for (int i = 0; i < size; ++i) {
+              val = val.or(BigInteger.valueOf(getLong()).shiftLeft(8 * i));
+          }
+          pos = size;
+          byte[] bs = new byte[VP8L_MAX_NUM_BIT_READ];
+          chunkData.rawBuffer.get(bs);
+          bytes = ByteBuffer.wrap(bs);
+      }
+
+  }
+
+  private int readVP8LBits(VP8LBitsReader reader, int len) {
+      if (!reader.eos && len <= VP8L_MAX_NUM_BIT_READ) {
+          int val = (reader.val.shiftRight(reader.offset & (VP8L_LBITS - 1))
+                  .add(BigInteger.valueOf(Vp8Info.Vp8BitMask[len]))).intValue();
+          reader.offset += len;
+          while (reader.offset >= 8 && reader.pos < reader.len) {
+              reader.val = reader.val.shiftRight(8);
+              reader.val = reader.val.or(
+                      BigInteger.valueOf(reader.bytes.getLong(reader.pos))
+                              .shiftLeft(VP8L_LBITS - 8));
+              reader.pos++;
+              reader.offset -= 8;
+          }
+          return val;
+      } else {
+          reader.eos = true;
+          return 0;
+      }
   }
 
   private void processALPHChunk(ChunkData chunkData) {
@@ -654,11 +867,50 @@ public class WebpHeaderParser {
       }
       this.header.hasAlpha = true;
       // FIXME: 2018/7/2 parse alpha subtrunk
+      parseAlphaHeader(chunkData);
+  }
+
+  private void parseAlphaHeader(ChunkData chunkData) {
+      chunkData.reset();
+      int dataSize = chunkData.size - CHUNK_HEADER_SIZE;
+      if (dataSize <= ALPHA_HEADER_LEN) {
+          loge("Truncated ALPH chunk.");
+          this.header.status = STATUS_TRUNCATED_DATA;
+          return;
+      }
+      loge("  Parsing ALPH chunk...");
+      {
+          int next = getIntFrom(chunkData.start + chunkData.payloadOffset, 1);
+          // alpha compression method, diff from image compression method.
+          int compressionMethod = (next >> 0) & 0x03;
+          int alphaFilter = (next >> 2) & 0x03;
+          int preProcessingMethod = (next >> 4) & 0x03;
+          int reservedBits = (next >> 6) & 0x03;
+          loge(" Compression format:    " + compressionMethod);
+          loge(" Filter:                " + Vp8AlphaFilter.values()[alphaFilter].name());
+          loge(" Pre-processing:        " + preProcessingMethod);
+          if (compressionMethod > ALPHA_LOSSLESS_COMPRESSION) {
+              loge("Invalid Alpha compression method.");
+              this.header.status = STATUS_BITSTREAM_ERROR;
+              return;
+          }
+          if (preProcessingMethod > ALPHA_PREPROCESSED_LEVELS) {
+              loge("Invalid Alpha pre-processing method");
+              this.header.status = STATUS_BITSTREAM_ERROR;
+              return;
+          }
+          if (reservedBits != 0) {
+              logw("Reserved bits in ALPH chunk header are not all 0.");
+          }
+          if (compressionMethod == ALPHA_LOSSLESS_COMPRESSION) {
+              // FIXME: 7/3/2018 parse lossless transform
+          }
+      }
   }
 
   private void processICCPChunk(ChunkData chunkData) {
       chunkData.reset();
-      if (this.header.chunksMark[ChunkId.VP8X.ordinal()]) {
+      if (!this.header.chunksMark[ChunkId.VP8X.ordinal()]) {
           loge("ICCP chunk detected before VP8X chunk.");
           this.header.status = STATUS_PARSE_ERROR;
           return;
@@ -673,39 +925,56 @@ public class WebpHeaderParser {
       this.header.chunksMark[ChunkId.ICCP.ordinal()] = true;
   }
 
-  /**
-   * Skips LZW image data for a single frame to advance buffer.
-   */
-  private void skipImageData() {
-    // lzwMinCodeSize
-    read();
-    // data sub-blocks
-    skip();
+  private byte[] getBytes(int len) {
+      return getBytesFrom(this.rawData.position(), len);
   }
 
-  /**
-   * Skips variable length blocks up to and including next zero length block.
-   */
-  private void skip() {
-    int blockSize;
-    do {
-      blockSize = read();
-      int newPosition = Math.min(rawData.position() + blockSize, rawData.limit());
-      rawData.position(newPosition);
-    } while (blockSize > 0);
-  }
-
-  /**
-   * Reads a single byte from the input stream.
-   */
-  private int read() {
-    int currByte = 0;
-    try {
-      currByte = rawData.get();
-    } catch (Exception e) {
-      header.status = STATUS_BITSTREAM_ERROR;
+    private byte[] getBytesFrom(int index, int len) {
+        this.rawData.mark();
+        byte[] bytes = readBytesFrom(index, len);
+        this.rawData.reset();
+        return bytes;
     }
-    return currByte;
+
+  private byte[] readBytes(int len) {
+      return readBytesFrom(this.rawData.position(), len);
+  }
+
+    private byte[] readBytesFrom(int index, int len) {
+        this.rawData.position(index);
+        byte[] bytes = new byte[len];
+        this.rawData.get(bytes);
+        return bytes;
+    }
+
+  private byte getByte() {
+      rawData.mark();
+      byte ret = readByte();
+      rawData.reset();
+      return ret;
+  }
+
+  private byte readByte() {
+      return rawData.get();
+  }
+
+  private byte getByteFrom(int index) {
+      rawData.mark();
+      byte ret = readByteFrom(index);
+      rawData.reset();
+      return ret;
+  }
+
+  private byte readByteFrom(int index) {
+      rawData.position(index);
+      return rawData.get();
+  }
+
+  private int getShort() {
+      rawData.mark();
+      int ret = readShort();
+      rawData.reset();
+      return ret;
   }
 
   /**
@@ -733,10 +1002,7 @@ public class WebpHeaderParser {
   }
 
   private int getIntFrom(int index) {
-    rawData.mark();
-    int ret = rawData.getInt(index);
-    rawData.reset();
-    return ret;
+    return rawData.getInt(index);
   }
 
   private int getIntFrom(int index, int len) {
@@ -755,7 +1021,8 @@ public class WebpHeaderParser {
   }
 
   private int readIntFrom(int index) {
-    return rawData.get(index);
+    rawData.position(index);
+    return rawData.getInt();
   }
 
   private int readIntFrom(int index, int len) {
@@ -763,6 +1030,29 @@ public class WebpHeaderParser {
     rawData.get(block, 0, len);
     return getIntWithLen(block, len);
   }
+
+    private long getLong() {
+      rawData.mark();
+      long ret = rawData.getLong();
+      rawData.reset();
+      return ret;
+    }
+
+    private long getLongFrom(int position) {
+      rawData.mark();
+      long ret = readLongFrom(position);
+      rawData.reset();
+      return ret;
+    }
+
+  private long readLong() {
+      return rawData.getLong();
+  }
+
+    private long readLongFrom(int position) {
+      rawData.position(position);
+      return rawData.getLong();
+    }
 
   private String getString(int len) {
     rawData.mark();
@@ -792,11 +1082,19 @@ public class WebpHeaderParser {
 
   private int getIntWithLen(byte[] bytes, int len) {
     int ret = 0;
-    for (; len > 0; --len) {
-      ret |= (bytes[len - 1] << (len * 8));
+    for (--len; len >= 0; --len) {
+      ret |= ((bytes[len] & 0xff) << (len * 8));
     }
     return ret;
   }
+
+    private long getLongWithLen(byte[] bytes, int len) {
+        long ret = 0;
+        for (--len; len >= 0; --len) {
+            ret |= ((bytes[len] & 0xff) << (len * 8));
+        }
+        return ret;
+    }
 
   private boolean getEquals(String tag) {
     return getEquals(rawData.position(), tag);

@@ -27,14 +27,15 @@ class Vp8Info {
     @interface Vp8ParseStatus {
     }
 
-    final static int COMPRESS_MIXED         = 0;
-    final static int COMPRESS_LOSSY         = 1;
-    final static int COMPRESS_LOSSLESS      = 2;
-
-    @Retention(RetentionPolicy.SOURCE)
-    @IntDef(value = {COMPRESS_MIXED, COMPRESS_LOSSY, COMPRESS_LOSSLESS})
-    @interface Vp8CompressFormat {
-    }
+    static final int[] Vp8BitMask = {
+        0,
+        0x000001, 0x000003, 0x000007, 0x00000f,
+        0x00001f, 0x00003f, 0x00007f, 0x0000ff,
+        0x0001ff, 0x0003ff, 0x0007ff, 0x000fff,
+        0x001fff, 0x003fff, 0x007fff, 0x00ffff,
+        0x01ffff, 0x03ffff, 0x07ffff, 0x0fffff,
+        0x1fffff, 0x3fffff, 0x7fffff, 0xffffff
+    };
 
     @Vp8ParseStatus
     int status = VP8_STATUS_OK;
@@ -48,8 +49,7 @@ class Vp8Info {
     // True if the bitstream is an animation.
     boolean hasAnimation;
     // 0 = undefined (/mixed), 1 = lossy, 2 = lossless
-    @Vp8CompressFormat
-    int format = COMPRESS_MIXED;
+    Vp8Format format = Vp8Format.Mixed;
     // padding for later use
     int pad[] = new int[5];
 

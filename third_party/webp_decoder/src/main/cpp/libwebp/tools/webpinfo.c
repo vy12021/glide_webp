@@ -509,7 +509,7 @@ WebPInfoStatus ParseAlphaHeader(const ChunkData* const chunk_data,
       LOG_ERROR("Invalid Alpha pre-processing method.");
       return WEBP_INFO_BITSTREAM_ERROR;
     }
-    if (reserved_bits != 0) {
+    if (reserved_bits) {
       LOG_WARN("Reserved bits in ALPH chunk header are not all 0.");
     }
     data += ALPHA_HEADER_LEN;
