@@ -22,7 +22,7 @@ public class WebpHeader {
   public static final int NETSCAPE_LOOP_COUNT_DOES_NOT_EXIST = -1;
 
   // current frame
-  WebpFrame currentFrame;
+  WebpFrame currentFrame = new WebpFrame();
   // frames container
   final List<WebpFrame> frames = new ArrayList<>();
 
@@ -40,15 +40,9 @@ public class WebpHeader {
   int bgColor;
   // frame count
   int frameCount;
-  /** Logical screen size: Full image width. */
-  int width;
-  /** Logical screen size: Full image height. */
-  int height;
   // loop repeat times
   int loopCount = NETSCAPE_LOOP_COUNT_DOES_NOT_EXIST;
-
-  // Used for parsing ANMF chunks.
-  int frameWidth, frameHeight;
+  //
   int canvasWidth, canvasHeight;
   // flags for vp8x chunk
   @WebpHeaderParser.WebpFeatureFlag
@@ -56,24 +50,21 @@ public class WebpHeader {
 
   // chunk flag for mark tag parsed
   boolean chunksMark[] = new boolean[ChunkId.CHUNK_ID_TYPES];
-  // anim chunk process flag
-  boolean isProcessingAnimFrame;
-  boolean foundAlphaSubchunk;
-  boolean foundImageSubchunk;
-  int animFrameSize;
-  // anmf subchunk flag for mark tag parsed
-  boolean anmfSubchunksMark[] = new boolean[3];  // 0 VP8; 1 VP8L; 2 ALPH.
 
   public int getHeight() {
-    return height;
+    return canvasHeight;
   }
 
   public int getWidth() {
-    return width;
+    return canvasWidth;
   }
 
   public int getNumFrames() {
     return frameCount;
+  }
+
+  void newFrame() {
+    this.frames.add(this.currentFrame = new WebpFrame());
   }
 
   /**
@@ -87,22 +78,18 @@ public class WebpHeader {
   @Override
   public String toString() {
     return "WebpHeader{" +
-            "frames=" + frames +
-            ", status=" + status +
-            ", hasAlpha=" + hasAlpha +
-            ", hasAnim=" + hasAnim +
-            ", bgColor=" + bgColor +
-            ", frameCount=" + frameCount +
-            ", width=" + width +
-            ", height=" + height +
-            ", loopCount=" + loopCount +
-            ", frameWidth=" + frameWidth +
-            ", frameHeight=" + frameHeight +
             ", canvasWidth=" + canvasWidth +
             ", canvasHeight=" + canvasHeight +
             ", featureFlags=" + featureFlags +
+            ", frameCount=" + frameCount +
+            ", loopCount=" + loopCount +
+            ", frames=" + frames +
+            ", status=" + status +
+            ", riffSize=" + riffSize +
+            ", hasAlpha=" + hasAlpha +
+            ", hasAnim=" + hasAnim +
+            ", bgColor=" + bgColor +
             ", chunksMark=" + Arrays.toString(chunksMark) +
-            ", animFrameSize=" + animFrameSize +
             '}';
   }
 }

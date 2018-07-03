@@ -103,12 +103,12 @@ public class StandardWebpDecoder implements WebpDecoder {
 
   @Override
   public int getWidth() {
-    return header.width;
+    return header.getWidth();
   }
 
   @Override
   public int getHeight() {
-    return header.height;
+    return header.getHeight();
   }
 
   @NonNull
@@ -128,10 +128,10 @@ public class StandardWebpDecoder implements WebpDecoder {
   }
 
   @Override
-  public int getDelay(int index) {
+  public int getDuration(int index) {
     int delay = -1;
     if (index >= 0 && index < header.frameCount) {
-      delay = header.frames.get(index).delay;
+      delay = header.frames.get(index).duration;
     }
     return delay;
   }
@@ -141,7 +141,7 @@ public class StandardWebpDecoder implements WebpDecoder {
     if (header.frameCount <= 0 || framePointer < 0) {
       return 0;
     }
-    return getDelay(framePointer);
+    return getDuration(framePointer);
   }
 
   @Override
@@ -311,11 +311,11 @@ public class StandardWebpDecoder implements WebpDecoder {
     }
 
     this.sampleSize = sampleSize;
-    downsampledWidth = header.width / sampleSize;
-    downsampledHeight = header.height / sampleSize;
+    downsampledWidth = header.getWidth() / sampleSize;
+    downsampledHeight = header.getHeight() / sampleSize;
     // Now that we know the size, init scratch arrays.
     // TODO Find a way to avoid this entirely or at least downsample it (either should be possible).
-    mainPixels = bitmapProvider.obtainByteArray(header.width * header.height);
+    mainPixels = bitmapProvider.obtainByteArray(header.getWidth() * header.getHeight());
     mainScratch = bitmapProvider.obtainIntArray(downsampledWidth * downsampledHeight);
   }
 
@@ -387,7 +387,7 @@ public class StandardWebpDecoder implements WebpDecoder {
       // Jump to the frame start position.
       rawData.position(frame.bufferFrameStart);
     }
-    int npix = (frame == null) ? header.width * header.height : frame.iw * frame.ih;
+    int npix = (frame == null) ? header.getWidth() * header.getHeight() : frame.width * frame.height;
   }
 
   private Bitmap getNextBitmap() {

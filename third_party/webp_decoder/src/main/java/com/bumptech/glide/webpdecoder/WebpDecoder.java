@@ -113,7 +113,7 @@ public interface WebpDecoder {
    * @param index int index of frame.
    * @return delay in milliseconds.
    */
-  int getDelay(int index);
+  int getDuration(int index);
 
   /**
    * Gets display duration for the upcoming frame in ms.

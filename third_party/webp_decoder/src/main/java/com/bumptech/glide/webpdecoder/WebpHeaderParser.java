@@ -234,19 +234,11 @@ public class WebpHeaderParser {
    * Reads next frame image.
    */
   private void readBitmap() {
-    // (sub)image position & size.
-    header.currentFrame.ix = readShort();
-    header.currentFrame.iy = readShort();
-    header.currentFrame.iw = readShort();
-    header.currentFrame.ih = readShort();
-
     // Save this as the decoding position pointer.
     header.currentFrame.bufferFrameStart = rawData.position();
-
     if (err()) {
       return;
     }
-
     header.frameCount++;
     // Add image to frame.
     header.frames.add(header.currentFrame);
@@ -315,7 +307,7 @@ public class WebpHeaderParser {
                 return;
             }
             // Incomplete animation frame
-            if (this.header.isProcessingAnimFrame) {
+            if (this.header.currentFrame.isProcessingAnimFrame) {
                 this.header.status = STATUS_MISS_DATA;
                 return;
             }
@@ -449,16 +441,17 @@ public class WebpHeaderParser {
           default:
               break;
       }
-      if (this.header.isProcessingAnimFrame && chunkData.id != ChunkId.ANMF) {
-          if (this.header.animFrameSize == chunkData.size) {
-              if (!this.header.foundImageSubchunk) {
+      if (this.header.currentFrame.isProcessingAnimFrame &&
+              chunkData.id != ChunkId.ANMF && chunkData.id != ChunkId.ALPHA) {
+          if (this.header.currentFrame.frameSize == chunkData.size) {
+              if (!this.header.currentFrame.foundImageSubchunk) {
                   loge("No VP8/VP8L chunk detected in an ANMF chunk.");
                   this.header.status = STATUS_PARSE_ERROR;
                   return;
               }
-              this.header.isProcessingAnimFrame = false;
-          } else if (this.header.animFrameSize > chunkData.size) {
-              this.header.animFrameSize = chunkData.size;
+              this.header.currentFrame.isProcessingAnimFrame = false;
+          } else if (this.header.currentFrame.frameSize > chunkData.size) {
+              this.header.currentFrame.frameSize = chunkData.size;
           } else {
               loge("Truncated data detected when parsing ANMF chunk.");
               this.header.status = STATUS_TRUNCATED_DATA;
@@ -510,7 +503,8 @@ public class WebpHeaderParser {
           this.header.status = STATUS_PARSE_ERROR;
           return;
       }
-      this.header.bgColor = readIntFrom(chunkData.start + chunkData.payloadOffset);
+      chunkData.resetData();
+      this.header.bgColor = readInt();
       this.header.loopCount = readInt(2);
       this.header.chunksMark[ChunkId.ANIM.ordinal()] = true;
       if (this.header.loopCount > MAX_LOOP_COUNT) {
@@ -520,8 +514,9 @@ public class WebpHeaderParser {
 
   private void processANMFChunk(ChunkData chunkData) {
       chunkData.reset();
+      this.header.currentFrame = new WebpFrame();
       int offsetX, offsetY, width, height, duration, blend, dispose;
-      if (this.header.isProcessingAnimFrame) {
+      if (this.header.currentFrame.isProcessingAnimFrame) {
           loge("ANMF chunk detected within another ANMF chunk.");
           this.header.status = STATUS_PARSE_ERROR;
           return;
@@ -561,15 +556,16 @@ public class WebpHeaderParser {
           this.header.status = STATUS_INVALID_PARAM;
           return;
       }
-      this.header.currentFrame = new WebpFrame();
+      this.header.newFrame();
+      this.header.currentFrame.duration = duration;
       this.header.currentFrame.dispose = dispose;
       this.header.currentFrame.blend = blend;
-      this.header.isProcessingAnimFrame = true;
-      this.header.foundAlphaSubchunk = false;
-      this.header.foundImageSubchunk = false;
-      this.header.frameWidth = width;
-      this.header.frameHeight = height;
-      this.header.animFrameSize = chunkData.size - CHUNK_HEADER_SIZE - ANMF_CHUNK_SIZE;
+      this.header.currentFrame.isProcessingAnimFrame = true;
+      this.header.currentFrame.foundAlphaSubchunk = false;
+      this.header.currentFrame.foundImageSubchunk = false;
+      this.header.currentFrame.width = width;
+      this.header.currentFrame.height = height;
+      this.header.currentFrame.frameSize = chunkData.size - CHUNK_HEADER_SIZE - ANMF_CHUNK_SIZE;
   }
 
   private void processImageChunk(ChunkData chunkData) {
@@ -578,25 +574,25 @@ public class WebpHeaderParser {
           loge("VP8/VP8L bitstream error.");
           this.header.status = STATUS_BITSTREAM_ERROR;
       }
-      if (this.header.isProcessingAnimFrame) {
-          this.header.anmfSubchunksMark[chunkData.id == ChunkId.VP8 ? 0 : 1] = true;
-          if (chunkData.id == ChunkId.VP8L && this.header.foundAlphaSubchunk) {
+      if (this.header.currentFrame.isProcessingAnimFrame) {
+          this.header.currentFrame.anmfSubchunksMark[chunkData.id == ChunkId.VP8 ? 0 : 1] = true;
+          if (chunkData.id == ChunkId.VP8L && this.header.currentFrame.foundAlphaSubchunk) {
               loge("Both VP8L and ALPH sub-chunks are present in an ANMF chunk.");
               this.header.status = STATUS_PARSE_ERROR;
               return;
           }
-          if (this.header.frameWidth != vp8Info.width ||
-                  this.header.frameHeight != vp8Info.height) {
+          if (this.header.currentFrame.width != vp8Info.width ||
+                  this.header.currentFrame.height != vp8Info.height) {
               loge("Frame size in VP8/VP8L sub-chunk differs from ANMF header.");
               this.header.status = STATUS_PARSE_ERROR;
               return;
           }
-          if (this.header.foundImageSubchunk) {
+          if (this.header.currentFrame.foundImageSubchunk) {
               loge("Consecutive VP8/VP8L sub-chunks in an ANMF chunk.");
               this.header.status = STATUS_PARSE_ERROR;
               return;
           }
-          this.header.foundImageSubchunk = true;
+          this.header.currentFrame.foundImageSubchunk = true;
       } else {
           if (this.header.chunksMark[ChunkId.VP8.ordinal()] ||
                   this.header.chunksMark[ChunkId.VP8L.ordinal()]) {
@@ -780,6 +776,7 @@ public class WebpHeaderParser {
       info.width = width;
       info.height = height;
       info.hasAlpha = hasAlpha && this.header.hasAlpha;
+      this.header.currentFrame.bufferFrameStart = chunkData.start + chunkData.payloadOffset;
       return info;
   }
 
@@ -828,15 +825,15 @@ public class WebpHeaderParser {
 
   private void processALPHChunk(ChunkData chunkData) {
       chunkData.reset();
-      if (this.header.isProcessingAnimFrame) {
-          this.header.anmfSubchunksMark[2] = true;
-          if (this.header.foundAlphaSubchunk) {
+      if (this.header.currentFrame.isProcessingAnimFrame) {
+          this.header.currentFrame.anmfSubchunksMark[2] = true;
+          if (this.header.currentFrame.foundAlphaSubchunk) {
               loge("Consecutive ALPH sub-chunks in an ANMF chunk.");
               this.header.status = STATUS_PARSE_ERROR;
               return;
           }
-          this.header.foundAlphaSubchunk = true;
-          if (this.header.foundImageSubchunk) {
+          this.header.currentFrame.foundAlphaSubchunk = true;
+          if (this.header.currentFrame.foundImageSubchunk) {
               loge("ALPHA sub-chunk detected after VP8 sub-chunk in an ANMF chunk.");
               this.header.status = STATUS_PARSE_ERROR;
               return;
@@ -865,7 +862,7 @@ public class WebpHeaderParser {
           }
           this.header.chunksMark[chunkData.id.ordinal()] = true;
       }
-      this.header.hasAlpha = true;
+      this.header.currentFrame.hasAlpha = true;
       // FIXME: 2018/7/2 parse alpha subtrunk
       parseAlphaHeader(chunkData);
   }

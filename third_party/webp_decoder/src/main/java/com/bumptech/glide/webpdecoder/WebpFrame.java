@@ -61,9 +61,17 @@ class WebpFrame {
   }
 
   /**
-   * size, position
+   * offset
    */
-  int ix, iy, iw, ih;
+  int offsetX, offsetY;
+  /**
+   * size
+   */
+  int width, height;
+  /**
+   * alpha subchunk
+   */
+  boolean hasAlpha;
   /**
    * Control Flag.
    */
@@ -83,26 +91,35 @@ class WebpFrame {
    */
   int transIndex;
   /**
-   * Delay, in milliseconds, to next frame.
+   * duration, in milliseconds, to next frame.
    */
-  int delay;
+  int duration;
   /**
    * Index in the raw buffer where we need to start reading to decode.
    */
   int bufferFrameStart;
+  /**
+   * frame data size
+   */
+  int frameSize;
+
+  // anim chunk process flag
+  boolean isProcessingAnimFrame;
+  boolean foundAlphaSubchunk;
+  boolean foundImageSubchunk;
+  // anmf subchunk flag for mark tag parsed
+  final boolean anmfSubchunksMark[] = new boolean[3];  // 0 VP8; 1 VP8L; 2 ALPH.
 
   @Override
   public String toString() {
     return "WebpFrame{" +
-            "ix=" + ix +
-            ", iy=" + iy +
-            ", iw=" + iw +
-            ", ih=" + ih +
-            ", transparency=" + transparency +
+            "offsetX=" + offsetX +
+            ", offsetY=" + offsetY +
+            ", width=" + width +
+            ", height=" + height +
             ", dispose=" + dispose +
             ", blend=" + blend +
-            ", transIndex=" + transIndex +
-            ", delay=" + delay +
+            ", duration=" + duration +
             ", bufferFrameStart=" + bufferFrameStart +
             '}';
   }
