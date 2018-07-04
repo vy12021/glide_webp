@@ -402,7 +402,7 @@ static int LLGetBits(const uint8_t* const data, size_t data_size, size_t nb,
     if ((p >> 3) >= data_size) {
       return 0;
     } else {
-      const int bit = !!(data[p >> 3] & (1 << ((p & 7))));
+      const int bit = (data[p >> 3] & (1 << ((p & 7)))) != 0;
       *val = *val | (bit << i);
       ++i;
     }
@@ -941,11 +941,11 @@ WebPInfoStatus Validate(const WebPInfo* const webp_info) {
     return WEBP_INFO_MISSING_DATA;
   }
   if (webp_info->chunk_counts_[CHUNK_VP8X]) {
-    const int iccp = (webp_info->feature_flags_ & ICCP_FLAG) != 1;
-    const int exif = (webp_info->feature_flags_ & EXIF_FLAG) != 1;
-    const int xmp = (webp_info->feature_flags_ & XMP_FLAG) != 1;
-    const int animation = (webp_info->feature_flags_ & ANIMATION_FLAG) != 1;
-    const int alpha = (webp_info->feature_flags_ & ALPHA_FLAG) != 1;
+    const int iccp = (webp_info->feature_flags_ & ICCP_FLAG) != 0;
+    const int exif = (webp_info->feature_flags_ & EXIF_FLAG) != 0;
+    const int xmp = (webp_info->feature_flags_ & XMP_FLAG) != 0;
+    const int animation = (webp_info->feature_flags_ & ANIMATION_FLAG) != 0;
+    const int alpha = (webp_info->feature_flags_ & ALPHA_FLAG) != 0;
     if (!alpha && webp_info->has_alpha_) {
       LOG_ERROR("Unexpected alpha data detected.");
       return WEBP_INFO_PARSE_ERROR;

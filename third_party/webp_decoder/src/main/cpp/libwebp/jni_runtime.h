@@ -6,9 +6,9 @@
 #define ANDROID_JNIRUNTIME_H
 
 #include <jni.h>
+#include <stdio.h>
 #include "jni_log.h"
 
-#define PACKAGE_ROOT com_bumptech_glide_webpdecoder
 #define TO_STRING(ANY) #ANY
 
 #define _JNI_METHOD(Package, Class, Name, Return)    JNIEXPORT Return JNICALL Java_##Package##_##Class##_##Name
@@ -18,5 +18,6 @@
 #define JNI_METHOD(Package, Class, Name, Return)    _JNI_METHOD(Package, Class, Name, Return)
 #define JNI_STATIC_METHOD(Package, Class, Name, Return)    _JNI_STATIC_METHOD(Package, Class, Name, Return)
 
+extern int RedirectStdout(const char * file);
 
 #endif //ANDROID_JNIRUNTIME_H

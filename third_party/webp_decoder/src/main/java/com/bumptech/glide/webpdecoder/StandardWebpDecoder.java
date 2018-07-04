@@ -3,12 +3,10 @@ package com.bumptech.glide.webpdecoder;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.support.annotation.ColorInt;
+import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
-
-import com.google.webp.libwebp;
-import com.google.webp.libwebpJNI;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -48,20 +46,12 @@ public class StandardWebpDecoder implements WebpDecoder {
   @ColorInt
   private static final int COLOR_TRANSPARENT_BLACK = 0x00000000;
 
-  /** Private color table that can be modified if needed. */
-  @ColorInt
-  private final int[] pct = new int[256];
-
   private final WebpDecoder.BitmapProvider bitmapProvider;
 
   /** Raw WEBP data from input source. */
   private ByteBuffer rawData;
 
-  /** Raw data read working array. */
-  private byte[] block;
-
   private WebpHeaderParser parser;
-
   private byte[] mainPixels;
   @ColorInt
   private int[] mainScratch;
@@ -82,18 +72,14 @@ public class StandardWebpDecoder implements WebpDecoder {
 
   // Public API.
   @SuppressWarnings("unused")
-  public StandardWebpDecoder(@NonNull WebpDecoder.BitmapProvider provider,
-                             WebpHeader webpHeader, ByteBuffer rawData) {
-    this(provider, webpHeader, rawData, 1);
-    com.google.webp.libwebp libwebp = new libwebp();
-    com.google.webp.libwebpJNI libwebpJNI = new libwebpJNI();
-    // com.google.webp.libwebp.WebPGetInfo()
+  public StandardWebpDecoder(@NonNull WebpDecoder.BitmapProvider provider, WebpHeader webpHeader) {
+    this(provider, webpHeader, 1);
   }
 
   public StandardWebpDecoder(@NonNull WebpDecoder.BitmapProvider provider,
-                             WebpHeader webpHeader, ByteBuffer rawData, int sampleSize) {
+                             WebpHeader webpHeader, int sampleSize) {
     this(provider);
-    setData(webpHeader, rawData, sampleSize);
+    setData(webpHeader, sampleSize);
   }
 
   public StandardWebpDecoder(@NonNull WebpDecoder.BitmapProvider provider) {
@@ -128,7 +114,7 @@ public class StandardWebpDecoder implements WebpDecoder {
   }
 
   @Override
-  public int getDuration(int index) {
+  public int getDuration(@IntRange(from = 0) int index) {
     int delay = -1;
     if (index >= 0 && index < header.frameCount) {
       delay = header.frames.get(index).duration;
@@ -150,6 +136,7 @@ public class StandardWebpDecoder implements WebpDecoder {
   }
 
   @Override
+  @IntRange(from = 0)
   public int getCurrentFrameIndex() {
     return framePointer;
   }
@@ -209,10 +196,6 @@ public class StandardWebpDecoder implements WebpDecoder {
     }
     status = STATUS_OK;
 
-    if (block == null) {
-      block = bitmapProvider.obtainByteArray(255);
-    }
-
     WebpFrame currentFrame = header.frames.get(framePointer);
     WebpFrame previousFrame = null;
     int previousIndex = framePointer - 1;
@@ -235,7 +218,6 @@ public class StandardWebpDecoder implements WebpDecoder {
           buffer.write(data, 0, nRead);
         }
         buffer.flush();
-
         read(buffer.toByteArray());
       } catch (IOException e) {
         Log.w(TAG, "Error reading data from stream", e);
@@ -270,24 +252,17 @@ public class StandardWebpDecoder implements WebpDecoder {
     previousImage = null;
     rawData = null;
     isFirstFrameTransparent = null;
-    if (block != null) {
-      bitmapProvider.release(block);
-    }
+    nativeReleaseParser(nativeWebpParserPointer);
+    nativeWebpParserPointer = 0;
   }
 
   @Override
-  public synchronized void setData(@NonNull WebpHeader header, @NonNull byte[] data) {
-    setData(header, ByteBuffer.wrap(data));
+  public synchronized void setData(@NonNull WebpHeader header) {
+    setData(header, 1);
   }
 
   @Override
-  public synchronized void setData(@NonNull WebpHeader header, @NonNull ByteBuffer buffer) {
-    setData(header, buffer, 1);
-  }
-
-  @Override
-  public synchronized void setData(@NonNull WebpHeader header, @NonNull ByteBuffer buffer,
-      int sampleSize) {
+  public synchronized void setData(@NonNull WebpHeader header, int sampleSize) {
     if (sampleSize <= 0) {
       throw new IllegalArgumentException("Sample size must be >0, not: " + sampleSize);
     }
@@ -297,10 +272,10 @@ public class StandardWebpDecoder implements WebpDecoder {
     this.header = header;
     framePointer = INITIAL_FRAME_POINTER;
     // Initialize the raw data buffer.
-    rawData = buffer.asReadOnlyBuffer();
+    rawData = parser.getRawData();
     rawData.position(0);
     rawData.order(ByteOrder.LITTLE_ENDIAN);
-
+    this.nativeWebpParserPointer = nativeInitWebpParser(rawData);
     // No point in specially saving an old frame if we're never going to use it.
     savePrevious = false;
     for (WebpFrame frame : header.frames) {
@@ -315,7 +290,7 @@ public class StandardWebpDecoder implements WebpDecoder {
     downsampledHeight = header.getHeight() / sampleSize;
     // Now that we know the size, init scratch arrays.
     // TODO Find a way to avoid this entirely or at least downsample it (either should be possible).
-    mainPixels = bitmapProvider.obtainByteArray(header.getWidth() * header.getHeight());
+    mainPixels = bitmapProvider.obtainByteArray(header.getWidth() * header.getHeight() * BYTES_PER_INTEGER);
     mainScratch = bitmapProvider.obtainIntArray(downsampledWidth * downsampledHeight);
   }
 
@@ -332,7 +307,7 @@ public class StandardWebpDecoder implements WebpDecoder {
   public synchronized int read(@Nullable byte[] data) {
     this.header = getHeaderParser().setData(data).parseHeader();
     if (data != null) {
-      setData(header, data);
+      setData(header);
     }
     return status;
   }
@@ -363,15 +338,15 @@ public class StandardWebpDecoder implements WebpDecoder {
       Arrays.fill(dest, COLOR_TRANSPARENT_BLACK);
     }
 
-    // Decode pixels for this frame into the global pixels[] scratch.
     decodeBitmapData(currentFrame);
+
     // Copy pixels into previous image
     if (savePrevious && currentFrame.dispose == DISPOSAL_NONE) {
       if (previousImage == null) {
         previousImage = getNextBitmap();
       }
-      previousImage.setPixels(dest, 0, downsampledWidth, 0, 0, downsampledWidth,
-          downsampledHeight);
+      previousImage.setPixels(dest, 0, downsampledWidth, 0, 0,
+              downsampledWidth, downsampledHeight);
     }
     // Set pixels for current image.
     Bitmap result = getNextBitmap();
@@ -379,15 +354,10 @@ public class StandardWebpDecoder implements WebpDecoder {
     return result;
   }
 
-  /**
-   * Decodes LZW image data into pixel array. Adapted from John Cristy's BitmapMagick.
-   */
   private void decodeBitmapData(WebpFrame frame) {
-    if (frame != null) {
-      // Jump to the frame start position.
-      rawData.position(frame.bufferFrameStart);
-    }
-    int npix = (frame == null) ? header.getWidth() * header.getHeight() : frame.width * frame.height;
+    int[] pixels = nativeGetWebpFrameByBytes(this.nativeWebpParserPointer,
+            mainPixels, mainPixels.length, header.getWidth(), downsampledWidth, downsampledHeight, framePointer);
+    System.arraycopy(pixels, 0, mainScratch, 0, mainScratch.length);
   }
 
   private Bitmap getNextBitmap() {
@@ -402,6 +372,18 @@ public class StandardWebpDecoder implements WebpDecoder {
     System.loadLibrary("webpparser");
   }
 
-  public native static WebpHeader getWebpInfo(String file);
+  private long nativeWebpParserPointer;
+
+  private native static long nativeInitWebpParser(ByteBuffer buffer);
+
+  private native static int nativeGetWebpFrame(long nativeWebpParserPointer,
+                                               @NonNull Bitmap dst, @IntRange(from = 1) int index);
+
+  private native static int[] nativeGetWebpFrameByBytes(long nativeWebpParserPointer,
+                                                        @NonNull byte[] dst, int size,
+                                                        int stride, int scaledWidth, int scaledHeight,
+                                                        @IntRange(from = 1) int index);
+
+  private native static void nativeReleaseParser(long nativeWebpParserPointer);
 
 }

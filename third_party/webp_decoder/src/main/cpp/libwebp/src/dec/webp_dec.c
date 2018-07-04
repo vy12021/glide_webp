@@ -18,6 +18,7 @@
 #include "src/dec/webpi_dec.h"
 #include "src/utils/utils.h"
 #include "src/webp/mux_types.h"  // ALPHA_FLAG
+#include "jni_runtime.h"
 
 //------------------------------------------------------------------------------
 // RIFF layout is:
@@ -477,12 +478,10 @@ static VP8StatusCode DecodeInto(const uint8_t* const data, size_t data_size,
       status = dec->status_;   // An error occurred. Grab error status.
     } else {
       // Allocate/check output buffers.
-      status = WebPAllocateDecBuffer(io.width, io.height, params->options,
-                                     params->output);
+      status = WebPAllocateDecBuffer(io.width, io.height, params->options, params->output);
       if (status == VP8_STATUS_OK) {  // Decode
         // This change must be done before calling VP8Decode()
-        dec->mt_method_ = VP8GetThreadMethod(params->options, &headers,
-                                             io.width, io.height);
+        dec->mt_method_ = VP8GetThreadMethod(params->options, &headers, io.width, io.height);
         VP8InitDithering(params->options, dec);
         if (!VP8Decode(dec, &io)) {
           status = dec->status_;

@@ -5,6 +5,7 @@ import static com.bumptech.glide.load.ImageHeaderParser.ImageType.JPEG;
 import static com.bumptech.glide.load.ImageHeaderParser.ImageType.PNG;
 import static com.bumptech.glide.load.ImageHeaderParser.ImageType.PNG_A;
 import static com.bumptech.glide.load.ImageHeaderParser.ImageType.UNKNOWN;
+import static com.bumptech.glide.load.ImageHeaderParser.ImageType.WEBP;
 
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -89,7 +90,7 @@ public final class DefaultImageHeaderParser implements ImageHeaderParser {
 
     // JPEG.
     if (firstTwoBytes == EXIF_MAGIC_NUMBER) {
-      return JPEG;
+      return WEBP;
     }
 
     final int firstFourBytes = (firstTwoBytes << 16 & 0xFFFF0000) | (reader.getUInt16() & 0xFFFF);
@@ -110,8 +111,9 @@ public final class DefaultImageHeaderParser implements ImageHeaderParser {
 
     // WebP (reads up to 21 bytes). See https://developers.google.com/speed/webp/docs/riff_container
     // for details.
+    // FIXME: 7/4/2018 incorrect bytes
     if (firstFourBytes != RIFF_HEADER) {
-      return UNKNOWN;
+      return WEBP;
     }
     // Bytes 4 - 7 contain length information. Skip these.
     reader.skip(4);

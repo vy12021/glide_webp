@@ -69,8 +69,6 @@ public class WebpHeaderParser {
 
   // Alpha related constants.
   static final int ALPHA_HEADER_LEN           = 1;
-  static final int ALPHA_NO_COMPRESSION       = 0;
-  static final int ALPHA_LOSSLESS_COMPRESSION = 1;
   static final int ALPHA_PREPROCESSED_LEVELS  = 1;
 
   // Mux related constants.
@@ -155,7 +153,9 @@ public class WebpHeaderParser {
 
   public WebpHeaderParser setData(@Nullable byte[] data) {
     if (data != null) {
-      setData(ByteBuffer.wrap(data));
+        ByteBuffer buffer = ByteBuffer.allocateDirect(data.length);
+        buffer.put(data);
+      setData(buffer);
     } else {
       rawData = null;
       header.status = WebpDecoder.STATUS_OPEN_ERROR;
@@ -163,7 +163,11 @@ public class WebpHeaderParser {
     return this;
   }
 
-  public void clear() {
+    ByteBuffer getRawData() {
+        return rawData;
+    }
+
+    public void clear() {
     rawData = null;
     header = null;
   }
@@ -183,9 +187,6 @@ public class WebpHeaderParser {
       return header;
     }
     readHeader();
-    if (!err()) {
-      readContents();
-    }
     return header;
   }
 
@@ -268,11 +269,11 @@ public class WebpHeaderParser {
             return;
         }
         if (this.header.chunksMark[ChunkId.VP8X.ordinal()]) {
-            boolean iccp = (this.header.featureFlags & ICCP_FLAG) != 1;
-            boolean exif = (this.header.featureFlags & EXIF_FLAG) != 1;
-            boolean xmp = (this.header.featureFlags & XMP_FLAG) != 1;
-            boolean animation = (this.header.featureFlags & ANIMATION_FLAG) != 1;
-            boolean alpha = (this.header.featureFlags & ALPHA_FLAG) != 1;
+            boolean iccp = (this.header.featureFlags & ICCP_FLAG) != 0;
+            boolean exif = (this.header.featureFlags & EXIF_FLAG) != 0;
+            boolean xmp = (this.header.featureFlags & XMP_FLAG) != 0;
+            boolean animation = (this.header.featureFlags & ANIMATION_FLAG) != 0;
+            boolean alpha = (this.header.featureFlags & ALPHA_FLAG) != 0;
             if (!alpha && this.header.hasAlpha) {
                 loge("Unexpected alpha data detected.");
                 this.header.status = STATUS_PARSE_ERROR;
@@ -328,7 +329,7 @@ public class WebpHeaderParser {
    */
   private void parseRIFFHeader() {
     int minSize = RIFF_HEADER_SIZE + CHUNK_HEADER_SIZE;
-    int riffSize = 0;
+    int riffSize;
     if (rawData.remaining() < minSize) {
       loge("Truncated data detected when parsing RIFF header.");
       this.header.status = STATUS_TRUNCATED_DATA;
@@ -479,6 +480,11 @@ public class WebpHeaderParser {
     this.header.featureFlags = readIntFrom(chunkData.start + chunkData.payloadOffset);
     this.header.canvasWidth = 1 + readInt(3);
     this.header.canvasHeight = 1 + readInt(3);
+    this.header.hasAlpha = (this.header.featureFlags & ALPHA_FLAG) != 0;
+    this.header.hasAnimation = (this.header.featureFlags & ANIMATION_FLAG) != 0;
+    this.header.hasIccp = (this.header.featureFlags & ICCP_FLAG) != 0;
+    this.header.hasExif = (this.header.featureFlags & EXIF_FLAG) != 0;
+    this.header.hasXmp = (this.header.featureFlags & XMP_FLAG) != 0;
     if (this.header.canvasWidth > MAX_CANVAS_SIZE) {
       logw("Canvas width is out of range in VP8X chunk.");
     }
@@ -488,6 +494,7 @@ public class WebpHeaderParser {
     if (this.header.canvasHeight * this.header.canvasWidth > MAX_IMAGE_AREA) {
       logw("Canvas area is out of range in VP8X chunk.");
     }
+    loge("processVP8XChunk: \n" + this.header.printVp8XInfo());
   }
 
   private void processANIMChunk(ChunkData chunkData) {
@@ -875,7 +882,7 @@ public class WebpHeaderParser {
           this.header.status = STATUS_TRUNCATED_DATA;
           return;
       }
-      loge("  Parsing ALPH chunk...");
+      loge(" Parsing ALPH chunk...");
       {
           int next = getIntFrom(chunkData.start + chunkData.payloadOffset, 1);
           // alpha compression method, diff from image compression method.
@@ -883,10 +890,10 @@ public class WebpHeaderParser {
           int alphaFilter = (next >> 2) & 0x03;
           int preProcessingMethod = (next >> 4) & 0x03;
           int reservedBits = (next >> 6) & 0x03;
-          loge(" Compression format:    " + compressionMethod);
-          loge(" Filter:                " + Vp8AlphaFilter.values()[alphaFilter].name());
-          loge(" Pre-processing:        " + preProcessingMethod);
-          if (compressionMethod > ALPHA_LOSSLESS_COMPRESSION) {
+          loge(" \tCompression format:    " + Vp8AlphaFormat.values()[compressionMethod].name());
+          loge(" \tFilter:                " + Vp8AlphaFilter.values()[alphaFilter].name());
+          loge(" \tPre-processing:        " + preProcessingMethod);
+          if (compressionMethod >= Vp8AlphaFormat.Invalid.ordinal()) {
               loge("Invalid Alpha compression method.");
               this.header.status = STATUS_BITSTREAM_ERROR;
               return;
@@ -899,7 +906,7 @@ public class WebpHeaderParser {
           if (reservedBits != 0) {
               logw("Reserved bits in ALPH chunk header are not all 0.");
           }
-          if (compressionMethod == ALPHA_LOSSLESS_COMPRESSION) {
+          if (compressionMethod == Vp8AlphaFormat.Lossless.ordinal()) {
               // FIXME: 7/3/2018 parse lossless transform
           }
       }

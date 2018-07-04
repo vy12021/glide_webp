@@ -8,7 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 /**
  * Inner model class housing metadata for each frame.
  */
-class WebpFrame {
+public class WebpFrame {
 
   /**
    * WEBP Disposal Method meaning leave canvas from previous frame.
@@ -63,45 +63,45 @@ class WebpFrame {
   /**
    * offset
    */
-  int offsetX, offsetY;
+  public int offsetX, offsetY;
   /**
    * size
    */
-  int width, height;
+  public int width, height;
   /**
    * alpha subchunk
    */
-  boolean hasAlpha;
+  public boolean hasAlpha;
   /**
    * Control Flag.
    */
-  boolean transparency;
+  public boolean transparency;
   /**
    * Disposal Method.
    */
   @WebPMuxAnimDispose
-  int dispose;
+  public int dispose;
   /**
    * Blend Mode.
    */
   @WebPMuxAnimBlend
-  int blend = BLEND_NONE;
+  public int blend = BLEND_NONE;
   /**
    * Transparency Index.
    */
-  int transIndex;
+  public int transIndex;
   /**
    * duration, in milliseconds, to next frame.
    */
-  int duration;
+  public int duration = 40;
   /**
    * Index in the raw buffer where we need to start reading to decode.
    */
-  int bufferFrameStart;
+  public int bufferFrameStart;
   /**
    * frame data size
    */
-  int frameSize;
+  public int frameSize;
 
   // anim chunk process flag
   boolean isProcessingAnimFrame;

@@ -59,7 +59,6 @@ add_subdirectory(libwebp)
 
 add_library(webpparser SHARED
 webp_parser.c
-jni_runtime.c
 )
 
 target_link_libraries(webpparser webp android jnigraphics log)

@@ -90,6 +90,7 @@ add_library(webptools OBJECT ${WEBP_TOOLS_SRCS})
 
 # 聚合库
 add_library(webp SHARED
+            jni_runtime.c
             libwebp_java_wrap.c
             $<TARGET_OBJECTS:webpdecode>
             $<TARGET_OBJECTS:webpdsp>
@@ -100,7 +101,7 @@ add_library(webp SHARED
             $<TARGET_OBJECTS:webpextras>
             $<TARGET_OBJECTS:webptools>)
 
-target_link_libraries(webp ${WEBP_DEP_LIBRARIES})
+target_link_libraries(webp ${WEBP_DEP_LIBRARIES} android log)
 
 set_target_properties(webpdecode
                       webpencode

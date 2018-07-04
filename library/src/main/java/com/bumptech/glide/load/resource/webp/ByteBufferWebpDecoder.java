@@ -106,7 +106,7 @@ public class ByteBufferWebpDecoder implements ResourceDecoder<ByteBuffer, WebpDr
           ? Bitmap.Config.RGB_565 : Bitmap.Config.ARGB_8888;
 
       int sampleSize = getSampleSize(header, width, height);
-      WebpDecoder webpDecoder = webpDecoderFactory.build(provider, header, byteBuffer, sampleSize);
+      WebpDecoder webpDecoder = webpDecoderFactory.build(provider, header, sampleSize);
       webpDecoder.setDefaultBitmapConfig(config);
       webpDecoder.advance();
       Bitmap firstFrame = webpDecoder.getNextFrame();
@@ -145,9 +145,8 @@ public class ByteBufferWebpDecoder implements ResourceDecoder<ByteBuffer, WebpDr
 
   @VisibleForTesting
   static class WebpDecoderFactory {
-    WebpDecoder build(WebpDecoder.BitmapProvider provider, WebpHeader header,
-        ByteBuffer data, int sampleSize) {
-      return new StandardWebpDecoder(provider, header, data, sampleSize);
+    WebpDecoder build(WebpDecoder.BitmapProvider provider, WebpHeader header, int sampleSize) {
+      return new StandardWebpDecoder(provider, header, sampleSize);
     }
   }
 

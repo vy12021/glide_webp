@@ -2,6 +2,7 @@ package com.bumptech.glide.webpdecoder;
 
 import android.graphics.Bitmap;
 import android.support.annotation.IntDef;
+import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import java.io.InputStream;
@@ -113,7 +114,7 @@ public interface WebpDecoder {
    * @param index int index of frame.
    * @return delay in milliseconds.
    */
-  int getDuration(int index);
+  int getDuration(@IntRange(from = 0) int index);
 
   /**
    * Gets display duration for the upcoming frame in ms.
@@ -132,6 +133,7 @@ public interface WebpDecoder {
    *
    * @return frame index.
    */
+  @IntRange(from = 0)
   int getCurrentFrameIndex();
 
   /**
@@ -192,7 +194,7 @@ public interface WebpDecoder {
 
   /**
    * Returns an estimated byte size for this decoder based on the data provided to {@link
-   * #setData(WebpHeader, byte[])}, as well as internal buffers.
+   * #setData(WebpHeader)}, as well as internal buffers.
    */
   int getByteSize();
 
@@ -215,11 +217,9 @@ public interface WebpDecoder {
 
   void clear();
 
-  void setData(@NonNull WebpHeader header, @NonNull byte[] data);
+  void setData(@NonNull WebpHeader header);
 
-  void setData(@NonNull WebpHeader header, @NonNull ByteBuffer buffer);
-
-  void setData(@NonNull WebpHeader header, @NonNull ByteBuffer buffer, int sampleSize);
+  void setData(@NonNull WebpHeader header, int sampleSize);
 
   /**
    * Reads WEBP image from byte array.

@@ -71,6 +71,7 @@ import com.bumptech.glide.load.resource.transcode.BitmapBytesTranscoder;
 import com.bumptech.glide.load.resource.transcode.BitmapDrawableTranscoder;
 import com.bumptech.glide.load.resource.transcode.DrawableBytesTranscoder;
 import com.bumptech.glide.load.resource.transcode.GifDrawableBytesTranscoder;
+import com.bumptech.glide.load.resource.transcode.WebpDrawableBytesTranscoder;
 import com.bumptech.glide.load.resource.webp.ByteBufferWebpDecoder;
 import com.bumptech.glide.load.resource.webp.StreamWebpDecoder;
 import com.bumptech.glide.load.resource.webp.WebpDrawable;
@@ -364,6 +365,7 @@ public class Glide implements ComponentCallbacks2 {
 
     BitmapBytesTranscoder bitmapBytesTranscoder = new BitmapBytesTranscoder();
     GifDrawableBytesTranscoder gifDrawableBytesTranscoder = new GifDrawableBytesTranscoder();
+    WebpDrawableBytesTranscoder webpDrawableBytesTranscoder = new WebpDrawableBytesTranscoder();
 
     ContentResolver contentResolver = context.getContentResolver();
 
@@ -511,6 +513,12 @@ public class Glide implements ComponentCallbacks2 {
             BitmapDrawable.class,
             new BitmapDrawableTranscoder(resources))
         .register(Bitmap.class, byte[].class, bitmapBytesTranscoder)
+            .register(
+                    Drawable.class,
+                    byte[].class,
+                    new DrawableBytesTranscoder(
+                            bitmapPool, bitmapBytesTranscoder, webpDrawableBytesTranscoder))
+            .register(WebpDrawable.class, byte[].class, webpDrawableBytesTranscoder)
         .register(
             Drawable.class,
             byte[].class,

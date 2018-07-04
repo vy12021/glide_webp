@@ -1,7 +1,7 @@
 package com.bumptech.glide.webpdecoder;
 
 /**
- * Lossless transform
+ * Vp8 lossless transform
  */
 public enum Vp8LosslessTransform {
 

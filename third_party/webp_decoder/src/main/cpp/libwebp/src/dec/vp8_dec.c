@@ -12,6 +12,7 @@
 // Author: Skal (pascal.massimino@gmail.com)
 
 #include <stdlib.h>
+#include <jni_log.h>
 
 #include "src/dec/alphai_dec.h"
 #include "src/dec/vp8i_dec.h"
@@ -289,6 +290,7 @@ int VP8GetHeaders(VP8Decoder* const dec, VP8Io* const io) {
                          "Incorrect keyframe parameters.");
     }
     if (!frm_hdr->show_) {
+        LOGE("vp8_dec", "VP8GetHeaders: VP8_STATUS_UNSUPPORTED_FEATURE, Frame not displayable.");
       return VP8SetError(dec, VP8_STATUS_UNSUPPORTED_FEATURE,
                          "Frame not displayable.");
     }
@@ -374,6 +376,7 @@ int VP8GetHeaders(VP8Decoder* const dec, VP8Io* const io) {
 
   // Frame buffer marking
   if (!frm_hdr->key_frame_) {
+      LOGE("vp8_dec", "VP8GetHeaders: VP8_STATUS_UNSUPPORTED_FEATURE, Not a key frame");
     return VP8SetError(dec, VP8_STATUS_UNSUPPORTED_FEATURE,
                        "Not a key frame.");
   }

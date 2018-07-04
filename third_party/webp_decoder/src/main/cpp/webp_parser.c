@@ -4,9 +4,12 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "jni_runtime.h"
+#include <android/bitmap.h>
+#include "src/webp/demux.h"
+#include "libwebp/jni_runtime.h"
 #include "libwebp/src/webp/mux_types.h"
 #include "libwebp/tools/webpinfo.h"
+#include "tag.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,7 +19,28 @@ extern "C" {
 #define JAVA_CLS_WEBP_HEADER "com/bumptech/glide/webpdecoder/WebpHeader"
 #define JAVA_CLS_WEBP_FRAME "com/bumptech/glide/webpdecoder/WebpFrame"
 
-JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, getWebpInfo, jobject)
+struct WebpParser {
+
+    WebPDemuxer *demuxer;
+    WebPIterator iterator;
+
+};
+
+typedef struct WebpParser WebpParser;
+
+JNI_STATIC_METHOD(PACKAGE_ROOT, Helper, setStdoutFile, jboolean)
+(JNIEnv *env, jclass class, jstring file) {
+    const char *in_file;
+    jboolean ret = JNI_TRUE;
+    in_file = (*env)->GetStringUTFChars(env, file, &ret);
+    if (!RedirectStdout(in_file)) {
+        LOGE("setStdoutFile", "failed to setStdoutFile");
+        return JNI_FALSE;
+    }
+    return JNI_TRUE;
+}
+
+JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeGetWebpInfo, jobject)
 (JNIEnv *env, jclass clazz, jstring file) {
     const char *in_file;
     jboolean flag = JNI_TRUE;
@@ -67,6 +91,136 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, getWebpInfo, jobject)
     jmethodID construct = (*env)->GetMethodID(env, jcls, JAVA_METHOD_CONSTRUCTOR, "()V");
     jobject jinfo = (*env)->NewObject(env, jcls, construct);
     return jinfo;
+}
+
+JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeInitWebpParser, jlong)
+(JNIEnv *env, jclass class, jobject byte_buffer) {
+    uint8_t* buffer = (*env)->GetDirectBufferAddress(env, byte_buffer);
+    size_t capacity = (size_t) (*env)->GetDirectBufferCapacity(env, byte_buffer);
+    WebPData webPData;
+    webPData.bytes = buffer;
+    webPData.size = capacity;
+    WebpParser* parser = (WebpParser *)malloc(sizeof(WebpParser));
+    parser->demuxer = WebPDemux(&webPData);
+    if (!parser->demuxer) {
+        LOGE("webp_parser", "nativeInitWebpDemux failed!");
+    }
+    return (jlong) parser;
+}
+
+JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeGetWebpFrame, jint)
+(JNIEnv *env, jclass class, jlong parser_pointer, jobject bitmap, jint frame_index){
+    int index = frame_index;
+    WebpParser *webpParser;
+    if (parser_pointer) {
+        webpParser = (WebpParser *) parser_pointer;
+    } else {
+        LOGE("webp_parser", "Null pointer for demux");
+        return 0;
+    }
+    AndroidBitmapInfo bitmapInfo;
+    AndroidBitmap_getInfo(env, bitmap, &bitmapInfo);
+    if (bitmapInfo.height * bitmapInfo.height == 0) {
+        LOGE("webp_parser", "nativeGetWebpFrame: Invalid bitmap!");
+        return 0;
+    }
+    WebPDecoderConfig config;
+    WebPInitDecoderConfig(&config);
+    if(!WebPDemuxGetFrame(webpParser->demuxer, index, &webpParser->iterator)) {
+        LOGE("nativeGetWebpFrame", "WebPDemuxGetFrame() fail...");
+        return 0;
+    }
+    VP8StatusCode status = WebPGetFeatures(webpParser->iterator.fragment.bytes,
+                                           webpParser->iterator.fragment.size, &config.input);
+    if(status != VP8_STATUS_OK) {
+        LOGE("nativeGetWebpFrame", "WebPGetFeatures() fail...");
+        return 0;
+    }
+    //
+    config.options.flip = 0;
+    config.options.bypass_filtering = 1;
+    config.options.no_fancy_upsampling = 1;
+
+    config.output.width  = config.input.width;
+    config.output.height = config.input.height;
+    config.output.colorspace = MODE_rgbA;
+    config.output.is_external_memory = 1;
+    void *pixels;
+    AndroidBitmap_lockPixels(env, bitmap, &pixels);
+    config.output.private_memory = pixels;
+    config.output.u.RGBA.stride  = bitmapInfo.stride;
+    config.output.u.RGBA.rgba  = config.output.private_memory;
+    config.output.u.RGBA.size  = config.output.height * bitmapInfo.stride;
+    status = WebPDecode(webpParser->iterator.fragment.bytes,
+                        webpParser->iterator.fragment.size, &config);
+    AndroidBitmap_unlockPixels(env, bitmap);
+    WebPFreeDecBuffer(&config.output);
+    if (VP8_STATUS_OK != status) {
+        LOGE("webp_parser", "WebPDecode of nativeGetWebpFrame failed!");
+        return 0;
+    }
+    return 1;
+}
+
+JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeGetWebpFrameByBytes, jintArray)
+(JNIEnv *env, jclass class, jlong parser_pointer, jbyteArray pixels, jint size,
+ jint scaled_width, jint scaled_height, jint stride, jint frame_index){
+    int index = frame_index;
+    WebpParser *webpParser;
+    if (parser_pointer) {
+        webpParser = (WebpParser *) parser_pointer;
+    } else {
+        LOGE("webp_parser", "Null pointer for demux");
+        return NULL;
+    }
+    if (!pixels || size == 0) {
+        LOGE("webp_parser", "nativeGetWebpFrame: Invalid pixel bytes!");
+        return NULL;
+    }
+    WebPDecoderConfig config;
+    WebPInitDecoderConfig(&config);
+    if(!WebPDemuxGetFrame(webpParser->demuxer, index, &webpParser->iterator)) {
+        LOGE("nativeGetWebpFrame", "WebPDemuxGetFrame() fail...");
+        return NULL;
+    }
+    VP8StatusCode status = WebPGetFeatures(webpParser->iterator.fragment.bytes,
+                                           webpParser->iterator.fragment.size, &config.input);
+    if(status != VP8_STATUS_OK) {
+        LOGE("nativeGetWebpFrame", "WebPGetFeatures() fail...");
+        return NULL;
+    }
+    //
+    config.options.flip = 0;
+    config.options.bypass_filtering = 1;
+    config.options.no_fancy_upsampling = 1;
+
+    config.options.use_scaling = 1;
+    config.options.scaled_width = scaled_width;
+    config.options.scaled_height = scaled_height;
+
+    config.output.width  = config.input.width;
+    config.output.height = config.input.height;
+    config.output.colorspace = MODE_rgbA;
+    config.output.is_external_memory = 1;
+    config.output.private_memory = pixels;
+    config.output.u.RGBA.stride  = stride;
+    config.output.u.RGBA.rgba  = config.output.private_memory;
+    config.output.u.RGBA.size  = config.output.height * (size_t) stride;
+    status = WebPDecode(webpParser->iterator.fragment.bytes,
+                        webpParser->iterator.fragment.size, &config);
+    WebPFreeDecBuffer(&config.output);
+    if (VP8_STATUS_OK != status) {
+        LOGE("webp_parser", "WebPDecode of nativeGetWebpFrame failed!");
+        return NULL;
+    }
+    return pixels;
+}
+
+JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeReleaseParser, void)
+(JNIEnv *env, jclass class, jlong demux_pointer) {
+    if (demux_pointer) {
+        free((void *)demux_pointer);
+    }
 }
 
 #ifdef __cplusplus

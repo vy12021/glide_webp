@@ -31,10 +31,17 @@ public class WebpHeader {
   int status = WebpDecoder.STATUS_OK;
   // riff chunk size
   int riffSize;
-  // Alpha channel.
+  // ALPH Chunk.
   boolean hasAlpha;
-  // Chunk type ANMF
-  boolean hasAnim;
+  // ANMF Chunk.
+  boolean hasAnimation;
+  // EXIF Chunk.
+  boolean hasExif;
+  // ICCP Chunk.
+  boolean hasIccp;
+  // XMP Chunk.
+  boolean hasXmp;
+
   // global background color
   @ColorInt
   int bgColor;
@@ -63,6 +70,10 @@ public class WebpHeader {
     return frameCount;
   }
 
+  public WebpFrame next() {
+    return this.frames.get(0);
+  }
+
   void newFrame() {
     this.frames.add(this.currentFrame = new WebpFrame());
   }
@@ -75,21 +86,38 @@ public class WebpHeader {
     return status;
   }
 
+  String printVp8XInfo() {
+    return "Vp8XInfo{" +
+            "\n riffSize=" + riffSize +
+            ",\n featureFlags=" + featureFlags +
+            ",\n hasAlpha=" + hasAlpha +
+            ",\n hasAnimation=" + hasAnimation +
+            ",\n hasExif=" + hasExif +
+            ",\n hasIccp=" + hasIccp +
+            ",\n hasXmp=" + hasXmp +
+            ",\n canvasWidth=" + canvasWidth +
+            ",\n canvasHeight=" + canvasHeight +
+            '}';
+  }
+
   @Override
   public String toString() {
     return "WebpHeader{" +
-            ", canvasWidth=" + canvasWidth +
-            ", canvasHeight=" + canvasHeight +
-            ", featureFlags=" + featureFlags +
-            ", frameCount=" + frameCount +
-            ", loopCount=" + loopCount +
-            ", frames=" + frames +
-            ", status=" + status +
-            ", riffSize=" + riffSize +
-            ", hasAlpha=" + hasAlpha +
-            ", hasAnim=" + hasAnim +
-            ", bgColor=" + bgColor +
-            ", chunksMark=" + Arrays.toString(chunksMark) +
+            "\n status=" + status +
+            ",\n riffSize=" + riffSize +
+            ",\n featureFlags=" + featureFlags +
+            ",\n hasAlpha=" + hasAlpha +
+            ",\n hasAnimation=" + hasAnimation +
+            ",\n hasExif=" + hasExif +
+            ",\n hasIccp=" + hasIccp +
+            ",\n hasXmp=" + hasXmp +
+            ",\n canvasWidth=" + canvasWidth +
+            ",\n canvasHeight=" + canvasHeight +
+            ",\n frameCount=" + frameCount +
+            ",\n loopCount=" + loopCount +
+            ",\n frames=" + frames +
+            ",\n bgColor=" + bgColor +
+            ",\n chunksMark=" + Arrays.toString(chunksMark) +
             '}';
   }
 }

@@ -135,7 +135,7 @@
 #include <jni.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "jni_runtime.h"
 
 /* Support for throwing Java exceptions */
 typedef enum {
@@ -1173,6 +1173,9 @@ SWIGEXPORT jbyteArray JNICALL Java_com_google_webp_libwebpJNI_WebPDecodeRGBA(
     arg4 = &temp4;
   }
   result = WebPDecodeRGBA((uint8_t const *)arg1,arg2,arg3,arg4);
+    if (!result) {
+        LOGE("JAVA_WRAP", "WebPDecodeRGBA failed!");
+    }
   jresult = SWIG_JavaArrayOutUint8(jenv, result, FillMeInAsSizeCannotBeDeterminedAutomatically);
   SWIG_JavaArrayArgoutUint8(jenv, jarr1, arg1, jarg1);
   {
