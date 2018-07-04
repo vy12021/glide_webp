@@ -170,23 +170,23 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeGetWebpFrameByBytes, 
     if (parser_pointer) {
         webpParser = (WebpParser *) parser_pointer;
     } else {
-        LOGE("webp_parser", "Null pointer for demux");
+        LOGE("nativeGetWebpFrameByBytes", "Null pointer for demux");
         return NULL;
     }
     if (!pixels || size == 0) {
-        LOGE("webp_parser", "nativeGetWebpFrame: Invalid pixel bytes!");
+        LOGE("nativeGetWebpFrameByBytes", "nativeGetWebpFrameByBytes: Invalid pixel bytes!");
         return NULL;
     }
     WebPDecoderConfig config;
     WebPInitDecoderConfig(&config);
     if(!WebPDemuxGetFrame(webpParser->demuxer, index, &webpParser->iterator)) {
-        LOGE("nativeGetWebpFrame", "WebPDemuxGetFrame() fail...");
+        LOGE("nativeGetWebpFrameByBytes", "WebPDemuxGetFrame() fail...");
         return NULL;
     }
     VP8StatusCode status = WebPGetFeatures(webpParser->iterator.fragment.bytes,
                                            webpParser->iterator.fragment.size, &config.input);
     if(status != VP8_STATUS_OK) {
-        LOGE("nativeGetWebpFrame", "WebPGetFeatures() fail...");
+        LOGE("nativeGetWebpFrameByBytes", "WebPGetFeatures() fail...");
         return NULL;
     }
     //
@@ -210,7 +210,7 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeGetWebpFrameByBytes, 
                         webpParser->iterator.fragment.size, &config);
     WebPFreeDecBuffer(&config.output);
     if (VP8_STATUS_OK != status) {
-        LOGE("webp_parser", "WebPDecode of nativeGetWebpFrame failed!");
+        LOGE("nativeGetWebpFrameByBytes", "WebPDecode failed!");
         return NULL;
     }
     return pixels;

@@ -6,10 +6,8 @@ import android.support.annotation.Nullable;
 import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.load.resource.bytes.BytesResource;
-import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.load.resource.webp.WebpDrawable;
 import com.bumptech.glide.util.ByteBufferUtil;
-import com.bumptech.glide.webpdecoder.WebpDecoder;
 
 import java.nio.ByteBuffer;
 

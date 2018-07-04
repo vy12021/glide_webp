@@ -11,6 +11,7 @@ import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.load.resource.bitmap.BitmapResource;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
+import com.bumptech.glide.load.resource.webp.WebpDrawable;
 
 /**
  * Obtains {@code byte[]} from {@link BitmapDrawable}s by delegating to a
@@ -20,14 +21,17 @@ public final class DrawableBytesTranscoder implements ResourceTranscoder<Drawabl
   private final BitmapPool bitmapPool;
   private final ResourceTranscoder<Bitmap, byte[]> bitmapBytesTranscoder;
   private final ResourceTranscoder<GifDrawable, byte[]> gifDrawableBytesTranscoder;
+  private final ResourceTranscoder<WebpDrawable, byte[]> webpDrawableBytesTranscoder;
 
   public DrawableBytesTranscoder(
       @NonNull BitmapPool bitmapPool,
       @NonNull ResourceTranscoder<Bitmap, byte[]> bitmapBytesTranscoder,
-      @NonNull ResourceTranscoder<GifDrawable, byte[]> gifDrawableBytesTranscoder) {
+      @NonNull ResourceTranscoder<GifDrawable, byte[]> gifDrawableBytesTranscoder,
+      @NonNull ResourceTranscoder<WebpDrawable, byte[]> webpDrawableBytesTranscoder) {
     this.bitmapPool = bitmapPool;
     this.bitmapBytesTranscoder = bitmapBytesTranscoder;
     this.gifDrawableBytesTranscoder = gifDrawableBytesTranscoder;
+    this.webpDrawableBytesTranscoder = webpDrawableBytesTranscoder;
   }
 
   @Nullable
@@ -40,6 +44,8 @@ public final class DrawableBytesTranscoder implements ResourceTranscoder<Drawabl
           BitmapResource.obtain(((BitmapDrawable) drawable).getBitmap(), bitmapPool), options);
     } else if (drawable instanceof GifDrawable) {
       return gifDrawableBytesTranscoder.transcode(toGifDrawableResource(toTranscode), options);
+    } else if (drawable instanceof WebpDrawable) {
+      return webpDrawableBytesTranscoder.transcode(toWebpDrawableResource(toTranscode), options);
     }
     return null;
   }
@@ -49,4 +55,11 @@ public final class DrawableBytesTranscoder implements ResourceTranscoder<Drawabl
   private static Resource<GifDrawable> toGifDrawableResource(@NonNull Resource<Drawable> resource) {
     return (Resource<GifDrawable>) (Resource<?>) resource;
   }
+
+  @SuppressWarnings("unchecked")
+  @NonNull
+  private static Resource<WebpDrawable> toWebpDrawableResource(@NonNull Resource<Drawable> resource) {
+    return (Resource<WebpDrawable>) (Resource<?>) resource;
+  }
+
 }

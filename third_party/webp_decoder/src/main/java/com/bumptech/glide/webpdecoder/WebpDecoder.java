@@ -217,9 +217,9 @@ public interface WebpDecoder {
 
   void clear();
 
-  void setData(@NonNull WebpHeader header);
+  void setData(@NonNull WebpHeader header, ByteBuffer byteBuffer);
 
-  void setData(@NonNull WebpHeader header, int sampleSize);
+  void setData(@NonNull WebpHeader header, ByteBuffer byteBuffer, int sampleSize);
 
   /**
    * Reads WEBP image from byte array.

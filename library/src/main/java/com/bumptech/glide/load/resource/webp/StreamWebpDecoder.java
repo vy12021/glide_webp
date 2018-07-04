@@ -38,8 +38,10 @@ public class StreamWebpDecoder implements ResourceDecoder<InputStream, WebpDrawa
 
   @Override
   public boolean handles(@NonNull InputStream source, @NonNull Options options) throws IOException {
+    ImageType type;
     return !options.get(WebpOptions.DISABLE_ANIMATION)
-        && ImageHeaderParserUtils.getType(parsers, source, byteArrayPool) == ImageType.WEBP;
+            && ((type = ImageHeaderParserUtils.getType(parsers, source, byteArrayPool))
+            == ImageType.WEBP || type == ImageType.WEBP_A);
   }
 
   @Override

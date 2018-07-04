@@ -145,6 +145,7 @@ public class Registry {
    * @param dataClass The data that will be decoded from
    * ({@link java.io.InputStream}, {@link java.io.FileDescriptor} etc).
    * @param resourceClass The resource that will be decoded to ({@link android.graphics.Bitmap},
+   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable},
    * {@link com.bumptech.glide.load.resource.gif.GifDrawable} etc).
    * @param decoder The {@link ResourceDecoder} to register.
    */
@@ -175,6 +176,7 @@ public class Registry {
    * @param dataClass The data that will be decoded from
    * ({@link java.io.InputStream}, {@link java.io.FileDescriptor} etc).
    * @param resourceClass The resource that will be decoded to ({@link android.graphics.Bitmap},
+   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable},
    * {@link com.bumptech.glide.load.resource.gif.GifDrawable} etc).
    * @param decoder The {@link ResourceDecoder} to register.
    */
@@ -205,6 +207,7 @@ public class Registry {
    * @param dataClass The data that will be decoded from
    * ({@link java.io.InputStream}, {@link java.io.FileDescriptor} etc).
    * @param resourceClass The resource that will be decoded to ({@link android.graphics.Bitmap},
+   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable},
    * {@link com.bumptech.glide.load.resource.gif.GifDrawable} etc).
    * @param decoder The {@link ResourceDecoder} to register.
    */
@@ -235,6 +238,7 @@ public class Registry {
    * @param dataClass The data that will be decoded from
    * ({@link java.io.InputStream}, {@link java.io.FileDescriptor} etc).
    * @param resourceClass The resource that will be decoded to ({@link android.graphics.Bitmap},
+   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable},
    * {@link com.bumptech.glide.load.resource.gif.GifDrawable} etc).
    * @param decoder The {@link ResourceDecoder} to register.
    */
@@ -281,7 +285,8 @@ public class Registry {
    * <p>The {@link ResourceEncoder} will be used both for the exact resource class and any subtypes.
    * For example, registering an {@link ResourceEncoder} for
    * {@link android.graphics.drawable.Drawable} (not recommended) will result in the
-   * {@link ResourceEncoder} being used for {@link android.graphics.drawable.BitmapDrawable} and
+   * {@link ResourceEncoder} being used for {@link android.graphics.drawable.BitmapDrawable},
+   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable} and
    * {@link com.bumptech.glide.load.resource.gif.GifDrawable} and any other subclass.
    *
    * <p>If multiple {@link ResourceEncoder}s are registered for the same type or super type, the
@@ -304,7 +309,8 @@ public class Registry {
    * <p>The {@link ResourceEncoder} will be used both for the exact resource class and any subtypes.
    * For example, registering an {@link ResourceEncoder} for
    * {@link android.graphics.drawable.Drawable} (not recommended) will result in the
-   * {@link ResourceEncoder} being used for {@link android.graphics.drawable.BitmapDrawable} and
+   * {@link ResourceEncoder} being used for {@link android.graphics.drawable.BitmapDrawable},
+   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable} and
    * {@link com.bumptech.glide.load.resource.gif.GifDrawable} and any other subclass.
    *
    * <p>If multiple {@link ResourceEncoder}s are registered for the same type or super type, the

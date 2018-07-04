@@ -76,13 +76,24 @@ public class ByteBufferWebpDecoder implements ResourceDecoder<ByteBuffer, WebpDr
 
   @Override
   public boolean handles(@NonNull ByteBuffer source, @NonNull Options options) throws IOException {
+    ImageType type;
     return !options.get(WebpOptions.DISABLE_ANIMATION)
-        && ImageHeaderParserUtils.getType(parsers, source) == ImageType.WEBP;
+        && ((type = ImageHeaderParserUtils.getType(parsers, source))
+            == ImageType.WEBP || type == ImageType.WEBP_A);
   }
 
   @Override
   public WebpDrawableResource decode(@NonNull ByteBuffer source, int width, int height,
                                      @NonNull Options options) {
+    if (!source.isDirect()) {
+      source.mark();
+      source.position(0);
+      ByteBuffer oldSource = source;
+      source = ByteBuffer.allocateDirect(source.capacity());
+      source = source.put(oldSource).asReadOnlyBuffer();
+      oldSource.reset();
+      source.position(oldSource.position());
+    }
     final WebpHeaderParser parser = parserPool.obtain(source);
     try {
       return decode(source, width, height, parser, options);
@@ -106,7 +117,7 @@ public class ByteBufferWebpDecoder implements ResourceDecoder<ByteBuffer, WebpDr
           ? Bitmap.Config.RGB_565 : Bitmap.Config.ARGB_8888;
 
       int sampleSize = getSampleSize(header, width, height);
-      WebpDecoder webpDecoder = webpDecoderFactory.build(provider, header, sampleSize);
+      WebpDecoder webpDecoder = webpDecoderFactory.build(provider, header, byteBuffer, sampleSize);
       webpDecoder.setDefaultBitmapConfig(config);
       webpDecoder.advance();
       Bitmap firstFrame = webpDecoder.getNextFrame();
@@ -120,6 +131,9 @@ public class ByteBufferWebpDecoder implements ResourceDecoder<ByteBuffer, WebpDr
           new WebpDrawable(context, webpDecoder, unitTransformation, width, height, firstFrame);
 
       return new WebpDrawableResource(webpDrawable);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return null;
     } finally {
       if (Log.isLoggable(TAG, Log.VERBOSE)) {
         Log.v(TAG, "Decoded WEBP from stream in " + LogTime.getElapsedMillis(startTime));
@@ -145,8 +159,9 @@ public class ByteBufferWebpDecoder implements ResourceDecoder<ByteBuffer, WebpDr
 
   @VisibleForTesting
   static class WebpDecoderFactory {
-    WebpDecoder build(WebpDecoder.BitmapProvider provider, WebpHeader header, int sampleSize) {
-      return new StandardWebpDecoder(provider, header, sampleSize);
+    WebpDecoder build(WebpDecoder.BitmapProvider provider, WebpHeader header,
+                      ByteBuffer buffer, int sampleSize) {
+      return new StandardWebpDecoder(provider, header, buffer, sampleSize);
     }
   }
 

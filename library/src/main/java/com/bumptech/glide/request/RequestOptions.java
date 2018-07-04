@@ -31,6 +31,8 @@ import com.bumptech.glide.load.resource.bitmap.VideoDecoder;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.load.resource.gif.GifDrawableTransformation;
 import com.bumptech.glide.load.resource.gif.GifOptions;
+import com.bumptech.glide.load.resource.webp.WebpDrawable;
+import com.bumptech.glide.load.resource.webp.WebpDrawableTransformation;
 import com.bumptech.glide.signature.EmptySignature;
 import com.bumptech.glide.util.CachedHashCodeArrayMap;
 import com.bumptech.glide.util.Preconditions;
@@ -1168,7 +1170,8 @@ public class RequestOptions implements Cloneable {
   /**
    * Applies the given {@link Transformation} for
    * {@link Bitmap Bitmaps} to the default types ({@link Bitmap},
-   * {@link android.graphics.drawable.BitmapDrawable}, and
+   * {@link android.graphics.drawable.BitmapDrawable},
+   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable}, and
    * {@link com.bumptech.glide.load.resource.gif.GifDrawable})
    * and throws an exception if asked to transform an unknown type.
    *
@@ -1189,7 +1192,8 @@ public class RequestOptions implements Cloneable {
   /**
    * Applies the given {@link Transformation}s in the given order for
    * {@link Bitmap Bitmaps} to the default types ({@link Bitmap},
-   * {@link android.graphics.drawable.BitmapDrawable}, and
+   * {@link android.graphics.drawable.BitmapDrawable},
+   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable}, and
    * {@link com.bumptech.glide.load.resource.gif.GifDrawable})
    * and throws an exception if asked to transform an unknown type.
    *
@@ -1210,7 +1214,8 @@ public class RequestOptions implements Cloneable {
   /**
    * Applies the given {@link Transformation} for
    * {@link Bitmap Bitmaps} to the default types ({@link Bitmap},
-   * {@link android.graphics.drawable.BitmapDrawable}, and
+   * {@link android.graphics.drawable.BitmapDrawable},
+   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable}, and
    * {@link com.bumptech.glide.load.resource.gif.GifDrawable}) and ignores unknown types.
    *
    * <p>This will override previous calls to {@link #dontTransform()}.
@@ -1244,6 +1249,7 @@ public class RequestOptions implements Cloneable {
     // affecting the functionality.
     transform(BitmapDrawable.class, drawableTransformation.asBitmapDrawable(), isRequired);
     transform(GifDrawable.class, new GifDrawableTransformation(transformation), isRequired);
+    transform(WebpDrawable.class, new WebpDrawableTransformation(transformation), isRequired);
     return selfOrThrowIfLocked();
   }
 

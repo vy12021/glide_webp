@@ -2,8 +2,13 @@ package com.bumptech.glide.samples.webp;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Adapter;
 import android.widget.Button;
 import android.widget.ImageView;
 
@@ -28,13 +33,15 @@ public class MainActivity extends Activity {
 
   private static final String TAG = "WebpActivity";
   private String dir;
-  private ImageView imageView;
+  private RecyclerView recyclerView;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
-    imageView = findViewById(R.id.image_view);
+    recyclerView = findViewById(R.id.recycler_view);
+    recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
+    recyclerView.setAdapter(new Adapter());
     Button button = findViewById(R.id.btn_reload);
     button.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -49,7 +56,31 @@ public class MainActivity extends Activity {
 
   private void reload() {
     Log.w(TAG, "reloading");
-    Glide.with(this).load(dir + "/test_3.webp").into(imageView);
+  }
+
+  private class Adapter extends RecyclerView.Adapter<Holder> {
+    @NonNull
+    @Override
+    public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+      return new Holder(new ImageView(parent.getContext()));
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull Holder holder, int position) {
+      Glide.with(MainActivity.this).load(dir + "/test_3.webp").into((ImageView) holder.itemView);
+    }
+
+    @Override
+    public int getItemCount() {
+      return 300;
+    }
+  }
+
+  class Holder extends RecyclerView.ViewHolder {
+
+    Holder(View itemView) {
+      super(itemView);
+    }
   }
 
   private ByteBuffer readFile(String webpFile) {

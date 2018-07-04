@@ -13,9 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 
-import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_NONE;
 import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_PREVIOUS;
 
 /**
@@ -52,9 +50,6 @@ public class StandardWebpDecoder implements WebpDecoder {
   private ByteBuffer rawData;
 
   private WebpHeaderParser parser;
-  private byte[] mainPixels;
-  @ColorInt
-  private int[] mainScratch;
 
   private int framePointer;
   private WebpHeader header;
@@ -72,14 +67,15 @@ public class StandardWebpDecoder implements WebpDecoder {
 
   // Public API.
   @SuppressWarnings("unused")
-  public StandardWebpDecoder(@NonNull WebpDecoder.BitmapProvider provider, WebpHeader webpHeader) {
-    this(provider, webpHeader, 1);
+  public StandardWebpDecoder(@NonNull WebpDecoder.BitmapProvider provider,
+                             WebpHeader webpHeader, ByteBuffer byteBuffer) {
+    this(provider, webpHeader,  byteBuffer,1);
   }
 
   public StandardWebpDecoder(@NonNull WebpDecoder.BitmapProvider provider,
-                             WebpHeader webpHeader, int sampleSize) {
+                             WebpHeader webpHeader, ByteBuffer byteBuffer, int sampleSize) {
     this(provider);
-    setData(webpHeader, sampleSize);
+    setData(webpHeader, byteBuffer, sampleSize);
   }
 
   public StandardWebpDecoder(@NonNull WebpDecoder.BitmapProvider provider) {
@@ -173,7 +169,7 @@ public class StandardWebpDecoder implements WebpDecoder {
 
   @Override
   public int getByteSize() {
-    return rawData.limit() + mainPixels.length + (mainScratch.length * BYTES_PER_INTEGER);
+    return rawData.limit();
   }
 
   @Nullable
@@ -239,13 +235,8 @@ public class StandardWebpDecoder implements WebpDecoder {
 
   @Override
   public void clear() {
+    parser = null;
     header = null;
-    if (mainPixels != null) {
-      bitmapProvider.release(mainPixels);
-    }
-    if (mainScratch != null) {
-      bitmapProvider.release(mainScratch);
-    }
     if (previousImage != null) {
       bitmapProvider.release(previousImage);
     }
@@ -257,12 +248,12 @@ public class StandardWebpDecoder implements WebpDecoder {
   }
 
   @Override
-  public synchronized void setData(@NonNull WebpHeader header) {
-    setData(header, 1);
+  public synchronized void setData(@NonNull WebpHeader header, @NonNull ByteBuffer byteBuffer) {
+    setData(header, byteBuffer, 1);
   }
 
   @Override
-  public synchronized void setData(@NonNull WebpHeader header, int sampleSize) {
+  public synchronized void setData(@NonNull WebpHeader header, @NonNull ByteBuffer byteBuffer, int sampleSize) {
     if (sampleSize <= 0) {
       throw new IllegalArgumentException("Sample size must be >0, not: " + sampleSize);
     }
@@ -272,10 +263,12 @@ public class StandardWebpDecoder implements WebpDecoder {
     this.header = header;
     framePointer = INITIAL_FRAME_POINTER;
     // Initialize the raw data buffer.
-    rawData = parser.getRawData();
+    rawData = byteBuffer;
     rawData.position(0);
     rawData.order(ByteOrder.LITTLE_ENDIAN);
-    this.nativeWebpParserPointer = nativeInitWebpParser(rawData);
+    if (0 == (this.nativeWebpParserPointer = nativeInitWebpParser(rawData))) {
+      throw new RuntimeException("nativeInitWebpParser failed");
+    }
     // No point in specially saving an old frame if we're never going to use it.
     savePrevious = false;
     for (WebpFrame frame : header.frames) {
@@ -284,14 +277,9 @@ public class StandardWebpDecoder implements WebpDecoder {
         break;
       }
     }
-
     this.sampleSize = sampleSize;
     downsampledWidth = header.getWidth() / sampleSize;
     downsampledHeight = header.getHeight() / sampleSize;
-    // Now that we know the size, init scratch arrays.
-    // TODO Find a way to avoid this entirely or at least downsample it (either should be possible).
-    mainPixels = bitmapProvider.obtainByteArray(header.getWidth() * header.getHeight() * BYTES_PER_INTEGER);
-    mainScratch = bitmapProvider.obtainIntArray(downsampledWidth * downsampledHeight);
   }
 
   @NonNull
@@ -307,7 +295,7 @@ public class StandardWebpDecoder implements WebpDecoder {
   public synchronized int read(@Nullable byte[] data) {
     this.header = getHeaderParser().setData(data).parseHeader();
     if (data != null) {
-      setData(header);
+      setData(header, getHeaderParser().getRawData());
     }
     return status;
   }
@@ -326,38 +314,23 @@ public class StandardWebpDecoder implements WebpDecoder {
    * disposition codes).
    */
   private Bitmap setPixels(WebpFrame currentFrame, WebpFrame previousFrame) {
-    // Final location of blended pixels.
-    final int[] dest = mainScratch;
-
     // clear all pixels when meet first frame and drop prev image from last loop
     if (previousFrame == null) {
       if (previousImage != null) {
         bitmapProvider.release(previousImage);
       }
       previousImage = null;
-      Arrays.fill(dest, COLOR_TRANSPARENT_BLACK);
     }
 
-    decodeBitmapData(currentFrame);
-
-    // Copy pixels into previous image
-    if (savePrevious && currentFrame.dispose == DISPOSAL_NONE) {
-      if (previousImage == null) {
-        previousImage = getNextBitmap();
-      }
-      previousImage.setPixels(dest, 0, downsampledWidth, 0, 0,
-              downsampledWidth, downsampledHeight);
-    }
     // Set pixels for current image.
     Bitmap result = getNextBitmap();
-    result.setPixels(dest, 0, downsampledWidth, 0, 0, downsampledWidth, downsampledHeight);
+    decodeBitmapData(currentFrame, result);
+
     return result;
   }
 
-  private void decodeBitmapData(WebpFrame frame) {
-    int[] pixels = nativeGetWebpFrameByBytes(this.nativeWebpParserPointer,
-            mainPixels, mainPixels.length, header.getWidth(), downsampledWidth, downsampledHeight, framePointer);
-    System.arraycopy(pixels, 0, mainScratch, 0, mainScratch.length);
+  private void decodeBitmapData(WebpFrame frame, Bitmap bitmap) {
+    nativeGetWebpFrame(this.nativeWebpParserPointer, bitmap, getCurrentFrameIndex() + 1);
   }
 
   private Bitmap getNextBitmap() {

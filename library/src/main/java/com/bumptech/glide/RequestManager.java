@@ -16,6 +16,7 @@ import android.support.annotation.Nullable;
 import android.view.View;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
+import com.bumptech.glide.load.resource.webp.WebpDrawable;
 import com.bumptech.glide.manager.ConnectivityMonitor;
 import com.bumptech.glide.manager.ConnectivityMonitorFactory;
 import com.bumptech.glide.manager.Lifecycle;
@@ -49,6 +50,7 @@ public class RequestManager implements LifecycleListener,
     ModelTypes<RequestBuilder<Drawable>> {
   private static final RequestOptions DECODE_TYPE_BITMAP = decodeTypeOf(Bitmap.class).lock();
   private static final RequestOptions DECODE_TYPE_GIF = decodeTypeOf(GifDrawable.class).lock();
+  private static final RequestOptions DECODE_TYPE_WEBP = decodeTypeOf(WebpDrawable.class).lock();
   private static final RequestOptions DOWNLOAD_ONLY_OPTIONS =
       diskCacheStrategyOf(DiskCacheStrategy.DATA).priority(Priority.LOW)
           .skipMemoryCache(true);
@@ -337,6 +339,25 @@ public class RequestManager implements LifecycleListener,
   @CheckResult
   public RequestBuilder<GifDrawable> asGif() {
     return as(GifDrawable.class).apply(DECODE_TYPE_GIF);
+  }
+
+  /**
+   * Attempts to always load the resource as a
+   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable}.
+   *
+   * <p> If the underlying data is not a WEBP, this will fail. As a result, this should only be used
+   * if the model represents an animated WEBP and the caller wants to interact with the WebpDrawable
+   * directly. Normally using just {@link #asDrawable()} is sufficient because it will determine
+   * whether or not the given data represents an animated WEBP and return the appropriate {@link
+   * Drawable}, animated or not, automatically. </p>
+   *
+   * @return A new request builder for loading a
+   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable}.
+   */
+  @NonNull
+  @CheckResult
+  public RequestBuilder<WebpDrawable> asWebp() {
+    return as(WebpDrawable.class).apply(DECODE_TYPE_WEBP);
   }
 
   /**

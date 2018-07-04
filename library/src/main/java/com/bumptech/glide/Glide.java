@@ -513,17 +513,12 @@ public class Glide implements ComponentCallbacks2 {
             BitmapDrawable.class,
             new BitmapDrawableTranscoder(resources))
         .register(Bitmap.class, byte[].class, bitmapBytesTranscoder)
-            .register(
-                    Drawable.class,
-                    byte[].class,
-                    new DrawableBytesTranscoder(
-                            bitmapPool, bitmapBytesTranscoder, webpDrawableBytesTranscoder))
-            .register(WebpDrawable.class, byte[].class, webpDrawableBytesTranscoder)
         .register(
             Drawable.class,
             byte[].class,
             new DrawableBytesTranscoder(
-                bitmapPool, bitmapBytesTranscoder, gifDrawableBytesTranscoder))
+                bitmapPool, bitmapBytesTranscoder, gifDrawableBytesTranscoder, webpDrawableBytesTranscoder))
+        .register(WebpDrawable.class, byte[].class, webpDrawableBytesTranscoder)
         .register(GifDrawable.class, byte[].class, gifDrawableBytesTranscoder);
 
     ImageViewTargetFactory imageViewTargetFactory = new ImageViewTargetFactory();

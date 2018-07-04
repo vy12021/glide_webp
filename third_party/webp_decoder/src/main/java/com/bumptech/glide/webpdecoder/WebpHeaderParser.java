@@ -145,6 +145,9 @@ public class WebpHeaderParser {
 
   public WebpHeaderParser setData(@NonNull ByteBuffer data) {
     reset();
+    if (!data.isDirect()) {
+        throw new IllegalArgumentException("ByteBuffer must directed");
+    }
     rawData = data.asReadOnlyBuffer();
     rawData.position(0);
     rawData.order(ByteOrder.LITTLE_ENDIAN);
@@ -564,7 +567,7 @@ public class WebpHeaderParser {
           return;
       }
       this.header.newFrame();
-      this.header.currentFrame.duration = duration;
+      this.header.currentFrame.duration = Math.max(75, duration);
       this.header.currentFrame.dispose = dispose;
       this.header.currentFrame.blend = blend;
       this.header.currentFrame.isProcessingAnimFrame = true;

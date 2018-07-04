@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import com.bumptech.glide.load.engine.Initializable;
 import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
+import com.bumptech.glide.load.resource.webp.WebpDrawable;
 import com.bumptech.glide.util.Preconditions;
 
 /**
@@ -49,6 +50,8 @@ public abstract class DrawableResource<T extends Drawable> implements Resource<T
       ((BitmapDrawable) drawable).getBitmap().prepareToDraw();
     } else if (drawable instanceof GifDrawable) {
       ((GifDrawable) drawable).getFirstFrame().prepareToDraw();
+    } else if (drawable instanceof WebpDrawable) {
+      ((WebpDrawable) drawable).getFirstFrame().prepareToDraw();
     }
   }
 }

@@ -90,7 +90,7 @@ public final class DefaultImageHeaderParser implements ImageHeaderParser {
 
     // JPEG.
     if (firstTwoBytes == EXIF_MAGIC_NUMBER) {
-      return WEBP;
+      return JPEG;
     }
 
     final int firstFourBytes = (firstTwoBytes << 16 & 0xFFFF0000) | (reader.getUInt16() & 0xFFFF);
@@ -113,7 +113,7 @@ public final class DefaultImageHeaderParser implements ImageHeaderParser {
     // for details.
     // FIXME: 7/4/2018 incorrect bytes
     if (firstFourBytes != RIFF_HEADER) {
-      return WEBP;
+      return UNKNOWN;
     }
     // Bytes 4 - 7 contain length information. Skip these.
     reader.skip(4);
