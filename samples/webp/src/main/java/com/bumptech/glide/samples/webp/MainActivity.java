@@ -8,7 +8,6 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Adapter;
 import android.widget.Button;
 import android.widget.ImageView;
 
@@ -72,7 +71,7 @@ public class MainActivity extends Activity {
 
     @Override
     public int getItemCount() {
-      return 1;
+      return 500;
     }
   }
 

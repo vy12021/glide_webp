@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 /**
  * Reads frame data from a WEBP image source and decodes it into individual frames for animation
@@ -46,6 +47,7 @@ public class StandardWebpDecoder implements WebpDecoder {
 
   private WebpHeaderParser parser;
 
+  private int[] scratchPixels;
   private Bitmap scratchBitmap;
   private Canvas scratchCanvas;
 
@@ -165,7 +167,8 @@ public class StandardWebpDecoder implements WebpDecoder {
 
   @Override
   public int getByteSize() {
-    return rawData.limit();
+    return rawData.limit() + bitmapProvider.getSize(scratchBitmap) +
+            (scratchPixels.length * BYTES_PER_INTEGER);
   }
 
   @Nullable
@@ -233,6 +236,10 @@ public class StandardWebpDecoder implements WebpDecoder {
   public void clear() {
     parser = null;
     header = null;
+    if (null != scratchPixels) {
+      bitmapProvider.release(scratchPixels);
+    }
+    scratchPixels = null;
     if (scratchBitmap != null) {
       bitmapProvider.release(scratchBitmap);
     }
@@ -276,14 +283,17 @@ public class StandardWebpDecoder implements WebpDecoder {
     for (WebpFrame frame : header.frames) {
       if (frame.dispose == WebpFrame.DISPOSAL_BACKGROUND || frame.blend == WebpFrame.BLEND_MUX) {
         savePrevious = true;
-        scratchBitmap = getNextBitmap();
-        scratchCanvas = new Canvas(scratchBitmap);
         break;
       }
     }
     this.sampleSize = sampleSize;
     downsampledWidth = header.getWidth() / this.sampleSize;
     downsampledHeight = header.getHeight() / this.sampleSize;
+    scratchPixels = bitmapProvider.obtainIntArray(downsampledWidth * downsampledHeight);
+    if (savePrevious) {
+      scratchBitmap = getNextBitmap();
+      scratchCanvas = new Canvas(scratchBitmap);
+    }
   }
 
   @NonNull
@@ -324,6 +334,7 @@ public class StandardWebpDecoder implements WebpDecoder {
         bitmapProvider.release(previousImage);
       }
       previousImage = null;
+      Arrays.fill(scratchPixels, COLOR_TRANSPARENT_BLACK);
       scratchCanvas.drawColor(COLOR_TRANSPARENT_BLACK, PorterDuff.Mode.CLEAR);
     }
 
@@ -350,11 +361,17 @@ public class StandardWebpDecoder implements WebpDecoder {
       }
       Log.e(TAG, currentFrame.toString());
       // Only update the requested area, not the whole canvas.
-      scratchCanvas.save();
+      scratchCanvas.setBitmap(scratchBitmap);
       scratchCanvas.clipRect(window_x, window_y, frame_w, frame_h);
+      if (null == previousFrame) {
+        scratchCanvas.drawBitmap(result, 0, 0, null);
+      }
+    } else {
       scratchCanvas.drawBitmap(result, 0, 0, null);
-      scratchCanvas.restore();
-      //result = scratchBitmap;
+      scratchBitmap.getPixels(scratchPixels, 0, downsampledWidth,
+              0, 0, downsampledWidth, downsampledHeight);
+      result.setPixels(scratchPixels, 0, downsampledWidth,
+              0, 0, downsampledWidth, downsampledHeight);
     }
 
     return result;

@@ -58,6 +58,11 @@ public interface WebpDecoder {
     Bitmap obtain(int width, int height, @NonNull Bitmap.Config config);
 
     /**
+     * get given Bitmap byte size.
+     */
+    int getSize(@NonNull Bitmap bitmap);
+
+    /**
      * Releases the given Bitmap back to the pool.
      */
     void release(@NonNull Bitmap bitmap);

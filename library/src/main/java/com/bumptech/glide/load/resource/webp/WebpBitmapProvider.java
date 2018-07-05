@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import com.bumptech.glide.gifdecoder.GifDecoder;
 import com.bumptech.glide.load.engine.bitmap_recycle.ArrayPool;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
+import com.bumptech.glide.util.Util;
 import com.bumptech.glide.webpdecoder.WebpDecoder;
 
 import java.nio.ByteBuffer;
@@ -43,6 +44,11 @@ public final class WebpBitmapProvider implements WebpDecoder.BitmapProvider {
   @Override
   public Bitmap obtain(int width, int height, @NonNull Bitmap.Config config) {
     return bitmapPool.getDirty(width, height, config);
+  }
+
+  @Override
+  public int getSize(@NonNull Bitmap bitmap) {
+    return Util.getBitmapByteSize(bitmap);
   }
 
   @Override
