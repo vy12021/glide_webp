@@ -22,7 +22,7 @@ public class WebpHeader {
   public static final int NETSCAPE_LOOP_COUNT_DOES_NOT_EXIST = -1;
 
   // current frame
-  WebpFrame currentFrame = new WebpFrame();
+  WebpFrame currentFrame = new WebpFrame(-1);
   // frames container
   final List<WebpFrame> frames = new ArrayList<>();
 
@@ -75,7 +75,7 @@ public class WebpHeader {
   }
 
   void newFrame() {
-    this.frames.add(this.currentFrame = new WebpFrame());
+    this.frames.add(this.currentFrame = new WebpFrame(frameCount));
   }
 
   /**

@@ -1,6 +1,7 @@
 package com.bumptech.glide.annotation.compiler;
 
 import static com.bumptech.glide.annotation.GlideOption.OVERRIDE_EXTEND;
+import static com.bumptech.glide.annotation.compiler.ProcessorUtil.checkResult;
 import static com.bumptech.glide.annotation.compiler.ProcessorUtil.nonNull;
 
 import com.bumptech.glide.annotation.GlideExtension;
@@ -30,7 +31,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -77,8 +77,6 @@ final class RequestOptionsGenerator {
   private static final String REQUEST_OPTIONS_SIMPLE_NAME = "RequestOptions";
   static final String REQUEST_OPTIONS_QUALIFIED_NAME =
       REQUEST_OPTIONS_PACKAGE_NAME + "." + REQUEST_OPTIONS_SIMPLE_NAME;
-  private static final ClassName CHECK_RESULT_CLASS_NAME =
-      ClassName.get("android.support.annotation", "CheckResult");
 
   private final ProcessingEnvironment processingEnvironment;
   private final ClassName requestOptionsName;
@@ -197,19 +195,19 @@ final class RequestOptionsGenerator {
   private MethodSpec generateRequestOptionOverride(ExecutableElement methodToOverride) {
     MethodSpec.Builder result = ProcessorUtil.overriding(methodToOverride)
         .returns(glideOptionsName)
-        .addModifiers(Modifier.FINAL)
-        .addCode(CodeBlock.builder()
-            .add("return ($T) super.$N(", glideOptionsName, methodToOverride.getSimpleName())
-            .add(FluentIterable.from(methodToOverride.getParameters())
-                .transform(new Function<VariableElement, String>() {
-                  @Override
-                  public String apply(VariableElement input) {
-                    return input.getSimpleName().toString();
-                  }
-                })
-                .join(Joiner.on(", ")))
-            .add(");\n")
-            .build());
+        .addModifiers(Modifier.FINAL);
+    result.addCode(CodeBlock.builder()
+        .add("return ($T) super.$N(", glideOptionsName, methodToOverride.getSimpleName())
+        .add(FluentIterable.from(result.build().parameters)
+            .transform(new Function<ParameterSpec, String>() {
+              @Override
+              public String apply(ParameterSpec input) {
+                return input.name;
+              }
+            })
+            .join(Joiner.on(", ")))
+        .add(");\n")
+        .build());
 
     if (methodToOverride.getSimpleName().toString().equals("transforms")) {
       result
@@ -254,24 +252,25 @@ final class RequestOptionsGenerator {
         .returns(glideOptionsName);
 
     // The 0th element is expected to be a RequestOptions object.
-    List<? extends VariableElement> parameters =
+    List<? extends VariableElement> paramElements =
         element.getParameters().subList(1, element.getParameters().size());
-    builder.addParameters(ProcessorUtil.getParameters(parameters));
+    List<ParameterSpec> parameters = ProcessorUtil.getParameters(paramElements);
+    builder.addParameters(parameters);
 
     String extensionRequestOptionsArgument;
     if (overrideType == OVERRIDE_EXTEND) {
       builder
           .addJavadoc(
-              processorUtil.generateSeeMethodJavadoc(requestOptionsName, methodName, parameters))
+              processorUtil.generateSeeMethodJavadoc(requestOptionsName, methodName, paramElements))
           .addAnnotation(Override.class);
 
       List<Object> methodArgs = new ArrayList<>();
       methodArgs.add(element.getSimpleName().toString());
       StringBuilder methodLiterals = new StringBuilder();
       if (!parameters.isEmpty()) {
-        for (VariableElement variable : parameters) {
+        for (ParameterSpec parameter : parameters) {
           methodLiterals.append("$L, ");
-          methodArgs.add(variable.getSimpleName().toString());
+          methodArgs.add(parameter.name);
         }
         methodLiterals = new StringBuilder(
             methodLiterals.substring(0, methodLiterals.length() - 2));
@@ -291,9 +290,9 @@ final class RequestOptionsGenerator {
     args.add(element.getSimpleName().toString());
     args.add(extensionRequestOptionsArgument);
     if (!parameters.isEmpty()) {
-      for (VariableElement variable : parameters) {
+      for (ParameterSpec parameter : parameters) {
         code.append("$L, ");
-        args.add(variable.getSimpleName().toString());
+        args.add(parameter.name);
       }
     }
     code = new StringBuilder(code.substring(0, code.length() - 2));
@@ -301,7 +300,7 @@ final class RequestOptionsGenerator {
     builder.addStatement(code.toString(), args.toArray(new Object[0]));
 
     builder
-        .addAnnotation(AnnotationSpec.builder(CHECK_RESULT_CLASS_NAME).build())
+        .addAnnotation(checkResult())
         .addAnnotation(nonNull());
 
     List<MethodAndStaticVar> result = new ArrayList<>();
@@ -326,9 +325,10 @@ final class RequestOptionsGenerator {
         .returns(glideOptionsName);
 
     // The 0th element is expected to be a RequestOptions object.
-    List<? extends VariableElement> parameters =
+    List<? extends VariableElement> paramElements =
         element.getParameters().subList(1, element.getParameters().size());
-    builder.addParameters(ProcessorUtil.getParameters(parameters));
+    List<ParameterSpec> parameters = ProcessorUtil.getParameters(paramElements);
+    builder.addParameters(parameters);
 
     // Generates the String and list of arguments to pass in when calling this method or super.
     // IE centerCrop(context) creates methodLiterals="%L" and methodArgs=[centerCrop, context].
@@ -336,9 +336,9 @@ final class RequestOptionsGenerator {
     methodArgs.add(element.getSimpleName().toString());
     StringBuilder methodLiterals = new StringBuilder();
     if (!parameters.isEmpty()) {
-      for (VariableElement variable : parameters) {
+      for (ParameterSpec parameter : parameters) {
         methodLiterals.append("$L, ");
-        methodArgs.add(variable.getSimpleName().toString());
+        methodArgs.add(parameter.name);
       }
       methodLiterals = new StringBuilder(methodLiterals.substring(0, methodLiterals.length() - 2));
     }
@@ -353,7 +353,7 @@ final class RequestOptionsGenerator {
       String callSuper = "super.$L(" + methodLiterals + ")";
       builder.addStatement(callSuper, methodArgs.toArray(new Object[0]))
           .addJavadoc(processorUtil.generateSeeMethodJavadoc(
-              requestOptionsName, methodName, parameters))
+              requestOptionsName, methodName, paramElements))
           .addAnnotation(Override.class);
     }
 
@@ -364,9 +364,9 @@ final class RequestOptionsGenerator {
     args.add(element.getSimpleName().toString());
     args.add("this");
     if (!parameters.isEmpty()) {
-      for (VariableElement variable : parameters) {
+      for (ParameterSpec parameter : parameters) {
         code.append("$L, ");
-        args.add(variable.getSimpleName().toString());
+        args.add(parameter.name);
       }
     }
     code = new StringBuilder(code.substring(0, code.length() - 2));
@@ -374,7 +374,7 @@ final class RequestOptionsGenerator {
     builder.addStatement(code.toString(), args.toArray(new Object[0]));
 
     builder.addStatement("return this")
-        .addAnnotation(AnnotationSpec.builder(CHECK_RESULT_CLASS_NAME).build())
+        .addAnnotation(checkResult())
         .addAnnotation(nonNull());
 
     List<MethodAndStaticVar> result = new ArrayList<>();
@@ -446,9 +446,8 @@ final class RequestOptionsGenerator {
             .addJavadoc(processorUtil.generateSeeMethodJavadoc(staticMethod))
             .returns(glideOptionsName);
 
-    List<? extends VariableElement> parameters = staticMethod.getParameters();
     StringBuilder createNewOptionAndCall = createNewOptionAndCall(memoize, methodSpecBuilder,
-        parameters, "new $T().$N(", ProcessorUtil.getParameters(staticMethod));
+        "new $T().$N(", ProcessorUtil.getParameters(staticMethod));
 
     FieldSpec requiredStaticField = null;
     if (memoize) {
@@ -483,7 +482,7 @@ final class RequestOptionsGenerator {
     }
 
     methodSpecBuilder
-        .addAnnotation(AnnotationSpec.builder(CHECK_RESULT_CLASS_NAME).build())
+        .addAnnotation(checkResult())
         .addAnnotation(nonNull());
 
     return new MethodAndStaticVar(methodSpecBuilder.build(), requiredStaticField);
@@ -535,7 +534,7 @@ final class RequestOptionsGenerator {
     parameters = parameters.subList(1, parameters.size());
 
     StringBuilder createNewOptionAndCall = createNewOptionAndCall(memoize, methodSpecBuilder,
-        parameters, "new $T().$L(", ProcessorUtil.getParameters(parameters));
+        "new $T().$L(", ProcessorUtil.getParameters(parameters));
 
     FieldSpec requiredStaticField = null;
     if (memoize) {
@@ -569,19 +568,19 @@ final class RequestOptionsGenerator {
           TypeVariableName.get(typeParameterElement.getSimpleName().toString()));
     }
 
-    methodSpecBuilder.addAnnotation(AnnotationSpec.builder(CHECK_RESULT_CLASS_NAME).build());
+    methodSpecBuilder.addAnnotation(checkResult());
 
     return new MethodAndStaticVar(methodSpecBuilder.build(), requiredStaticField);
   }
 
   private StringBuilder createNewOptionAndCall(boolean memoize,
       MethodSpec.Builder methodSpecBuilder,
-      List<? extends VariableElement> parameters, String start, List<ParameterSpec> specs) {
+      String start, List<ParameterSpec> specs) {
     StringBuilder createNewOptionAndCall = new StringBuilder(start);
-    if (!parameters.isEmpty()) {
+    if (!specs.isEmpty()) {
       methodSpecBuilder.addParameters(specs);
-      for (VariableElement parameter : parameters) {
-        createNewOptionAndCall.append(parameter.getSimpleName().toString());
+      for (ParameterSpec parameter : specs) {
+        createNewOptionAndCall.append(parameter.name);
         // use the Application Context to avoid memory leaks.
         if (memoize && isAndroidContext(parameter)) {
           createNewOptionAndCall.append(".getApplicationContext()");
@@ -595,9 +594,8 @@ final class RequestOptionsGenerator {
     return createNewOptionAndCall;
   }
 
-  private boolean isAndroidContext(VariableElement variableElement) {
-    Element element = processingEnvironment.getTypeUtils().asElement(variableElement.asType());
-    return element.toString().equals("android.content.Context");
+  private boolean isAndroidContext(ParameterSpec parameter) {
+    return parameter.type.toString().equals("android.content.Context");
   }
 
   @Nullable

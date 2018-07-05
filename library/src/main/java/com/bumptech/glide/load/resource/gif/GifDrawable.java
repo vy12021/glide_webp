@@ -25,7 +25,8 @@ import java.nio.ByteBuffer;
 /**
  * An animated {@link android.graphics.drawable.Drawable} that plays the frames of an animated GIF.
  */
-public class GifDrawable extends Drawable implements GifFrameLoader.FrameCallback, Animatable {
+public class GifDrawable extends Drawable implements GifFrameLoader.FrameCallback,
+    Animatable {
   /**
    * A constant indicating that an animated drawable should loop continuously.
    */

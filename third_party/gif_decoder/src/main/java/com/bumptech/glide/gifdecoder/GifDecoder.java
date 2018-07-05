@@ -102,10 +102,10 @@ public interface GifDecoder {
   /**
    * Gets display duration for specified frame.
    *
-   * @param index int index of frame.
+   * @param n int index of frame.
    * @return delay in milliseconds.
    */
-  int getDelay(int index);
+  int getDelay(int n);
 
   /**
    * Gets display duration for the upcoming frame in ms.

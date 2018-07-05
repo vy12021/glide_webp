@@ -11,12 +11,6 @@ import java.lang.annotation.RetentionPolicy;
  * @see <a href="https://www.w3.org/Graphics/GIF/spec-gif89a.txt">GIF 89a Specification</a>
  */
 class GifFrame {
-
-  /**
-   * Dispose method (animation only). Indicates how the area used by the current
-   * frame is to be treated before rendering the next frame on the canvas.
-   */
-
   /**
    * GIF Disposal Method meaning take no action.
    * <p><b>GIF89a</b>: <i>No disposal specified.

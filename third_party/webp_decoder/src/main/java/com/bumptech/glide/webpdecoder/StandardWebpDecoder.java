@@ -2,6 +2,8 @@ package com.bumptech.glide.webpdecoder;
 
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
+import android.graphics.Canvas;
+import android.graphics.PorterDuff;
 import android.support.annotation.ColorInt;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
@@ -13,8 +15,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-
-import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_PREVIOUS;
 
 /**
  * Reads frame data from a WEBP image source and decodes it into individual frames for animation
@@ -32,11 +32,6 @@ import static com.bumptech.glide.webpdecoder.WebpFrame.DISPOSAL_PREVIOUS;
 public class StandardWebpDecoder implements WebpDecoder {
   private static final String TAG = StandardWebpDecoder.class.getSimpleName();
 
-  /** Maximum pixel stack size for decoding LZW compressed data. */
-  private static final int MAX_STACK_SIZE = 4 * 1024;
-
-  private static final int NULL_CODE = -1;
-
   private static final int INITIAL_FRAME_POINTER = -1;
 
   private static final int BYTES_PER_INTEGER = Integer.SIZE / 8;
@@ -51,7 +46,9 @@ public class StandardWebpDecoder implements WebpDecoder {
 
   private WebpHeaderParser parser;
 
-  private int[] mainPixels;
+  private Bitmap scratchBitmap;
+  private Canvas scratchCanvas;
+
   private int framePointer;
   private WebpHeader header;
   private Bitmap previousImage;
@@ -61,8 +58,6 @@ public class StandardWebpDecoder implements WebpDecoder {
   private int sampleSize;
   private int downsampledHeight;
   private int downsampledWidth;
-  @Nullable
-  private Boolean isFirstFrameTransparent;
   @NonNull
   private Bitmap.Config bitmapConfig = Config.ARGB_8888;
 
@@ -238,12 +233,17 @@ public class StandardWebpDecoder implements WebpDecoder {
   public void clear() {
     parser = null;
     header = null;
+    if (scratchBitmap != null) {
+      bitmapProvider.release(scratchBitmap);
+    }
+    scratchBitmap = null;
+    scratchCanvas.setBitmap(null);
+    scratchCanvas = null;
     if (previousImage != null) {
       bitmapProvider.release(previousImage);
     }
     previousImage = null;
     rawData = null;
-    isFirstFrameTransparent = null;
     nativeReleaseParser(nativeWebpParserPointer);
     nativeWebpParserPointer = 0;
   }
@@ -254,7 +254,8 @@ public class StandardWebpDecoder implements WebpDecoder {
   }
 
   @Override
-  public synchronized void setData(@NonNull WebpHeader header, @NonNull ByteBuffer byteBuffer, int sampleSize) {
+  public synchronized void setData(@NonNull WebpHeader header,
+                                   @NonNull ByteBuffer byteBuffer, int sampleSize) {
     if (sampleSize <= 0) {
       throw new IllegalArgumentException("Sample size must be >0, not: " + sampleSize);
     }
@@ -273,15 +274,16 @@ public class StandardWebpDecoder implements WebpDecoder {
     // No point in specially saving an old frame if we're never going to use it.
     savePrevious = false;
     for (WebpFrame frame : header.frames) {
-      if (frame.dispose == DISPOSAL_PREVIOUS) {
+      if (frame.dispose == WebpFrame.DISPOSAL_BACKGROUND || frame.blend == WebpFrame.BLEND_MUX) {
         savePrevious = true;
+        scratchBitmap = getNextBitmap();
+        scratchCanvas = new Canvas(scratchBitmap);
         break;
       }
     }
     this.sampleSize = sampleSize;
     downsampledWidth = header.getWidth() / this.sampleSize;
     downsampledHeight = header.getHeight() / this.sampleSize;
-    mainPixels = bitmapProvider.obtainIntArray(downsampledWidth * downsampledHeight);
   }
 
   @NonNull
@@ -316,50 +318,50 @@ public class StandardWebpDecoder implements WebpDecoder {
    * disposition codes).
    */
   private Bitmap setPixels(WebpFrame currentFrame, WebpFrame previousFrame) {
-    Bitmap result = previousImage;
     // clear all pixels when meet first frame and drop prev image from last loop
     if (previousFrame == null) {
       if (previousImage != null) {
         bitmapProvider.release(previousImage);
       }
-    } else {
-      if (previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND ||
-              currentFrame.blend == WebpFrame.BLEND_NONE) {
-        // glScissor() takes window coordinates (0,0 at bottom left).
-        int window_x, window_y;
-        int frame_w, frame_h;
-        if (previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) {
-          // Clear the previous frame rectangle.
-          window_x = previousFrame.offsetX;
-          window_y = header.canvasHeight - previousFrame.offsetY - previousFrame.height;
-          frame_w = previousFrame.width;
-          frame_h = previousFrame.height;
-        } else {  // curr->blend_method == WEBP_MUX_NO_BLEND.
-          // We simulate no-blending behavior by first clearing the current frame
-          // rectangle (to a checker-board) and then alpha-blending against it.
-          window_x = currentFrame.offsetX;
-          window_y = header.canvasHeight - currentFrame.offsetY - currentFrame.height;
-          frame_w = currentFrame.width;
-          frame_h = currentFrame.height;
-        }
-        // Only update the requested area, not the whole canvas.
-        Log.e(TAG, "window_x: " + window_x + "; window_y: " + window_y +
-                "; frame_w: " + frame_w + "; frame_h: " + frame_h);
-      }
+      previousImage = null;
+      scratchCanvas.drawColor(COLOR_TRANSPARENT_BLACK, PorterDuff.Mode.CLEAR);
     }
-    result = previousImage = getNextBitmap();
-    decodeBitmapData(currentFrame, result);
+
+    Bitmap result = getNextBitmap();
+    nativeGetWebpFrame(this.nativeWebpParserPointer, result, getCurrentFrameIndex() + 1);
+
+    if (((null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) ||
+            currentFrame.blend == WebpFrame.BLEND_NONE)) {
+      int window_x, window_y;
+      int frame_w, frame_h;
+      if (null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) {
+        // Clear the previous frame rectangle.
+        window_x = previousFrame.offsetX;
+        window_y = header.canvasHeight - previousFrame.offsetY - previousFrame.height;
+        frame_w = previousFrame.width;
+        frame_h = previousFrame.height;
+      } else {  // curr->blend_method == WEBP_MUX_NO_BLEND.
+        // We simulate no-blending behavior by first clearing the current frame
+        // rectangle (to a checker-board) and then alpha-blending against it.
+        window_x = currentFrame.offsetX;
+        window_y = header.canvasHeight - currentFrame.offsetY - currentFrame.height;
+        frame_w = currentFrame.width;
+        frame_h = currentFrame.height;
+      }
+      Log.e(TAG, currentFrame.toString());
+      // Only update the requested area, not the whole canvas.
+      scratchCanvas.save();
+      scratchCanvas.clipRect(window_x, window_y, frame_w, frame_h);
+      scratchCanvas.drawBitmap(result, 0, 0, null);
+      scratchCanvas.restore();
+      //result = scratchBitmap;
+    }
 
     return result;
   }
 
-  private void decodeBitmapData(WebpFrame frame, Bitmap bitmap) {
-    nativeGetWebpFrame(this.nativeWebpParserPointer, bitmap, getCurrentFrameIndex() + 1);
-  }
-
   private Bitmap getNextBitmap() {
-    Bitmap.Config config = isFirstFrameTransparent == null || isFirstFrameTransparent
-        ? Bitmap.Config.ARGB_8888 : bitmapConfig;
+    Bitmap.Config config = header.hasAlpha ? Bitmap.Config.ARGB_8888 : bitmapConfig;
     Bitmap result = bitmapProvider.obtain(downsampledWidth, downsampledHeight, config);
     result.setHasAlpha(true);
     return result;
@@ -375,11 +377,6 @@ public class StandardWebpDecoder implements WebpDecoder {
 
   private native static int nativeGetWebpFrame(long nativeWebpParserPointer,
                                                @NonNull Bitmap dst, @IntRange(from = 1) int index);
-
-  private native static int[] nativeGetWebpFrameByBytes(long nativeWebpParserPointer,
-                                                        @NonNull byte[] dst, int size,
-                                                        int stride, int scaledWidth, int scaledHeight,
-                                                        @IntRange(from = 1) int index);
 
   private native static void nativeReleaseParser(long nativeWebpParserPointer);
 

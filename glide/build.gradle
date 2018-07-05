@@ -4,7 +4,7 @@ apply plugin: 'java'
 
 // The paths of Android projects that should be included in the jar and javadoc.
 static def getAndroidPathsForJar() {
-    [':third_party:gif_decoder', ':library']
+    [':third_party:gif_decoder', ':third_party:webp_decoder', ':library']
 }
 
 // The paths of Java projects that should be included in the jar and javadoc.

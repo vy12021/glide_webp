@@ -33,8 +33,8 @@ import java.util.List;
  *
  * <p> Any calls to {@link View#setTag(Object)}} on a View given to this class will result in
  * excessive allocations and and/or {@link IllegalArgumentException}s. If you must call {@link
- * View#setTag(Object)} on a view, consider using {@link BaseTarget} or {@link SimpleTarget}
- * instead. </p>
+ * View#setTag(Object)} on a view, use {@link #setTagId(int)} to specify a custom tag for Glide to
+ * use.
  *
  * <p> Subclasses must call super in {@link #onLoadCleared(Drawable)} </p>
  *
@@ -126,7 +126,7 @@ public abstract class ViewTarget<T extends View, Z> extends BaseTarget<Z> {
   @SuppressWarnings("WeakerAccess")
   @Synthetic void resumeMyRequest() {
     Request request = getRequest();
-    if (request != null && request.isPaused()) {
+    if (request != null && request.isCleared()) {
       request.begin();
     }
   }
@@ -134,9 +134,11 @@ public abstract class ViewTarget<T extends View, Z> extends BaseTarget<Z> {
   @SuppressWarnings("WeakerAccess")
   @Synthetic void pauseMyRequest() {
     Request request = getRequest();
-    if (request != null && !request.isCancelled() && !request.isPaused()) {
+    // If the Request were cleared by the developer, it would be null here. The only way it's
+    // present is if the developer hasn't previously cleared this Target.
+    if (request != null) {
       isClearedByUs = true;
-      request.pause();
+      request.clear();
       isClearedByUs = false;
     }
   }

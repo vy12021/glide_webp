@@ -165,60 +165,6 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeGetWebpFrame, jint)
     return 1;
 }
 
-JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeGetWebpFrameByBytes, jintArray)
-(JNIEnv *env, jclass class, jlong parser_pointer, jbyteArray pixels, jint size,
- jint scaled_width, jint scaled_height, jint stride, jint frame_index){
-    int index = frame_index;
-    WebpParser *webpParser;
-    if (parser_pointer) {
-        webpParser = (WebpParser *) parser_pointer;
-    } else {
-        LOGE("nativeGetWebpFrameByBytes", "Null pointer for demux");
-        return NULL;
-    }
-    if (!pixels || size == 0) {
-        LOGE("nativeGetWebpFrameByBytes", "nativeGetWebpFrameByBytes: Invalid pixel bytes!");
-        return NULL;
-    }
-    WebPDecoderConfig config;
-    WebPInitDecoderConfig(&config);
-    if(!WebPDemuxGetFrame(webpParser->demuxer, index, &webpParser->iterator)) {
-        LOGE("nativeGetWebpFrameByBytes", "WebPDemuxGetFrame() fail...");
-        return NULL;
-    }
-    VP8StatusCode status = WebPGetFeatures(webpParser->iterator.fragment.bytes,
-                                           webpParser->iterator.fragment.size, &config.input);
-    if(status != VP8_STATUS_OK) {
-        LOGE("nativeGetWebpFrameByBytes", "WebPGetFeatures() fail...");
-        return NULL;
-    }
-    //
-    config.options.flip = 0;
-    config.options.bypass_filtering = 1;
-    config.options.no_fancy_upsampling = 1;
-
-    config.options.use_scaling = 1;
-    config.options.scaled_width = scaled_width;
-    config.options.scaled_height = scaled_height;
-
-    config.output.width  = config.input.width;
-    config.output.height = config.input.height;
-    config.output.colorspace = MODE_rgbA;
-    config.output.is_external_memory = 1;
-    config.output.private_memory = pixels;
-    config.output.u.RGBA.stride  = stride;
-    config.output.u.RGBA.rgba  = config.output.private_memory;
-    config.output.u.RGBA.size  = config.output.height * (size_t) stride;
-    status = WebPDecode(webpParser->iterator.fragment.bytes,
-                        webpParser->iterator.fragment.size, &config);
-    WebPFreeDecBuffer(&config.output);
-    if (VP8_STATUS_OK != status) {
-        LOGE("nativeGetWebpFrameByBytes", "WebPDecode failed!");
-        return NULL;
-    }
-    return pixels;
-}
-
 JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeReleaseParser, void)
 (JNIEnv *env, jclass class, jlong demux_pointer) {
     if (demux_pointer) {

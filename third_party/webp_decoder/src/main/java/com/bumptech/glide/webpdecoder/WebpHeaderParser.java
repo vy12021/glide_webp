@@ -128,13 +128,13 @@ public class WebpHeaderParser {
   @interface WebpFeatureFlag {
   }
 
-  /** The minimum frame delay in hundredths of a second. */
-  static final int MIN_FRAME_DELAY = 2;
+  /** The minimum frame delay in ms. */
+  static final int MIN_FRAME_DELAY = 20;
   /**
-   * The default frame delay in hundredths of a second.
+   * The default frame delay in ms.
    * This is used for WEBPs with frame delays less than the minimum.
    */
-  static final int DEFAULT_FRAME_DELAY = 10;
+  static final int DEFAULT_FRAME_DELAY = 100;
 
   private static final int MAX_BLOCK_SIZE = 256;
   // Raw data read working array.
@@ -166,11 +166,11 @@ public class WebpHeaderParser {
     return this;
   }
 
-    ByteBuffer getRawData() {
-        return rawData;
-    }
+  ByteBuffer getRawData() {
+      return rawData;
+  }
 
-    public void clear() {
+  public void clear() {
     rawData = null;
     header = null;
   }
@@ -199,53 +199,6 @@ public class WebpHeaderParser {
    */
   public boolean isAnimated() {
     return header.frameCount > 1;
-  }
-
-  /**
-   * Main file parser. Reads WEBP content blocks.
-   */
-  private void readContents() {
-    readContents(Integer.MAX_VALUE /* maxFrames */);
-  }
-
-  /**
-   * Main file parser. Reads WEBP content blocks. Stops after reading maxFrames
-   */
-  private void readContents(int maxFrames) {
-    // Read WEBP file content blocks.
-    boolean done = false;
-    while (!(done || err() || header.frameCount > maxFrames)) {
-      int code = 0;
-      switch (code) {
-        case 0:
-          // The Graphic Control Extension is optional, but will always come first if it exists.
-          // If one did exist, there will be a non-null current frame which we should use.
-          // However if one did not exist, the current frame will be null
-          // and we must create it here. See issue #134.
-          if (header.currentFrame == null) {
-            header.currentFrame = new WebpFrame();
-          }
-          readBitmap();
-          break;
-        default:
-          header.status = STATUS_PARSE_ERROR;
-          done = true;
-      }
-    }
-  }
-
-  /**
-   * Reads next frame image.
-   */
-  private void readBitmap() {
-    // Save this as the decoding position pointer.
-    header.currentFrame.bufferFrameStart = rawData.position();
-    if (err()) {
-      return;
-    }
-    header.frameCount++;
-    // Add image to frame.
-    header.frames.add(header.currentFrame);
   }
 
   /**
@@ -328,7 +281,7 @@ public class WebpHeaderParser {
     }
 
   /**
-   * 解析riff头部区
+   * parse riff container tag
    */
   private void parseRIFFHeader() {
     int minSize = RIFF_HEADER_SIZE + CHUNK_HEADER_SIZE;
@@ -524,7 +477,7 @@ public class WebpHeaderParser {
 
   private void processANMFChunk(ChunkData chunkData) {
       chunkData.reset();
-      this.header.currentFrame = new WebpFrame();
+      this.header.currentFrame = new WebpFrame(-1);
       int offsetX, offsetY, width, height, duration, blend, dispose;
       if (this.header.currentFrame.isProcessingAnimFrame) {
           loge("ANMF chunk detected within another ANMF chunk.");
@@ -567,7 +520,8 @@ public class WebpHeaderParser {
           return;
       }
       this.header.newFrame();
-      this.header.currentFrame.duration = Math.max(75, duration);
+      this.header.currentFrame.duration =
+              duration < MIN_FRAME_DELAY ? DEFAULT_FRAME_DELAY : duration;
       this.header.currentFrame.dispose = dispose;
       this.header.currentFrame.blend = blend;
       this.header.currentFrame.isProcessingAnimFrame = true;
@@ -629,7 +583,8 @@ public class WebpHeaderParser {
               this.header.canvasWidth = vp8Info.width;
               this.header.canvasHeight = vp8Info.height;
               if (this.header.canvasWidth < 1 || this.header.canvasHeight < 1 ||
-                      this.header.canvasWidth > MAX_CANVAS_SIZE || this.header.canvasHeight > MAX_CANVAS_SIZE ||
+                      this.header.canvasWidth > MAX_CANVAS_SIZE ||
+                      this.header.canvasHeight > MAX_CANVAS_SIZE ||
                       this.header.canvasWidth * this.header.canvasHeight > MAX_IMAGE_AREA) {
                   logw("Invalid parameters in VP8/VP8L chunk. Out range of image size");
               }
@@ -642,7 +597,6 @@ public class WebpHeaderParser {
   }
 
     /**
-     * FIXME: 2018/7/2 none impl
      * Only parse enough of the data to retrieve the features.
      * line 222 in file webp_dec.c
      * Fetch '*width', '*height', '*has_alpha' and fill out 'headers' based on
@@ -671,35 +625,35 @@ public class WebpHeaderParser {
       chunkData.reset();
       int width = 0, height = 0;
       boolean hasAlpha = false;
+
       // ParseVP8Header
-      {
-          int minSize = TAG_SIZE + CHUNK_HEADER_SIZE;
-          if (chunkData.size < CHUNK_HEADER_SIZE) {
-              loge("processVp8Bitstream: Not enough data.");
+      int minSize = TAG_SIZE + CHUNK_HEADER_SIZE;
+      if (chunkData.size < CHUNK_HEADER_SIZE) {
+          loge("processVp8Bitstream: Not enough data.");
+          info.status = Vp8Info.VP8_STATUS_NOT_ENOUGH_DATA;
+          return info;
+      }
+      if (chunkData.id == ChunkId.VP8 || chunkData.id == ChunkId.VP8L) {
+          int size = getIntFrom(chunkData.start + TAG_SIZE);
+          if (this.header.riffSize > size && size > this.header.riffSize - minSize) {
+              loge("processVp8Bitstream: Inconsistent size information.");
+              info.status = Vp8Info.VP8_STATUS_BITSTREAM_ERROR;
+              return info;
+          }
+          if (size > chunkData.rawBuffer.remaining() - CHUNK_HEADER_SIZE) {
+              loge("processVp8Bitstream: Truncated bitstream.");
               info.status = Vp8Info.VP8_STATUS_NOT_ENOUGH_DATA;
               return info;
           }
-          if (chunkData.id == ChunkId.VP8 || chunkData.id == ChunkId.VP8L) {
-              int size = getIntFrom(chunkData.start + TAG_SIZE);
-              if (this.header.riffSize > size && size > this.header.riffSize - minSize) {
-                  loge("processVp8Bitstream: Inconsistent size information.");
-                  info.status = Vp8Info.VP8_STATUS_BITSTREAM_ERROR;
-                  return info;
-              }
-              if (size > chunkData.rawBuffer.remaining() - CHUNK_HEADER_SIZE) {
-                  loge("processVp8Bitstream: Truncated bitstream.");
-                  info.status = Vp8Info.VP8_STATUS_NOT_ENOUGH_DATA;
-                  return info;
-              }
-              info.format = ChunkId.VP8L == chunkData.id ? Vp8Format.Lossless : Vp8Format.Lossy;
-              chunkData.resetData();
-          } else {
-              // Raw VP8/VP8L bitstream (no header).
-              if (getByte() == VP8L_MAGIC_BYTE && (getByteFrom(chunkData.start + 4) >> 5) == 0) {
-                  info.format = Vp8Format.Lossless;
-              }
+          info.format = ChunkId.VP8L == chunkData.id ? Vp8Format.Lossless : Vp8Format.Lossy;
+          chunkData.resetData();
+      } else {
+          // Raw VP8/VP8L bitstream (no header).
+          if (getByte() == VP8L_MAGIC_BYTE && (getByteFrom(chunkData.start + 4) >> 5) == 0) {
+              info.format = Vp8Format.Lossless;
           }
       }
+
       if (chunkData.size > MAX_CHUNK_PAYLOAD) {
           loge("processVp8Bitstream: Chunk size large than max chunk payload");
           info.status = Vp8Info.VP8_STATUS_BITSTREAM_ERROR;

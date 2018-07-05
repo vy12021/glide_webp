@@ -111,7 +111,6 @@ public final class DefaultImageHeaderParser implements ImageHeaderParser {
 
     // WebP (reads up to 21 bytes). See https://developers.google.com/speed/webp/docs/riff_container
     // for details.
-    // FIXME: 7/4/2018 incorrect bytes
     if (firstFourBytes != RIFF_HEADER) {
       return UNKNOWN;
     }

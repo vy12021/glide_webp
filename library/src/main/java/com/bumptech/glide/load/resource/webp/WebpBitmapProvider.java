@@ -10,6 +10,8 @@ import com.bumptech.glide.load.engine.bitmap_recycle.ArrayPool;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.webpdecoder.WebpDecoder;
 
+import java.nio.ByteBuffer;
+
 /**
  * Implements {@link WebpDecoder.BitmapProvider} by wrapping Glide's
  * {@link BitmapPool}.

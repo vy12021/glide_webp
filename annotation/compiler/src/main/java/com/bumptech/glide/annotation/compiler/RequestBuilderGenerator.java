@@ -1,5 +1,6 @@
 package com.bumptech.glide.annotation.compiler;
 
+import static com.bumptech.glide.annotation.compiler.ProcessorUtil.checkResult;
 import static com.bumptech.glide.annotation.compiler.ProcessorUtil.nonNull;
 
 import com.bumptech.glide.annotation.GlideExtension;
@@ -33,7 +34,6 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
@@ -108,9 +108,8 @@ final class RequestBuilderGenerator {
   /** A set of method names to avoid overriding from RequestOptions. */
   private static final ImmutableSet<String> EXCLUDED_METHODS_FROM_BASE_REQUEST_OPTIONS =
       ImmutableSet.of("clone", "apply", "autoLock", "lock", "autoClone");
-  private static final ClassName CHECK_RESULT_CLASS_NAME =
-      ClassName.get("android.support.annotation", "CheckResult");
   private static final AnnotationSpec NON_NULL = AnnotationSpec.builder(nonNull()).build();
+  private static final AnnotationSpec CHECK_RESULT = AnnotationSpec.builder(checkResult()).build();
 
   private final ProcessingEnvironment processingEnv;
   private final ProcessorUtil processorUtil;
@@ -214,20 +213,20 @@ final class RequestBuilderGenerator {
         ParameterizedTypeName.get(generatedRequestBuilderClassName, ClassName.get(typeArgument));
 
     MethodSpec.Builder builder = ProcessorUtil.overriding(methodToOverride)
-        .returns(generatedRequestBuilderOfType)
-        .addCode(CodeBlock.builder()
-            .add("return ($T) super.$N(",
-                generatedRequestBuilderOfType, methodToOverride.getSimpleName())
-            .add(FluentIterable.from(methodToOverride.getParameters())
-                .transform(new Function<VariableElement, String>() {
-                  @Override
-                  public String apply(VariableElement input) {
-                    return input.getSimpleName().toString();
-                  }
-                })
-                .join(Joiner.on(", ")))
-            .add(");\n")
-            .build());
+        .returns(generatedRequestBuilderOfType);
+    builder.addCode(CodeBlock.builder()
+        .add("return ($T) super.$N(",
+            generatedRequestBuilderOfType, methodToOverride.getSimpleName())
+        .add(FluentIterable.from(builder.build().parameters)
+            .transform(new Function<ParameterSpec, String>() {
+              @Override
+              public String apply(ParameterSpec input) {
+                return input.name;
+              }
+            })
+            .join(Joiner.on(", ")))
+        .add(");\n")
+        .build());
 
     for (AnnotationMirror mirror : methodToOverride.getAnnotationMirrors()) {
       builder = builder.addAnnotation(AnnotationSpec.get(mirror));
@@ -449,7 +448,7 @@ final class RequestBuilderGenerator {
         = ParameterizedTypeName.get(generatedRequestBuilderClassName, ClassName.get(File.class));
     return MethodSpec.methodBuilder("getDownloadOnlyRequest")
         .addAnnotation(Override.class)
-        .addAnnotation(AnnotationSpec.builder(CHECK_RESULT_CLASS_NAME).build())
+        .addAnnotation(CHECK_RESULT)
         .addAnnotation(NON_NULL)
         .returns(generatedRequestBuilderOfFile)
         .addModifiers(Modifier.PROTECTED)

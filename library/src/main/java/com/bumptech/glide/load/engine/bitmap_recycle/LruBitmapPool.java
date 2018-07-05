@@ -185,6 +185,7 @@ public class LruBitmapPool implements BitmapPool {
       Log.v(TAG, "Get bitmap=" + strategy.logBitmap(width, height, config));
     }
     dump();
+
     return result;
   }
 

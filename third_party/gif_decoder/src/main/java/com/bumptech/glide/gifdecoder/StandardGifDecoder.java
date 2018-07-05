@@ -467,8 +467,8 @@ public class StandardGifDecoder implements GifDecoder {
         }
       } else if (previousFrame.dispose == DISPOSAL_PREVIOUS && previousImage != null) {
         // Start with the previous frame
-        previousImage.getPixels(dest, 0, downsampledWidth, 0, 0, downsampledWidth,
-            downsampledHeight);
+        previousImage.getPixels(dest, 0, downsampledWidth,
+                0, 0, downsampledWidth, downsampledHeight);
       }
     }
 
@@ -487,13 +487,14 @@ public class StandardGifDecoder implements GifDecoder {
       if (previousImage == null) {
         previousImage = getNextBitmap();
       }
-      previousImage.setPixels(dest, 0, downsampledWidth, 0, 0, downsampledWidth,
-          downsampledHeight);
+      previousImage.setPixels(dest, 0, downsampledWidth,
+              0, 0, downsampledWidth, downsampledHeight);
     }
 
     // Set pixels for current image.
     Bitmap result = getNextBitmap();
-    result.setPixels(dest, 0, downsampledWidth, 0, 0, downsampledWidth, downsampledHeight);
+    result.setPixels(dest, 0, downsampledWidth,
+            0, 0, downsampledWidth, downsampledHeight);
     return result;
   }
 
@@ -766,8 +767,9 @@ public class StandardGifDecoder implements GifDecoder {
         } else if (code == endOfInformation) {
           break;
         } else if (oldCode == NULL_CODE) {
-          pixelStack[top] = suffix[code];
-          ++top;
+          mainPixels[pi] = suffix[code];
+          ++pi;
+          ++i;
           oldCode = code;
           first = code;
           continue;

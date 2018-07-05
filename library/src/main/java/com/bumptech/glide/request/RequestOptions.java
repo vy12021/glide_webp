@@ -31,8 +31,6 @@ import com.bumptech.glide.load.resource.bitmap.VideoDecoder;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.load.resource.gif.GifDrawableTransformation;
 import com.bumptech.glide.load.resource.gif.GifOptions;
-import com.bumptech.glide.load.resource.webp.WebpDrawable;
-import com.bumptech.glide.load.resource.webp.WebpDrawableTransformation;
 import com.bumptech.glide.signature.EmptySignature;
 import com.bumptech.glide.util.CachedHashCodeArrayMap;
 import com.bumptech.glide.util.Preconditions;
@@ -563,6 +561,8 @@ public class RequestOptions implements Cloneable {
   /**
    * Sets an {@link Drawable} to display while a resource is loading.
    *
+   * <p>Replaces any previous calls to this method or {@link #placeholder(int)}.
+   *
    * @param drawable The drawable to display as a placeholder.
    * @return This request builder.
    */
@@ -576,12 +576,17 @@ public class RequestOptions implements Cloneable {
     this.placeholderDrawable = drawable;
     fields |= PLACEHOLDER;
 
+    placeholderId = 0;
+    fields &= ~PLACEHOLDER_ID;
+
     return selfOrThrowIfLocked();
   }
 
   /**
    * Sets an Android resource id for a {@link Drawable} resource to
    * display while a resource is loading.
+   *
+   * <p>Replaces any previous calls to this method or {@link #placeholder(Drawable)}
    *
    * @param resourceId The id of the resource to use as a placeholder
    * @return This request builder.
@@ -596,6 +601,9 @@ public class RequestOptions implements Cloneable {
     this.placeholderId = resourceId;
     fields |= PLACEHOLDER_ID;
 
+    placeholderDrawable = null;
+    fields &= ~PLACEHOLDER;
+
     return selfOrThrowIfLocked();
   }
 
@@ -605,6 +613,8 @@ public class RequestOptions implements Cloneable {
    *
    * <p> If a fallback is not set, null models will cause the error drawable to be displayed. If the
    * error drawable is not set, the placeholder will be displayed.
+   *
+   * <p>Replaces any previous calls to this method or {@link #fallback(int)}.
    *
    * @see #placeholder(Drawable)
    * @see #placeholder(int)
@@ -622,6 +632,9 @@ public class RequestOptions implements Cloneable {
     this.fallbackDrawable = drawable;
     fields |= FALLBACK;
 
+    fallbackId = 0;
+    fields &= ~FALLBACK_ID;
+
     return selfOrThrowIfLocked();
   }
 
@@ -631,6 +644,8 @@ public class RequestOptions implements Cloneable {
    *
    * <p> If a fallback is not set, null models will cause the error drawable to be displayed. If
    * the error drawable is not set, the placeholder will be displayed.
+   *
+   * <p>Replaces any previous calls to this method or {@link #fallback(Drawable)}.
    *
    * @see #placeholder(Drawable)
    * @see #placeholder(int)
@@ -648,11 +663,16 @@ public class RequestOptions implements Cloneable {
     this.fallbackId = resourceId;
     fields |= FALLBACK_ID;
 
+    fallbackDrawable = null;
+    fields &= ~FALLBACK;
+
     return selfOrThrowIfLocked();
   }
 
   /**
    * Sets a {@link Drawable} to display if a load fails.
+   *
+   * <p>Replaces any previous calls to this method or {@link #error(int)}
    *
    * @param drawable The drawable to display.
    * @return This request builder.
@@ -667,11 +687,16 @@ public class RequestOptions implements Cloneable {
     this.errorPlaceholder = drawable;
     fields |= ERROR_PLACEHOLDER;
 
+    this.errorId = 0;
+    fields &= ~ERROR_ID;
+
     return selfOrThrowIfLocked();
   }
 
   /**
    * Sets a resource to display if a load fails.
+   *
+   * <p>Replaces any previous calls to this method or {@link #error(Drawable)}
    *
    * @param resourceId The id of the resource to use as a placeholder.
    * @return This request builder.
@@ -684,6 +709,9 @@ public class RequestOptions implements Cloneable {
     }
     this.errorId = resourceId;
     fields |= ERROR_ID;
+
+    this.errorPlaceholder = null;
+    fields &= ~ERROR_PLACEHOLDER;
 
     return selfOrThrowIfLocked();
   }
@@ -1170,8 +1198,7 @@ public class RequestOptions implements Cloneable {
   /**
    * Applies the given {@link Transformation} for
    * {@link Bitmap Bitmaps} to the default types ({@link Bitmap},
-   * {@link android.graphics.drawable.BitmapDrawable},
-   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable}, and
+   * {@link android.graphics.drawable.BitmapDrawable}, and
    * {@link com.bumptech.glide.load.resource.gif.GifDrawable})
    * and throws an exception if asked to transform an unknown type.
    *
@@ -1192,8 +1219,7 @@ public class RequestOptions implements Cloneable {
   /**
    * Applies the given {@link Transformation}s in the given order for
    * {@link Bitmap Bitmaps} to the default types ({@link Bitmap},
-   * {@link android.graphics.drawable.BitmapDrawable},
-   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable}, and
+   * {@link android.graphics.drawable.BitmapDrawable}, and
    * {@link com.bumptech.glide.load.resource.gif.GifDrawable})
    * and throws an exception if asked to transform an unknown type.
    *
@@ -1214,8 +1240,7 @@ public class RequestOptions implements Cloneable {
   /**
    * Applies the given {@link Transformation} for
    * {@link Bitmap Bitmaps} to the default types ({@link Bitmap},
-   * {@link android.graphics.drawable.BitmapDrawable},
-   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable}, and
+   * {@link android.graphics.drawable.BitmapDrawable}, and
    * {@link com.bumptech.glide.load.resource.gif.GifDrawable}) and ignores unknown types.
    *
    * <p>This will override previous calls to {@link #dontTransform()}.
@@ -1249,7 +1274,6 @@ public class RequestOptions implements Cloneable {
     // affecting the functionality.
     transform(BitmapDrawable.class, drawableTransformation.asBitmapDrawable(), isRequired);
     transform(GifDrawable.class, new GifDrawableTransformation(transformation), isRequired);
-    transform(WebpDrawable.class, new WebpDrawableTransformation(transformation), isRequired);
     return selfOrThrowIfLocked();
   }
 
@@ -1397,15 +1421,23 @@ public class RequestOptions implements Cloneable {
     }
     if (isSet(other.fields, ERROR_PLACEHOLDER)) {
       errorPlaceholder = other.errorPlaceholder;
+      errorId = 0;
+      fields &= ~ERROR_ID;
     }
     if (isSet(other.fields, ERROR_ID)) {
       errorId = other.errorId;
+      errorPlaceholder = null;
+      fields &= ~ERROR_PLACEHOLDER;
     }
     if (isSet(other.fields, PLACEHOLDER)) {
       placeholderDrawable = other.placeholderDrawable;
+      placeholderId = 0;
+      fields &= ~PLACEHOLDER_ID;
     }
     if (isSet(other.fields, PLACEHOLDER_ID)) {
       placeholderId = other.placeholderId;
+      placeholderDrawable = null;
+      fields &= ~PLACEHOLDER;
     }
     if (isSet(other.fields, IS_CACHEABLE)) {
       isCacheable = other.isCacheable;
@@ -1422,9 +1454,13 @@ public class RequestOptions implements Cloneable {
     }
     if (isSet(other.fields, FALLBACK)) {
       fallbackDrawable = other.fallbackDrawable;
+      fallbackId = 0;
+      fields &= ~FALLBACK_ID;
     }
     if (isSet(other.fields, FALLBACK_ID)) {
       fallbackId = other.fallbackId;
+      fallbackDrawable = null;
+      fields &= ~FALLBACK;
     }
     if (isSet(other.fields, THEME)) {
       theme = other.theme;

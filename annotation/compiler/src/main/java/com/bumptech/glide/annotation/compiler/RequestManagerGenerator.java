@@ -1,5 +1,6 @@
 package com.bumptech.glide.annotation.compiler;
 
+import static com.bumptech.glide.annotation.compiler.ProcessorUtil.checkResult;
 import static com.bumptech.glide.annotation.compiler.ProcessorUtil.nonNull;
 
 import com.bumptech.glide.annotation.GlideExtension;
@@ -12,6 +13,7 @@ import com.google.common.collect.Lists;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.MethodSpec.Builder;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
@@ -60,8 +62,6 @@ final class RequestManagerGenerator {
       "com.bumptech.glide.manager.Lifecycle";
   private static final String REQUEST_MANAGER_TREE_NODE_QUALIFIED_NAME =
       "com.bumptech.glide.manager.RequestManagerTreeNode";
-  private static final ClassName CHECK_RESULT_CLASS_NAME =
-      ClassName.get("android.support.annotation", "CheckResult");
   private static final ClassName CONTEXT_CLASS_NAME =
       ClassName.get("android.content", "Context");
 
@@ -163,7 +163,7 @@ final class RequestManagerGenerator {
     return MethodSpec.methodBuilder("as")
         .addModifiers(Modifier.PUBLIC)
         .addAnnotation(Override.class)
-        .addAnnotation(AnnotationSpec.builder(CHECK_RESULT_CLASS_NAME).build())
+        .addAnnotation(checkResult())
         .addAnnotation(nonNull())
         .addTypeVariable(TypeVariableName.get("ResourceType"))
         .returns(requestBuilderOfResourceType)
@@ -192,10 +192,12 @@ final class RequestManagerGenerator {
       String generatedPackageName, ExecutableElement method) {
     ClassName generatedRequestManagerName =
         ClassName.get(generatedPackageName, GENERATED_REQUEST_MANAGER_SIMPLE_NAME);
-    return ProcessorUtil.overriding(method)
+    Builder returns = ProcessorUtil.overriding(method)
         .addAnnotation(nonNull())
-        .returns(generatedRequestManagerName)
-        .addCode(ProcessorUtil.generateCastingSuperCall(generatedRequestManagerName, method))
+        .returns(generatedRequestManagerName);
+    return returns
+        .addCode(ProcessorUtil.generateCastingSuperCall(
+            generatedRequestManagerName, returns.build()))
         .build();
   }
 
@@ -240,10 +242,9 @@ final class RequestManagerGenerator {
         ParameterizedTypeName.get(generatedRequestBuilderClassName, ClassName.get(typeArgument));
 
     MethodSpec.Builder builder = ProcessorUtil.overriding(methodToOverride)
-        .returns(generatedRequestBuilderOfType)
-        .addCode(
-            ProcessorUtil.generateCastingSuperCall(
-                generatedRequestBuilderOfType, methodToOverride));
+        .returns(generatedRequestBuilderOfType);
+    builder.addCode(
+        ProcessorUtil.generateCastingSuperCall(generatedRequestBuilderOfType, builder.build()));
 
     for (AnnotationMirror mirror : methodToOverride.getAnnotationMirrors()) {
       builder.addAnnotation(AnnotationSpec.get(mirror));
@@ -287,7 +288,7 @@ final class RequestManagerGenerator {
         .returns(parameterizedTypeName)
         .addJavadoc(processorUtil.generateSeeMethodJavadoc(extensionMethod))
         .addAnnotation(nonNull())
-        .addAnnotation(AnnotationSpec.builder(CHECK_RESULT_CLASS_NAME).build())
+        .addAnnotation(checkResult())
         .addStatement(
             "$T requestBuilder = this.as($T.class)", parameterizedTypeName, returnTypeClassName)
         .addStatement("$T.$N(requestBuilder)",
@@ -309,7 +310,7 @@ final class RequestManagerGenerator {
         .returns(parameterizedTypeName)
         .addJavadoc(processorUtil.generateSeeMethodJavadoc(extensionMethod))
         .addAnnotation(nonNull())
-        .addAnnotation(AnnotationSpec.builder(CHECK_RESULT_CLASS_NAME).build())
+        .addAnnotation(checkResult())
         .addStatement(
             "return ($T) $T.$N(this.as($T.class))",
             parameterizedTypeName,

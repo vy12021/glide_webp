@@ -20,12 +20,6 @@ public class WebpFrame {
    * The area used by the graphic must be restored to the background color.</i></p>
    */
   static final int DISPOSAL_BACKGROUND = 1;
-  /**
-   * WEBP Disposal Method meaning clear canvas to frame before last.
-   * The decoder is required to restore the area overwritten by the graphic
-   * with what was there prior to rendering the graphic.</i></p>
-   */
-  static final int DISPOSAL_PREVIOUS = 2;
 
   /**
    * Dispose method (animation only). Indicates how the area used by the current
@@ -33,10 +27,9 @@ public class WebpFrame {
    *
    * @see #DISPOSAL_NONE
    * @see #DISPOSAL_BACKGROUND
-   * @see #DISPOSAL_PREVIOUS
    */
   @Retention(RetentionPolicy.SOURCE)
-  @IntDef(value = {DISPOSAL_NONE, DISPOSAL_BACKGROUND, DISPOSAL_PREVIOUS})
+  @IntDef(value = {DISPOSAL_NONE, DISPOSAL_BACKGROUND})
   private @interface WebPMuxAnimDispose {
   }
 
@@ -60,6 +53,11 @@ public class WebpFrame {
   private @interface WebPMuxAnimBlend {
   }
 
+  WebpFrame(int index) {
+    this.index = index;
+  }
+
+  final int index;
   /**
    * offset
    */
@@ -87,10 +85,6 @@ public class WebpFrame {
   @WebPMuxAnimBlend
   public int blend = BLEND_NONE;
   /**
-   * Transparency Index.
-   */
-  public int transIndex;
-  /**
    * duration, in milliseconds, to next frame.
    */
   public int duration = 40;
@@ -113,7 +107,8 @@ public class WebpFrame {
   @Override
   public String toString() {
     return "WebpFrame{" +
-            "offsetX=" + offsetX +
+            "frameIndex=" + index +
+            ", offsetX=" + offsetX +
             ", offsetY=" + offsetY +
             ", width=" + width +
             ", height=" + height +

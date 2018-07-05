@@ -5,6 +5,7 @@ import android.support.annotation.IntDef;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+
 import java.io.InputStream;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -193,8 +194,8 @@ public interface WebpDecoder {
   int getTotalIterationCount();
 
   /**
-   * Returns an estimated byte size for this decoder based on the data provided to {@link
-   * #setData(WebpHeader)}, as well as internal buffers.
+   * Returns an estimated byte size for this decoder based on the data provided to
+   * {@link #setData(WebpHeader, ByteBuffer)}, as well as internal buffers.
    */
   int getByteSize();
 
