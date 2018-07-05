@@ -140,6 +140,9 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeGetWebpFrame, jint)
     config.options.flip = 0;
     config.options.bypass_filtering = 1;
     config.options.no_fancy_upsampling = 1;
+    config.options.use_scaling = 1;
+    config.options.scaled_width = bitmapInfo.width;
+    config.options.scaled_height = bitmapInfo.height;
 
     config.output.width  = config.input.width;
     config.output.height = config.input.height;
@@ -149,8 +152,8 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeGetWebpFrame, jint)
     AndroidBitmap_lockPixels(env, bitmap, &pixels);
     config.output.private_memory = pixels;
     config.output.u.RGBA.stride  = bitmapInfo.stride;
-    config.output.u.RGBA.rgba  = config.output.private_memory;
-    config.output.u.RGBA.size  = config.output.height * bitmapInfo.stride;
+    config.output.u.RGBA.rgba  = pixels;
+    config.output.u.RGBA.size  = bitmapInfo.height * bitmapInfo.stride;
     status = WebPDecode(webpParser->iterator.fragment.bytes,
                         webpParser->iterator.fragment.size, &config);
     AndroidBitmap_unlockPixels(env, bitmap);

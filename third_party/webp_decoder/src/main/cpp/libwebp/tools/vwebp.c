@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(WEBP_HAVE_GL)
+//#if defined(WEBP_HAVE_GL)
 
 #if defined(HAVE_GLUT_GLUT_H)
 #include <GLUT/glut.h>
@@ -40,7 +40,7 @@
 #include "src/webp/decode.h"
 #include "src/webp/demux.h"
 
-#include "examples/example_util.h"
+#include "example_util.h"
 #include "imageio/imageio_util.h"
 
 #if defined(_MSC_VER) && _MSC_VER < 1900
@@ -169,8 +169,7 @@ static int Decode(void) {   // Fills kParams.curr_frame
 
   ClearPreviousPic();
   output_buffer->colorspace = MODE_RGBA;
-  ok = (WebPDecode(curr->fragment.bytes, curr->fragment.size,
-                   config) == VP8_STATUS_OK);
+  ok = (WebPDecode(curr->fragment.bytes, curr->fragment.size, config) == VP8_STATUS_OK);
   if (!ok) {
     fprintf(stderr, "Decoding of frame #%d failed!\n", curr->frame_num);
   } else {

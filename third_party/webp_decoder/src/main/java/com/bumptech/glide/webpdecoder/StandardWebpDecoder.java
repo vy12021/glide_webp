@@ -51,6 +51,7 @@ public class StandardWebpDecoder implements WebpDecoder {
 
   private WebpHeaderParser parser;
 
+  private int[] mainPixels;
   private int framePointer;
   private WebpHeader header;
   private Bitmap previousImage;
@@ -278,8 +279,9 @@ public class StandardWebpDecoder implements WebpDecoder {
       }
     }
     this.sampleSize = sampleSize;
-    downsampledWidth = header.getWidth() / sampleSize;
-    downsampledHeight = header.getHeight() / sampleSize;
+    downsampledWidth = header.getWidth() / this.sampleSize;
+    downsampledHeight = header.getHeight() / this.sampleSize;
+    mainPixels = bitmapProvider.obtainIntArray(downsampledWidth * downsampledHeight);
   }
 
   @NonNull
@@ -314,16 +316,38 @@ public class StandardWebpDecoder implements WebpDecoder {
    * disposition codes).
    */
   private Bitmap setPixels(WebpFrame currentFrame, WebpFrame previousFrame) {
+    Bitmap result = previousImage;
     // clear all pixels when meet first frame and drop prev image from last loop
     if (previousFrame == null) {
       if (previousImage != null) {
         bitmapProvider.release(previousImage);
       }
-      previousImage = null;
+    } else {
+      if (previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND ||
+              currentFrame.blend == WebpFrame.BLEND_NONE) {
+        // glScissor() takes window coordinates (0,0 at bottom left).
+        int window_x, window_y;
+        int frame_w, frame_h;
+        if (previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) {
+          // Clear the previous frame rectangle.
+          window_x = previousFrame.offsetX;
+          window_y = header.canvasHeight - previousFrame.offsetY - previousFrame.height;
+          frame_w = previousFrame.width;
+          frame_h = previousFrame.height;
+        } else {  // curr->blend_method == WEBP_MUX_NO_BLEND.
+          // We simulate no-blending behavior by first clearing the current frame
+          // rectangle (to a checker-board) and then alpha-blending against it.
+          window_x = currentFrame.offsetX;
+          window_y = header.canvasHeight - currentFrame.offsetY - currentFrame.height;
+          frame_w = currentFrame.width;
+          frame_h = currentFrame.height;
+        }
+        // Only update the requested area, not the whole canvas.
+        Log.e(TAG, "window_x: " + window_x + "; window_y: " + window_y +
+                "; frame_w: " + frame_w + "; frame_h: " + frame_h);
+      }
     }
-
-    // Set pixels for current image.
-    Bitmap result = getNextBitmap();
+    result = previousImage = getNextBitmap();
     decodeBitmapData(currentFrame, result);
 
     return result;

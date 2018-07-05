@@ -72,7 +72,7 @@ public class MainActivity extends Activity {
 
     @Override
     public int getItemCount() {
-      return 300;
+      return 1;
     }
   }
 
