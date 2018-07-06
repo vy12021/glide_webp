@@ -362,10 +362,9 @@ public class StandardWebpDecoder implements WebpDecoder {
       Log.e(TAG, currentFrame.toString());
       // Only update the requested area, not the whole canvas.
       scratchCanvas.setBitmap(scratchBitmap);
+      // scratchCanvas.drawColor(this.header.bgColor, PorterDuff.Mode.CLEAR);
       scratchCanvas.clipRect(window_x, window_y, frame_w, frame_h);
-      if (null == previousFrame) {
-        scratchCanvas.drawBitmap(result, 0, 0, null);
-      }
+      scratchCanvas.drawBitmap(result, 0, 0, null);
     } else {
       scratchCanvas.drawBitmap(result, 0, 0, null);
       scratchBitmap.getPixels(scratchPixels, 0, downsampledWidth,

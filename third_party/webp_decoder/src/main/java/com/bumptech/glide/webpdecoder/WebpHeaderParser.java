@@ -732,11 +732,11 @@ public class WebpHeaderParser {
               }
           }
       }
-      if (this.header.canvasWidth != width || this.header.canvasHeight != height) {
+      /*if (this.header.canvasWidth != width || this.header.canvasHeight != height) {
           loge("processVp8Bitstream:  Validates image size coherency failed!");
           info.status = Vp8Info.VP8_STATUS_BITSTREAM_ERROR;
           return info;
-      }
+      }*/
       info.width = width;
       info.height = height;
       info.hasAlpha = hasAlpha && this.header.hasAlpha;

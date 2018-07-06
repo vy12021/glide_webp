@@ -5,24 +5,18 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 
 public class HeaderParserTest {
 
     @Test
     public void parseHead() {
-        File webpFile = new File("C:\\Users\\Leo\\Develop\\Android\\Project\\glide-webp-support\\samples\\webp\\src\\main\\assets\\test_3.webp");
+        File webpFile = new File("D:\\Develop\\Projects\\Android\\glide-webp-support\\samples\\webp\\src\\main\\assets\\test_1.webp");
         WebpHeaderParser parser = new WebpHeaderParser();
         RandomAccessFile raf = null;
         try {
             raf = new RandomAccessFile(webpFile, "r");
-            byte[] buffer = new byte[4096];
-            int readLength;
-            ByteBuffer byteBuffer = ByteBuffer.allocate((int) raf.length());
-            while (-1 != (readLength = raf.read(buffer))) {
-                byteBuffer.put(buffer, 0, readLength);
-            }
-            parser.setData(byteBuffer);
+            parser.setData(raf.getChannel().map(FileChannel.MapMode.READ_ONLY, 0, raf.length()));
             parser.parseHeader();
         } catch (Exception e) {
             e.printStackTrace();

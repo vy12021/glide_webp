@@ -12,8 +12,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.webpdecoder.Helper;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,11 +26,10 @@ import java.nio.ByteBuffer;
  */
 public class MainActivity extends Activity {
 
-    static {
-        System.loadLibrary("webpparser");
-    }
-
   private static final String TAG = "WebpActivity";
+
+  private static final String assetFile = "test_1.webp";
+
   private String dir;
   private RecyclerView recyclerView;
 
@@ -50,7 +49,6 @@ public class MainActivity extends Activity {
     });
     dir = getCacheDir().getAbsolutePath();
     copyFile();
-    Helper.setStdoutFile("/storage/emulated/0/glide.log");
   }
 
   private void reload() {
@@ -66,12 +64,12 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
-      Glide.with(MainActivity.this).load(dir + "/test_3.webp").into((ImageView) holder.itemView);
+      Glide.with(MainActivity.this).load(dir + File.separator + assetFile).into((ImageView) holder.itemView);
     }
 
     @Override
     public int getItemCount() {
-      return 500;
+      return 1;
     }
   }
 
@@ -108,8 +106,8 @@ public class MainActivity extends Activity {
     OutputStream os = null;
     InputStream is = null;
     try {
-      os = new FileOutputStream(dir + "/test_3.webp");
-      is = getAssets().open("test_3.webp");
+      os = new FileOutputStream(dir + File.separator + assetFile);
+      is = getAssets().open(assetFile);
       byte[] buffer = new byte[4096];
       int len;
       while ((len = is.read(buffer)) != -1) {
