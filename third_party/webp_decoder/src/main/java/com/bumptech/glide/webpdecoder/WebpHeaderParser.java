@@ -9,7 +9,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 
 import static com.bumptech.glide.webpdecoder.WebpDecoder.STATUS_BITSTREAM_ERROR;
 import static com.bumptech.glide.webpdecoder.WebpDecoder.STATUS_INVALID_PARAM;
@@ -146,7 +145,7 @@ public class WebpHeaderParser {
   public WebpHeaderParser setData(@NonNull ByteBuffer data) {
     reset();
     if (!data.isDirect()) {
-        throw new IllegalArgumentException("ByteBuffer must directed");
+        throw new IllegalArgumentException("ByteBuffer must be direct allocated");
     }
     rawData = data.asReadOnlyBuffer();
     rawData.position(0);
@@ -156,8 +155,8 @@ public class WebpHeaderParser {
 
   public WebpHeaderParser setData(@Nullable byte[] data) {
     if (data != null) {
-        ByteBuffer buffer = ByteBuffer.allocateDirect(data.length);
-        buffer.put(data);
+      ByteBuffer buffer = ByteBuffer.allocateDirect(data.length);
+      buffer.put(data);
       setData(buffer);
     } else {
       rawData = null;
@@ -171,13 +170,13 @@ public class WebpHeaderParser {
   }
 
   public void clear() {
+    rawData.clear();
     rawData = null;
     header = null;
   }
 
   private void reset() {
     rawData = null;
-    Arrays.fill(block, (byte) 0);
     header = new WebpHeader();
   }
 
@@ -248,7 +247,7 @@ public class WebpHeaderParser {
                 this.header.status = STATUS_PARSE_ERROR;
                 return;
             }
-            if (iccp && this.header.chunksMark[ChunkId.ICCP.ordinal()]) {
+            if (!iccp && this.header.chunksMark[ChunkId.ICCP.ordinal()]) {
                 loge( "Unexpected ICCP chunk detected.");
                 this.header.status = STATUS_PARSE_ERROR;
                 return;
@@ -409,6 +408,7 @@ public class WebpHeaderParser {
               this.header.currentFrame.isProcessingAnimFrame = false;
           } else if (this.header.currentFrame.frameSize > chunkData.size) {
               this.header.currentFrame.frameSize = chunkData.size;
+              this.header.currentFrame.isProcessingAnimFrame = false;
           } else {
               loge("Truncated data detected when parsing ANMF chunk.");
               this.header.status = STATUS_TRUNCATED_DATA;
@@ -520,13 +520,15 @@ public class WebpHeaderParser {
           return;
       }
       this.header.newFrame();
+      this.header.currentFrame.isProcessingAnimFrame = true;
+      this.header.currentFrame.foundAlphaSubchunk = false;
+      this.header.currentFrame.foundImageSubchunk = false;
       this.header.currentFrame.duration =
               duration < MIN_FRAME_DELAY ? DEFAULT_FRAME_DELAY : duration;
       this.header.currentFrame.dispose = dispose;
       this.header.currentFrame.blend = blend;
-      this.header.currentFrame.isProcessingAnimFrame = true;
-      this.header.currentFrame.foundAlphaSubchunk = false;
-      this.header.currentFrame.foundImageSubchunk = false;
+      this.header.currentFrame.offsetX = offsetX;
+      this.header.currentFrame.offsetY = offsetY;
       this.header.currentFrame.width = width;
       this.header.currentFrame.height = height;
       this.header.currentFrame.frameSize = chunkData.size - CHUNK_HEADER_SIZE - ANMF_CHUNK_SIZE;

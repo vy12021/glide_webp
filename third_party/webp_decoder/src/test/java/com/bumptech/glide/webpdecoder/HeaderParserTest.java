@@ -11,7 +11,7 @@ public class HeaderParserTest {
 
     @Test
     public void parseHead() {
-        File webpFile = new File("D:\\Develop\\Projects\\Android\\glide-webp-support\\samples\\webp\\src\\main\\assets\\test_1.webp");
+        File webpFile = new File("C:\\Users\\Leo\\Develop\\Android\\Project\\glide-webp-support\\samples\\webp\\src\\main\\assets\\test_3.webp");
         WebpHeaderParser parser = new WebpHeaderParser();
         RandomAccessFile raf = null;
         try {

@@ -103,7 +103,7 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeInitWebpParser, jlong
     WebpParser* parser = (WebpParser *)malloc(sizeof(WebpParser));
     parser->demuxer = WebPDemux(&webPData);
     if (!parser->demuxer) {
-        LOGE("webp_parser", "nativeInitWebpDemux failed!");
+        LOGE("webp_parser", "nativeInitWebpParser failed!");
     }
     return (jlong) parser;
 }
@@ -115,7 +115,7 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeGetWebpFrame, jint)
     if (parser_pointer) {
         webpParser = (WebpParser *) parser_pointer;
     } else {
-        LOGE("webp_parser", "Null pointer for demux");
+        LOGE("webp_parser", "Null pointer of parser");
         return 0;
     }
     AndroidBitmapInfo bitmapInfo;
@@ -136,7 +136,7 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeGetWebpFrame, jint)
         LOGE("nativeGetWebpFrame", "WebPGetFeatures() fail...");
         return 0;
     }
-    //
+
     config.options.flip = 0;
     config.options.bypass_filtering = 1;
     config.options.no_fancy_upsampling = 1;

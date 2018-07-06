@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.PorterDuff;
+import android.graphics.Rect;
 import android.support.annotation.ColorInt;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
@@ -51,9 +52,9 @@ public class StandardWebpDecoder implements WebpDecoder {
   private Bitmap scratchBitmap;
   private Canvas scratchCanvas;
 
+  private Rect src = new Rect(), dst = new Rect();
   private int framePointer;
   private WebpHeader header;
-  private Bitmap previousImage;
   private boolean savePrevious;
   @WebpDecodeStatus
   private int status;
@@ -197,8 +198,12 @@ public class StandardWebpDecoder implements WebpDecoder {
     if (previousIndex >= 0) {
       previousFrame = header.frames.get(previousIndex);
     }
+    WebpFrame nextFrame = null;
+    if (framePointer < getFrameCount() - 1) {
+      nextFrame = header.frames.get(framePointer + 1);
+    }
     // Transfer pixel data to image.
-    return setPixels(currentFrame, previousFrame);
+    return setPixels(currentFrame, previousFrame, nextFrame);
   }
 
   @Override
@@ -234,8 +239,6 @@ public class StandardWebpDecoder implements WebpDecoder {
 
   @Override
   public void clear() {
-    parser = null;
-    header = null;
     if (null != scratchPixels) {
       bitmapProvider.release(scratchPixels);
     }
@@ -246,13 +249,13 @@ public class StandardWebpDecoder implements WebpDecoder {
     scratchBitmap = null;
     scratchCanvas.setBitmap(null);
     scratchCanvas = null;
-    if (previousImage != null) {
-      bitmapProvider.release(previousImage);
-    }
-    previousImage = null;
-    rawData = null;
+    Log.e(TAG, "nativeReleaseParser: " + nativeWebpParserPointer);
     nativeReleaseParser(nativeWebpParserPointer);
     nativeWebpParserPointer = 0;
+    rawData.clear();
+    rawData = null;
+    parser = null;
+    header = null;
   }
 
   @Override
@@ -278,6 +281,7 @@ public class StandardWebpDecoder implements WebpDecoder {
     if (0 == (this.nativeWebpParserPointer = nativeInitWebpParser(rawData))) {
       throw new RuntimeException("nativeInitWebpParser failed");
     }
+    Log.e(TAG, "nativeInitWebpParser: " + nativeWebpParserPointer);
     // No point in specially saving an old frame if we're never going to use it.
     savePrevious = false;
     for (WebpFrame frame : header.frames) {
@@ -286,7 +290,7 @@ public class StandardWebpDecoder implements WebpDecoder {
         break;
       }
     }
-    this.sampleSize = sampleSize;
+    this.sampleSize = 5;
     downsampledWidth = header.getWidth() / this.sampleSize;
     downsampledHeight = header.getHeight() / this.sampleSize;
     scratchPixels = bitmapProvider.obtainIntArray(downsampledWidth * downsampledHeight);
@@ -327,46 +331,51 @@ public class StandardWebpDecoder implements WebpDecoder {
    * Creates new frame image from current data (and previous frames as specified by their
    * disposition codes).
    */
-  private Bitmap setPixels(WebpFrame currentFrame, WebpFrame previousFrame) {
+  private Bitmap setPixels(WebpFrame currentFrame, WebpFrame previousFrame, WebpFrame nextFrame) {
     // clear all pixels when meet first frame and drop prev image from last loop
     if (previousFrame == null) {
-      if (previousImage != null) {
-        bitmapProvider.release(previousImage);
-      }
-      previousImage = null;
       Arrays.fill(scratchPixels, COLOR_TRANSPARENT_BLACK);
       scratchCanvas.drawColor(COLOR_TRANSPARENT_BLACK, PorterDuff.Mode.CLEAR);
     }
 
     Bitmap result = getNextBitmap();
+    long before = System.nanoTime();
     nativeGetWebpFrame(this.nativeWebpParserPointer, result, getCurrentFrameIndex() + 1);
+    Log.e(TAG, "nativeGetWebpFrame cost: " + ((System.nanoTime() - before) / 1000000f) + " ms");
 
     if (((null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) ||
             currentFrame.blend == WebpFrame.BLEND_NONE)) {
-      int window_x, window_y;
-      int frame_w, frame_h;
+      int windowX, windowY;
+      int frameW, frameH;
       if (null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) {
         // Clear the previous frame rectangle.
-        window_x = previousFrame.offsetX;
-        window_y = header.canvasHeight - previousFrame.offsetY - previousFrame.height;
-        frame_w = previousFrame.width;
-        frame_h = previousFrame.height;
+        windowX = previousFrame.offsetX;
+        windowY = previousFrame.offsetY;
+        frameW = previousFrame.width;
+        frameH = previousFrame.height;
       } else {  // curr->blend_method == WEBP_MUX_NO_BLEND.
         // We simulate no-blending behavior by first clearing the current frame
         // rectangle (to a checker-board) and then alpha-blending against it.
-        window_x = currentFrame.offsetX;
-        window_y = header.canvasHeight - currentFrame.offsetY - currentFrame.height;
-        frame_w = currentFrame.width;
-        frame_h = currentFrame.height;
+        windowX = currentFrame.offsetX;
+        windowY = currentFrame.offsetY;
+        frameW = currentFrame.width;
+        frameH = currentFrame.height;
       }
       Log.e(TAG, currentFrame.toString());
       // Only update the requested area, not the whole canvas.
       scratchCanvas.setBitmap(scratchBitmap);
       // scratchCanvas.drawColor(this.header.bgColor, PorterDuff.Mode.CLEAR);
-      scratchCanvas.clipRect(window_x, window_y, frame_w, frame_h);
+      scratchCanvas.clipRect(windowX / sampleSize, windowY / sampleSize,
+              (windowX + frameW) / sampleSize, (windowY + frameH) / sampleSize);
       scratchCanvas.drawBitmap(result, 0, 0, null);
     } else {
-      scratchCanvas.drawBitmap(result, 0, 0, null);
+      scratchCanvas.save();
+      src.set(0, 0, result.getWidth(), result.getHeight());
+      dst.set(currentFrame.offsetX / sampleSize, currentFrame.offsetY / sampleSize,
+              (currentFrame.offsetX + currentFrame.width) / sampleSize,
+              (currentFrame.offsetY + currentFrame.height) / sampleSize);
+      scratchCanvas.drawBitmap(result, src, dst, null);
+      scratchCanvas.restore();
       scratchBitmap.getPixels(scratchPixels, 0, downsampledWidth,
               0, 0, downsampledWidth, downsampledHeight);
       result.setPixels(scratchPixels, 0, downsampledWidth,
