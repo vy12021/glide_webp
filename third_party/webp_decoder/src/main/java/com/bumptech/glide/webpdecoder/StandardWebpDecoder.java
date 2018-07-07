@@ -21,12 +21,12 @@ import java.util.Arrays;
 /**
  * Reads frame data from a WEBP image source and decodes it into individual frames for animation
  * purposes.  Image data can be read from either and InputStream source or a byte[].
- *
+ * <p>
  * <p>This class is optimized for running animations with the frames, there are no methods to get
  * individual frame images, only to decode the next frame in the animation sequence.  Instead, it
  * lowers its memory footprint by only housing the minimum data necessary to decode the next frame
  * in the animation sequence.
- *
+ * <p>
  * <p>The animation must be manually moved forward using {@link #advance()} before requesting the
  * next frame.  This method must also be called before you request the first frame or an error
  * will occur.
@@ -43,7 +43,9 @@ public class StandardWebpDecoder implements WebpDecoder {
 
   private final WebpDecoder.BitmapProvider bitmapProvider;
 
-  /** Raw WEBP data from input source. */
+  /**
+   * Raw WEBP data from input source.
+   */
   private ByteBuffer rawData;
 
   private WebpHeaderParser parser;
@@ -68,7 +70,7 @@ public class StandardWebpDecoder implements WebpDecoder {
   @SuppressWarnings("unused")
   public StandardWebpDecoder(@NonNull WebpDecoder.BitmapProvider provider,
                              WebpHeader webpHeader, ByteBuffer byteBuffer) {
-    this(provider, webpHeader,  byteBuffer,1);
+    this(provider, webpHeader, byteBuffer, 1);
   }
 
   public StandardWebpDecoder(@NonNull WebpDecoder.BitmapProvider provider,
@@ -178,8 +180,8 @@ public class StandardWebpDecoder implements WebpDecoder {
     if (header.frameCount <= 0 || framePointer < 0) {
       if (Log.isLoggable(TAG, Log.DEBUG)) {
         Log.d(TAG, "Unable to decode frame"
-            + ", frameCount=" + header.frameCount
-            + ", framePointer=" + framePointer
+                + ", frameCount=" + header.frameCount
+                + ", framePointer=" + framePointer
         );
       }
       status = STATUS_PARSE_ERROR;
@@ -290,7 +292,7 @@ public class StandardWebpDecoder implements WebpDecoder {
         break;
       }
     }
-    this.sampleSize = 5;
+    this.sampleSize = sampleSize;
     downsampledWidth = header.getWidth() / this.sampleSize;
     downsampledHeight = header.getHeight() / this.sampleSize;
     scratchPixels = bitmapProvider.obtainIntArray(downsampledWidth * downsampledHeight);
@@ -322,7 +324,7 @@ public class StandardWebpDecoder implements WebpDecoder {
   public void setDefaultBitmapConfig(@NonNull Bitmap.Config config) {
     if (config != Bitmap.Config.ARGB_8888 && config != Bitmap.Config.RGB_565) {
       throw new IllegalArgumentException("Unsupported format: " + config
-          + ", must be one of " + Bitmap.Config.ARGB_8888 + " or " + Bitmap.Config.RGB_565);
+              + ", must be one of " + Bitmap.Config.ARGB_8888 + " or " + Bitmap.Config.RGB_565);
     }
     bitmapConfig = config;
   }

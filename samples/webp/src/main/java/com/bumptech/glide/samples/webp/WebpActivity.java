@@ -1,5 +1,6 @@
 package com.bumptech.glide.samples.webp;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -13,25 +14,18 @@ import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Displays an Webp image loaded from an android raw resource.
  */
+@SuppressLint("Registered")
 public class WebpActivity extends Activity {
 
   private static final String TAG = "WebpActivity";
 
-  private static final String assetFile = "test_2.webp";
-
   List<String> webpUris = new ArrayList<>();
-  private String dir;
   private RecyclerView recyclerView;
 
   @Override
@@ -39,7 +33,7 @@ public class WebpActivity extends Activity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
     recyclerView = findViewById(R.id.recycler_view);
-    recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
+    recyclerView.setLayoutManager(new GridLayoutManager(this, 1));
     recyclerView.setAdapter(new Adapter());
     Button button = findViewById(R.id.btn_reload);
     button.setOnClickListener(new View.OnClickListener() {
@@ -48,8 +42,6 @@ public class WebpActivity extends Activity {
         reload();
       }
     });
-    dir = getCacheDir().getAbsolutePath();
-    copyFile();
     for (int i = 0; i <= 17; i++) {
       webpUris.add("http://www.teslaliu.com/webp (" + i + ").webp");
     }
@@ -63,7 +55,9 @@ public class WebpActivity extends Activity {
     @NonNull
     @Override
     public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-      return new Holder(new SquareImageView(parent.getContext()));
+      ImageView imageView = new SquareImageView(parent.getContext());
+      imageView.setPadding(0, 50, 0, 50);
+      return new Holder(imageView);
     }
 
     @Override
@@ -82,30 +76,6 @@ public class WebpActivity extends Activity {
 
     Holder(View itemView) {
       super(itemView);
-    }
-  }
-
-  private void copyFile() {
-    OutputStream os = null;
-    InputStream is = null;
-    try {
-      os = new FileOutputStream(dir + File.separator + assetFile);
-      is = getAssets().open(assetFile);
-      byte[] buffer = new byte[4096];
-      int len;
-      while ((len = is.read(buffer)) != -1) {
-        os.write(buffer, 0, len);
-      }
-      os.flush();
-    } catch (IOException e) {
-      e.printStackTrace();
-    } finally {
-      try {
-        if (null != os) os.close();
-        if (null != is) is.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
     }
   }
 

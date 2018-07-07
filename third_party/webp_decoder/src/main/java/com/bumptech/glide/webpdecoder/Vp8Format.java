@@ -5,8 +5,8 @@ package com.bumptech.glide.webpdecoder;
  */
 public enum Vp8Format {
 
-    Mixed,
-    Lossy,
-    Lossless;
+  Mixed,
+  Lossy,
+  Lossless;
 
 }

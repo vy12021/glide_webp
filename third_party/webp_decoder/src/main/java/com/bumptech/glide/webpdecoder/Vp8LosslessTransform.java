@@ -5,9 +5,9 @@ package com.bumptech.glide.webpdecoder;
  */
 public enum Vp8LosslessTransform {
 
-    Predictor,
-    CrossColor,
-    SubtractGreen,
-    ColorIndexing
+  Predictor,
+  CrossColor,
+  SubtractGreen,
+  ColorIndexing
 
 }

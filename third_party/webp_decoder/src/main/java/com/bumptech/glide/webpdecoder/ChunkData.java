@@ -7,23 +7,23 @@ import java.nio.ByteBuffer;
  */
 public class ChunkData {
 
-    // start position in whole ByteBuffer
-    public int start;
-    // chunk size
-    public int size;
-    // chunk type
-    public ChunkId id = ChunkId.UNKNOWN;
-    // data offset without chunk header
-    public int payloadOffset;
-    // raw buffer
-    public ByteBuffer rawBuffer;
+  // start position in whole ByteBuffer
+  public int start;
+  // chunk size
+  public int size;
+  // chunk type
+  public ChunkId id = ChunkId.UNKNOWN;
+  // data offset without chunk header
+  public int payloadOffset;
+  // raw buffer
+  public ByteBuffer rawBuffer;
 
-    public void reset() {
-        this.rawBuffer.position(start);
-    }
+  public void reset() {
+    this.rawBuffer.position(start);
+  }
 
-    public void resetData() {
-        this.rawBuffer.position(start + payloadOffset);
-    }
+  public void resetData() {
+    this.rawBuffer.position(start + payloadOffset);
+  }
 
 }

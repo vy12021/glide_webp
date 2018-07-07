@@ -46,6 +46,7 @@ public class WebpFrame {
   /**
    * Blend operation (animation only). Indicates how transparent pixels of the
    * current frame are blended with those of the previous canvas.
+   *
    * @see #BLEND_MUX
    */
   @Retention(RetentionPolicy.SOURCE)

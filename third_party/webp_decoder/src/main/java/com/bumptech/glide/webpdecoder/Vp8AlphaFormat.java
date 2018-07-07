@@ -5,10 +5,10 @@ package com.bumptech.glide.webpdecoder;
  */
 public enum Vp8AlphaFormat {
 
-    // no compression
-    NoneCompression,
-    // compressed but lossless
-    Lossless,
-    Invalid
+  // no compression
+  NoneCompression,
+  // compressed but lossless
+  Lossless,
+  Invalid
 
 }

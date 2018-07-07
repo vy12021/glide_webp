@@ -1,13 +1,13 @@
 package com.bumptech.glide.webpdecoder;
 
 /**
- * alpha subchunk filter method
+ * Alpha subchunk filter method
  */
 public enum Vp8AlphaFilter {
 
-    None,
-    Horizontal,
-    Vertical,
-    Gradient
+  None,
+  Horizontal,
+  Vertical,
+  Gradient
 
 }
