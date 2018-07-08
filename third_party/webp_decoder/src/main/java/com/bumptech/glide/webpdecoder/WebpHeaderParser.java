@@ -3,6 +3,7 @@ package com.bumptech.glide.webpdecoder;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -49,80 +50,83 @@ public class WebpHeaderParser {
   private static final String TAG = "WebpHeaderParser";
 
   // VP8 related constants.
-  static final int VP8_SIGNATURE = 0x9d012a;    // Signature in VP8 data.
-  static final int VP8_MAX_PARTITION0_SIZE = (1 << 19);   // max size of mode partition
-  static final int VP8_MAX_PARTITION_SIZE = (1 << 24);   // max size for token partition
-  static final int VP8_FRAME_HEADER_SIZE = 10;  // Size of the frame header within VP8 data.
+  static final int VP8_SIGNATURE              = 0x9d012a;    // Signature in VP8 data.
+  static final int VP8_MAX_PARTITION0_SIZE    = (1 << 19);   // max size of mode partition
+  static final int VP8_MAX_PARTITION_SIZE     = (1 << 24);   // max size for token partition
+  static final int VP8_FRAME_HEADER_SIZE      = 10;  // Size of the frame header within VP8 data.
 
   // VP8L related constants.
-  static final int VP8L_MAX_NUM_BIT_READ = 24;     // maximum number of bits (inclusive) the bit-reader can handle:
-  static final int VP8L_LBITS = 64;     // Number of bits prefetched (= bit-size of vp8l_val_t).
-  static final int VP8L_WBITS = 32;     // Minimum number of bytes ready after VP8LFillBitWindow.
-  static final int VP8L_SIGNATURE_SIZE = 1;      // VP8L signature size.
-  static final int VP8L_MAGIC_BYTE = 0x2f;   // VP8L signature byte.
-  static final int VP8L_IMAGE_SIZE_BITS = 14;     // Number of bits used to store
+  // maximum number of bits (inclusive) the bit-reader can handle:
+  static final int VP8L_MAX_NUM_BIT_READ      = 24;
+  // Number of bits prefetched (= bit-size of vp8l_val_t).
+  static final int VP8L_LBITS                 = 64;
+  // Minimum number of bytes ready after VP8LFillBitWindow.
+  static final int VP8L_WBITS                 = 32;
+  static final int VP8L_SIGNATURE_SIZE        = 1;      // VP8L signature size.
+  static final int VP8L_MAGIC_BYTE            = 0x2f;   // VP8L signature byte.
+  static final int VP8L_IMAGE_SIZE_BITS       = 14;     // Number of bits used to store
   // width and height.
-  static final int VP8L_VERSION_BITS = 3;      // 3 bits reserved for version.
-  static final int VP8L_VERSION = 0;      // version 0
-  static final int VP8L_FRAME_HEADER_SIZE = 5;      // Size of the VP8L frame header.
+  static final int VP8L_VERSION_BITS          = 3;      // 3 bits reserved for version.
+  static final int VP8L_VERSION               = 0;      // version 0
+  static final int VP8L_FRAME_HEADER_SIZE     = 5;      // Size of the VP8L frame header.
 
   // Alpha related constants.
-  static final int ALPHA_HEADER_LEN = 1;
-  static final int ALPHA_PREPROCESSED_LEVELS = 1;
+  static final int ALPHA_HEADER_LEN           = 1;
+  static final int ALPHA_PREPROCESSED_LEVELS  = 1;
 
   // Mux related constants.
-  static final int TAG_SIZE = 4;     // Size of a chunk tag (e.g. "VP8L").
-  static final int CHUNK_SIZE_BYTES = 4;     // Size needed to store chunk's size.
-  static final int CHUNK_HEADER_SIZE = 8;     // Size of a chunk header.
-  static final int RIFF_HEADER_SIZE = 12;    // Size of the RIFF header ("RIFFnnnnWEBP").
-  static final int ANMF_CHUNK_SIZE = 16;    // Size of an ANMF chunk.
-  static final int ANIM_CHUNK_SIZE = 6;     // Size of an ANIM chunk.
-  static final int VP8X_CHUNK_SIZE = 10;    // Size of a VP8X chunk.
+  static final int TAG_SIZE                   = 4;     // Size of a chunk tag (e.g. "VP8L").
+  static final int CHUNK_SIZE_BYTES           = 4;     // Size needed to store chunk's size.
+  static final int CHUNK_HEADER_SIZE          = 8;     // Size of a chunk header.
+  static final int RIFF_HEADER_SIZE           = 12;    // Size of the RIFF header ("RIFFnnnnWEBP").
+  static final int ANMF_CHUNK_SIZE            = 16;    // Size of an ANMF chunk.
+  static final int ANIM_CHUNK_SIZE            = 6;     // Size of an ANIM chunk.
+  static final int VP8X_CHUNK_SIZE            = 10;    // Size of a VP8X chunk.
 
-  static final int MAX_CANVAS_SIZE = (1 << 24);     // 24-bit max for VP8X width/height.
-  static final long MAX_IMAGE_AREA = (1L << 32);    // 32-bit max for width x height.
-  static final int MAX_LOOP_COUNT = (1 << 16);     // maximum value for loop-count
-  static final int MAX_DURATION = (1 << 24);     // maximum duration
-  static final int MAX_POSITION_OFFSET = (1 << 24);     // maximum frame x/y offset
+  static final int MAX_CANVAS_SIZE            = (1 << 24);     // 24-bit max for VP8X width/height.
+  static final long MAX_IMAGE_AREA            = (1L << 32);    // 32-bit max for width x height.
+  static final int MAX_LOOP_COUNT             = (1 << 16);     // maximum value for loop-count
+  static final int MAX_DURATION               = (1 << 24);     // maximum duration
+  static final int MAX_POSITION_OFFSET        = (1 << 24);     // maximum frame x/y offset
 
   // Maximum chunk payload is such that adding the header and padding won't
   // overflow a uint32_t.
-  static final long MAX_CHUNK_PAYLOAD = (MAX_IMAGE_AREA - CHUNK_HEADER_SIZE - 1);
+  static final long MAX_CHUNK_PAYLOAD         = (MAX_IMAGE_AREA - CHUNK_HEADER_SIZE - 1);
 
   /**
    * has animation, frame count > 1
    *
    * @see ChunkId#ANIM
    */
-  static final int ANIMATION_FLAG = 0x00000002;
+  static final int ANIMATION_FLAG     = 0x00000002;
   /**
    * has xmp trunk
    *
    * @see ChunkId#XMP
    */
-  static final int XMP_FLAG = 0x00000004;
+  static final int XMP_FLAG           = 0x00000004;
   /**
    * has exif meta info
    *
    * @see ChunkId#EXIF
    */
-  static final int EXIF_FLAG = 0x00000008;
+  static final int EXIF_FLAG          = 0x00000008;
   /**
    * has alpha channel
    *
    * @see ChunkId#ALPHA
    */
-  static final int ALPHA_FLAG = 0x00000010;
+  static final int ALPHA_FLAG         = 0x00000010;
   /**
    * has iccp
    *
    * @see ChunkId#ICCP
    */
-  static final int ICCP_FLAG = 0x00000020;
+  static final int ICCP_FLAG          = 0x00000020;
   /**
    * all flags
    */
-  static final int ALL_VALID_FLAGS = 0x0000003e;
+  static final int ALL_VALID_FLAGS    = 0x0000003e;
 
   /**
    * VP8X Feature Flags.
@@ -904,13 +908,16 @@ public class WebpHeaderParser {
   }
 
   private void loge(String msg) {
-    System.out.println("WebpHeaderParser: " + msg);
+    if (Log.isLoggable(TAG, Log.ERROR)) {
+      Log.e(TAG, msg);
+    }
   }
 
   private void logw(String msg) {
-    System.out.println("WebpHeaderParser: " + msg);
+    if (Log.isLoggable(TAG, Log.WARN)) {
+      Log.w(TAG, msg);
+    }
   }
-
   private boolean err() {
     return header.status != WebpDecoder.STATUS_OK;
   }

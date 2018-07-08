@@ -47,11 +47,11 @@ def getReleaseRepositoryUrl() {
 def getSnapshotRepositoryUrl() {
     return hasProperty('LOCAL') ? localMavenRepo()
             : hasProperty('SNAPSHOT_REPOSITORY_URL') ? SNAPSHOT_REPOSITORY_URL
-            : 'https://oss.sonatype.org/content/repositories/snapshots/'
+            : 'http://nexus3.dou-pai.com/repository/android-snapshot/'
 }
 
 def getRepositoryUsername() {
-    return hasProperty('USERNAME') ? USERNAME : (hasProperty('NEXUS_USERNAME') ? NEXUS_USERNAME : '')
+    return hasProperty('USERNAME') ? USERNAME : (hasProperty('NEXUS_USERNAME') ? NEXUS_USERNAME : 'liuyong')
 }
 
 def getRepositoryPassword() {

@@ -1,6 +1,7 @@
 package com.bumptech.glide.webpdecoder;
 
 import android.support.annotation.IntDef;
+import android.support.annotation.IntRange;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -14,12 +15,12 @@ public class WebpFrame {
    * WEBP Disposal Method meaning leave canvas from previous frame.
    * The graphic is to be left in place.</i></p>
    */
-  static final int DISPOSAL_NONE = 0;
+  static final int DISPOSAL_NONE        = 0;
   /**
    * WEBP Disposal Method meaning clear canvas to background color.
    * The area used by the graphic must be restored to the background color.</i></p>
    */
-  static final int DISPOSAL_BACKGROUND = 1;
+  static final int DISPOSAL_BACKGROUND  = 1;
 
   /**
    * Dispose method (animation only). Indicates how the area used by the current
@@ -58,6 +59,10 @@ public class WebpFrame {
     this.index = index;
   }
 
+  /**
+   * frame index
+   */
+  @IntRange(from = 0)
   final int index;
   /**
    * offset
@@ -98,6 +103,7 @@ public class WebpFrame {
    */
   public int frameSize;
 
+  // Flags while parsing webp header.
   // anim chunk process flag
   boolean isProcessingAnimFrame;
   boolean foundAlphaSubchunk;

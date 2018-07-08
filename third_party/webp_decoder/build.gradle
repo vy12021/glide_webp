@@ -1,8 +1,8 @@
 apply plugin: 'com.android.library'
 
 dependencies {
-    api fileTree(dir: "libs", include: ['*.jar'])
     implementation "com.android.support:support-annotations:${ANDROID_SUPPORT_VERSION}"
+
     testImplementation project(':testutil')
     testImplementation "com.android.support:support-v4:${ANDROID_SUPPORT_VERSION}"
     testImplementation "com.google.truth:truth:${TRUTH_VERSION}"
@@ -35,7 +35,7 @@ android {
                         // "-G=Android Gradle - Ninja",         // cmake指定构建系统
                         // "-DANDROID_NDK=",                    // NDK根目录
                         // "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=", // cmake输出结果lib目录
-                        "-DCMAKE_BUILD_TYPE=Debug",             // 编译构建方式Release
+                        "-DCMAKE_BUILD_TYPE=Release",             // 编译构建方式Release
                         // "-DCMAKE_MAKE_PROGRAM=ninja",        // cmake指定make程序
                         // "-DCMAKE_TOOLCHAIN_FILE=path",       // cmake编译链工具地址,默认指向android.toolchain.cmake= $NDK/build/cmake/
                         "-DANDROID_CPP_FEATURES=rtti exceptions"    // c++特性

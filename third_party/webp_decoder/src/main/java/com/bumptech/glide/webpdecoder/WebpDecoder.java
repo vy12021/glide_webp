@@ -17,19 +17,19 @@ import java.nio.ByteBuffer;
 public interface WebpDecoder {
 
   /** File read status: No errors. */
-  int STATUS_OK = 0;
+  int STATUS_OK                 = 0;
   /** File read status: Unable to open source. */
-  int STATUS_OPEN_ERROR = 1;
+  int STATUS_OPEN_ERROR         = 1;
   /** File read status: Error decoding file (may be partially decoded). */
-  int STATUS_PARSE_ERROR = 2;
+  int STATUS_PARSE_ERROR        = 2;
   /** File read status: Unable to open source. */
-  int STATUS_INVALID_PARAM = 3;
+  int STATUS_INVALID_PARAM      = 3;
   /** Unable to fully decode the current frame. */
-  int STATUS_TRUNCATED_DATA = 4;
+  int STATUS_TRUNCATED_DATA     = 4;
   /** File read status: Unable to open source. */
-  int STATUS_BITSTREAM_ERROR = 5;
+  int STATUS_BITSTREAM_ERROR    = 5;
   /** MISS DATA */
-  int STATUS_MISS_DATA = 6;
+  int STATUS_MISS_DATA          = 6;
 
   /** Android Lint annotation for status codes that can be used with a WEBP decoder. */
   @Retention(RetentionPolicy.SOURCE)

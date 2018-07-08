@@ -19,11 +19,11 @@ public class WebpHeader {
   /**
    * The "Netscape" loop count which means loop forever.
    */
-  public static final int NETSCAPE_LOOP_COUNT_FOREVER = 0;
+  public static final int NETSCAPE_LOOP_COUNT_FOREVER         = 0;
   /**
    * Indicates that this header has no "Netscape" loop count.
    */
-  public static final int NETSCAPE_LOOP_COUNT_DOES_NOT_EXIST = -1;
+  public static final int NETSCAPE_LOOP_COUNT_DOES_NOT_EXIST  = -1;
 
   // current frame
   WebpFrame currentFrame = new WebpFrame(-1);

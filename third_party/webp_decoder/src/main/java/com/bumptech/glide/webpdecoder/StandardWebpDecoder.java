@@ -47,17 +47,38 @@ public class StandardWebpDecoder implements WebpDecoder {
    * Raw WEBP data from input source.
    */
   private ByteBuffer rawData;
-
+  /**
+   * Webp header parser.
+   */
   private WebpHeaderParser parser;
-
+  /**
+   * Bitmap main pixels array
+   */
   private int[] scratchPixels;
+  /**
+   * Base frames Bitmap
+   */
   private Bitmap scratchBitmap;
+  /**
+   * Base canvas for scratch frames blend to {@link #scratchBitmap}.
+   */
   private Canvas scratchCanvas;
-
+  /**
+   * Rects for blend frames to {@link #scratchCanvas}.
+   */
   private Rect src = new Rect(), dst = new Rect();
+  /**
+   * Current frame index;
+   */
+  @IntRange(from = 0)
   private int framePointer;
+  /**
+   * Parsed Webp header.
+   */
   private WebpHeader header;
-  private boolean savePrevious;
+  /**
+   * Decode status;
+   */
   @WebpDecodeStatus
   private int status;
   private int sampleSize;
@@ -178,18 +199,14 @@ public class StandardWebpDecoder implements WebpDecoder {
   @Override
   public synchronized Bitmap getNextFrame() {
     if (header.frameCount <= 0 || framePointer < 0) {
-      if (Log.isLoggable(TAG, Log.DEBUG)) {
-        Log.d(TAG, "Unable to decode frame"
-                + ", frameCount=" + header.frameCount
-                + ", framePointer=" + framePointer
-        );
-      }
+      loge("Unable to decode frame"
+              + ", frameCount=" + header.frameCount
+              + ", framePointer=" + framePointer
+      );
       status = STATUS_PARSE_ERROR;
     }
     if (status == STATUS_PARSE_ERROR || status == STATUS_OPEN_ERROR) {
-      if (Log.isLoggable(TAG, Log.DEBUG)) {
-        Log.d(TAG, "Unable to decode frame, status=" + status);
-      }
+      loge("Unable to decode frame, status=" + status);
       return null;
     }
     status = STATUS_OK;
@@ -222,7 +239,7 @@ public class StandardWebpDecoder implements WebpDecoder {
         buffer.flush();
         read(buffer.toByteArray());
       } catch (IOException e) {
-        Log.w(TAG, "Error reading data from stream", e);
+        logw("Error reading data from stream" + e.getLocalizedMessage());
       }
     } else {
       status = STATUS_OPEN_ERROR;
@@ -233,7 +250,7 @@ public class StandardWebpDecoder implements WebpDecoder {
         is.close();
       }
     } catch (IOException e) {
-      Log.w(TAG, "Error closing stream", e);
+      logw("Error closing stream: " + e.getLocalizedMessage());
     }
 
     return status;
@@ -251,7 +268,7 @@ public class StandardWebpDecoder implements WebpDecoder {
     scratchBitmap = null;
     scratchCanvas.setBitmap(null);
     scratchCanvas = null;
-    Log.e(TAG, "nativeReleaseParser: " + nativeWebpParserPointer);
+    loge("nativeReleaseParser: " + nativeWebpParserPointer);
     nativeReleaseParser(nativeWebpParserPointer);
     nativeWebpParserPointer = 0;
     rawData.clear();
@@ -283,9 +300,9 @@ public class StandardWebpDecoder implements WebpDecoder {
     if (0 == (this.nativeWebpParserPointer = nativeInitWebpParser(rawData))) {
       throw new RuntimeException("nativeInitWebpParser failed");
     }
-    Log.e(TAG, "nativeInitWebpParser: " + nativeWebpParserPointer);
+    Log.d(TAG, "nativeInitWebpParser: " + nativeWebpParserPointer);
     // No point in specially saving an old frame if we're never going to use it.
-    savePrevious = false;
+    boolean savePrevious = false;
     for (WebpFrame frame : header.frames) {
       if (frame.dispose == WebpFrame.DISPOSAL_BACKGROUND || frame.blend == WebpFrame.BLEND_MUX) {
         savePrevious = true;
@@ -334,7 +351,7 @@ public class StandardWebpDecoder implements WebpDecoder {
    * disposition codes).
    */
   private Bitmap setPixels(WebpFrame currentFrame, WebpFrame previousFrame, WebpFrame nextFrame) {
-    // clear all pixels when meet first frame and drop prev image from last loop
+    // Clear all pixels when meet first frame and drop prev image from last loop
     if (previousFrame == null) {
       Arrays.fill(scratchPixels, COLOR_TRANSPARENT_BLACK);
       scratchCanvas.drawColor(COLOR_TRANSPARENT_BLACK, PorterDuff.Mode.CLEAR);
@@ -343,7 +360,7 @@ public class StandardWebpDecoder implements WebpDecoder {
     Bitmap result = getNextBitmap();
     long before = System.nanoTime();
     nativeGetWebpFrame(this.nativeWebpParserPointer, result, getCurrentFrameIndex() + 1);
-    Log.e(TAG, "nativeGetWebpFrame cost: " + ((System.nanoTime() - before) / 1000000f) + " ms");
+    logw("nativeGetWebpFrame cost: " + ((System.nanoTime() - before) / 1000000f) + " ms");
 
     if (((null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) ||
             currentFrame.blend == WebpFrame.BLEND_NONE)) {
@@ -363,7 +380,6 @@ public class StandardWebpDecoder implements WebpDecoder {
         frameW = currentFrame.width;
         frameH = currentFrame.height;
       }
-      Log.e(TAG, currentFrame.toString());
       // Only update the requested area, not the whole canvas.
       scratchCanvas.setBitmap(scratchBitmap);
       // scratchCanvas.drawColor(this.header.bgColor, PorterDuff.Mode.CLEAR);
@@ -371,13 +387,11 @@ public class StandardWebpDecoder implements WebpDecoder {
               (windowX + frameW) / sampleSize, (windowY + frameH) / sampleSize);
       scratchCanvas.drawBitmap(result, 0, 0, null);
     } else {
-      scratchCanvas.save();
       src.set(0, 0, result.getWidth(), result.getHeight());
       dst.set(currentFrame.offsetX / sampleSize, currentFrame.offsetY / sampleSize,
               (currentFrame.offsetX + currentFrame.width) / sampleSize,
               (currentFrame.offsetY + currentFrame.height) / sampleSize);
       scratchCanvas.drawBitmap(result, src, dst, null);
-      scratchCanvas.restore();
       scratchBitmap.getPixels(scratchPixels, 0, downsampledWidth,
               0, 0, downsampledWidth, downsampledHeight);
       result.setPixels(scratchPixels, 0, downsampledWidth,
@@ -392,6 +406,18 @@ public class StandardWebpDecoder implements WebpDecoder {
     Bitmap result = bitmapProvider.obtain(downsampledWidth, downsampledHeight, config);
     result.setHasAlpha(true);
     return result;
+  }
+
+  private void loge(String msg) {
+    if (Log.isLoggable(TAG, Log.ERROR)) {
+      Log.e(TAG, msg);
+    }
+  }
+
+  private void logw(String msg) {
+    if (Log.isLoggable(TAG, Log.WARN)) {
+      Log.w(TAG, msg);
+    }
   }
 
   static {

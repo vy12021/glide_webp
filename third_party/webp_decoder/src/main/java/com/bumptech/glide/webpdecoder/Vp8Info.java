@@ -11,14 +11,14 @@ import java.util.Arrays;
  */
 class Vp8Info {
 
-  final static int VP8_STATUS_OK = 0;
-  final static int VP8_STATUS_OUT_OF_MEMORY = 1;
-  final static int VP8_STATUS_INVALID_PARAM = 2;
-  final static int VP8_STATUS_BITSTREAM_ERROR = 3;
+  final static int VP8_STATUS_OK                  = 0;
+  final static int VP8_STATUS_OUT_OF_MEMORY       = 1;
+  final static int VP8_STATUS_INVALID_PARAM       = 2;
+  final static int VP8_STATUS_BITSTREAM_ERROR     = 3;
   final static int VP8_STATUS_UNSUPPORTED_FEATURE = 4;
-  final static int VP8_STATUS_SUSPENDED = 5;
-  final static int VP8_STATUS_USER_ABORT = 6;
-  final static int VP8_STATUS_NOT_ENOUGH_DATA = 7;
+  final static int VP8_STATUS_SUSPENDED           = 5;
+  final static int VP8_STATUS_USER_ABORT          = 6;
+  final static int VP8_STATUS_NOT_ENOUGH_DATA     = 7;
 
   @Retention(RetentionPolicy.SOURCE)
   @IntDef(value = {VP8_STATUS_OK, VP8_STATUS_OUT_OF_MEMORY, VP8_STATUS_INVALID_PARAM,
