@@ -224,7 +224,7 @@ public class WebpHeaderParser {
       rawData.position(mark);
     }
     validate();
-    loge("webp header info: " + this.header.toString());
+    logd("webp header info: " + this.header.toString());
   }
 
   private void validate() {
@@ -379,7 +379,7 @@ public class WebpHeaderParser {
     if (chunkData.id == ChunkId.UNKNOWN) {
       logw("Unknown chunk at offset " + chunkData.start + ", length " + chunkData.size);
     } else {
-      loge("Chunk " + chunkData.id + " at offset " + chunkData.start + " length " + chunkData.size);
+      logd("Chunk " + chunkData.id + " at offset " + chunkData.start + " length " + chunkData.size);
     }
     switch (chunkData.id) {
       case VP8:
@@ -462,7 +462,7 @@ public class WebpHeaderParser {
     if (this.header.canvasHeight * this.header.canvasWidth > MAX_IMAGE_AREA) {
       logw("Canvas area is out of range in VP8X chunk.");
     }
-    loge("processVP8XChunk: \n" + this.header.printVp8XInfo());
+    logd("processVP8XChunk: \n" + this.header.printVp8XInfo());
   }
 
   private void processANIMChunk(ChunkData chunkData) {
@@ -860,7 +860,7 @@ public class WebpHeaderParser {
       this.header.status = STATUS_TRUNCATED_DATA;
       return;
     }
-    loge(" Parsing ALPH chunk...");
+    logd(" Parsing ALPH chunk...");
     {
       int next = bufferReader.getIntFrom(chunkData.start + chunkData.payloadOffset, 1);
       // alpha compression method, diff from image compression method.
@@ -868,9 +868,9 @@ public class WebpHeaderParser {
       int alphaFilter = (next >> 2) & 0x03;
       int preProcessingMethod = (next >> 4) & 0x03;
       int reservedBits = (next >> 6) & 0x03;
-      loge(" \tCompression format:    " + Vp8AlphaFormat.values()[compressionMethod].name());
-      loge(" \tFilter:                " + Vp8AlphaFilter.values()[alphaFilter].name());
-      loge(" \tPre-processing:        " + preProcessingMethod);
+      logd(" \tCompression format:    " + Vp8AlphaFormat.values()[compressionMethod].name());
+      logd(" \tFilter:                " + Vp8AlphaFilter.values()[alphaFilter].name());
+      logd(" \tPre-processing:        " + preProcessingMethod);
       if (compressionMethod >= Vp8AlphaFormat.Invalid.ordinal()) {
         loge("Invalid Alpha compression method.");
         this.header.status = STATUS_BITSTREAM_ERROR;
@@ -910,6 +910,12 @@ public class WebpHeaderParser {
   private void loge(String msg) {
     if (Log.isLoggable(TAG, Log.ERROR)) {
       Log.e(TAG, msg);
+    }
+  }
+
+  private void logd(String msg) {
+    if (Log.isLoggable(TAG, Log.DEBUG)) {
+      Log.d(TAG, msg);
     }
   }
 
