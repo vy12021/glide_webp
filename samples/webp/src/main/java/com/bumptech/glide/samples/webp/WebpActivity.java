@@ -33,7 +33,7 @@ public class WebpActivity extends Activity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
     recyclerView = findViewById(R.id.recycler_view);
-    recyclerView.setLayoutManager(new GridLayoutManager(this, 1));
+    recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
     recyclerView.setAdapter(new Adapter());
     Button button = findViewById(R.id.btn_reload);
     button.setOnClickListener(new View.OnClickListener() {

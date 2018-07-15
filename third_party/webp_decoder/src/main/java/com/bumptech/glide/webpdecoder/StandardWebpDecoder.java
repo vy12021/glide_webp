@@ -3,6 +3,7 @@ package com.bumptech.glide.webpdecoder;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.support.annotation.ColorInt;
@@ -382,9 +383,13 @@ public class StandardWebpDecoder implements WebpDecoder {
       }
       // Only update the requested area, not the whole canvas.
       scratchCanvas.setBitmap(scratchBitmap);
-      // scratchCanvas.drawColor(this.header.bgColor, PorterDuff.Mode.CLEAR);
       scratchCanvas.clipRect(windowX / sampleSize, windowY / sampleSize,
               (windowX + frameW) / sampleSize, (windowY + frameH) / sampleSize);
+      if (null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) {
+        scratchCanvas.drawColor(header.bgColor, PorterDuff.Mode.CLEAR);
+      } else {
+        scratchCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+      }
       scratchCanvas.drawBitmap(result, 0, 0, null);
     } else {
       src.set(0, 0, result.getWidth(), result.getHeight());

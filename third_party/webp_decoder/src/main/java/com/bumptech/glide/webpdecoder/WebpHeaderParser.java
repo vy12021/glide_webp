@@ -21,6 +21,7 @@ import static com.bumptech.glide.webpdecoder.WebpDecoder.STATUS_TRUNCATED_DATA;
 /**
  * A class responsible for creating {@link WebpHeader}s from data
  * representing animated WEBPs.
+ * Specifics: https://developers.google.com/speed/webp/docs/riff_container
  * ------------------------------------------------------------------------------
  * RIFF layout is:
  * Offset  tag

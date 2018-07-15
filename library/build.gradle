@@ -11,6 +11,7 @@ tasks.withType(JavaCompile) {
 dependencies {
     api project(':third_party:gif_decoder')
     api project(':third_party:webp_decoder')
+    api project(':third_party:heif_decoder')
     api project(':third_party:disklrucache')
     api project(':annotation')
     api "com.android.support:support-fragment:${ANDROID_SUPPORT_VERSION}"
