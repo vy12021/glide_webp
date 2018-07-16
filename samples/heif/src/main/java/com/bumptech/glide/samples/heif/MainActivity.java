@@ -39,6 +39,7 @@ public class MainActivity extends Activity {
   }
 
   private void reload() {
+    System.loadLibrary("heifparser");
     HEIFExample.loadSingleImage(dir + File.separator + "autumn_1440x960.heic");
   }
 

@@ -44,6 +44,7 @@ public class WebpActivity extends Activity {
     });
     for (int i = 0; i <= 17; i++) {
       webpUris.add("http://www.teslaliu.com/webp (" + i + ").webp");
+      // webpUris.add("https://img-ws.doupai.cc/o_1ci9papeq1u1c1nbtj7m1f8gti12a.webp");
     }
   }
 

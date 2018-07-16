@@ -33,7 +33,7 @@ endif()
 
 
 #verify which type of allocator we can use.
-try_compile(COMPILE_SUCCEEDED ${CMAKE_BINARY_DIR}/compile_tests SOURCES ${PROJECT_SOURCE_DIR}/build/allocator_test.cpp CMAKE_FLAGS CXX_STANDARD 11)
+try_compile(COMPILE_SUCCEEDED ${CMAKE_BINARY_DIR}/compile_tests SOURCES ${PROJECT_SOURCE_DIR}/test/allocator_test.cpp CMAKE_FLAGS CXX_STANDARD 11)
 if(COMPILE_SUCCEEDED)
   message("Allocator test passed")
 else()

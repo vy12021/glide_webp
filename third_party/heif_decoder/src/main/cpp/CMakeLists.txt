@@ -58,13 +58,12 @@ include_directories(${ANDROID_NDK}/platforms/${ANDROID_PLATFORM}/${ARCH_DIR}/usr
                     ${CURRENT_DIR}/libheif
                     ${CURRENT_DIR}/libx265)
 
-# 搜索编译子目录CMakeLists.txt
 add_subdirectory(libx265)
 add_subdirectory(libheif)
 
 add_library(heifparser SHARED
-heif_parser.c
-jni_runtime.c
+    heif_parser.c
+    jni_runtime.c
 )
 
-target_link_libraries(heifparser heifjni android jnigraphics log)
+target_link_libraries(heifparser heifjni x265-shared android jnigraphics log)

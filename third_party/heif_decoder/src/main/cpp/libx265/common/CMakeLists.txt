@@ -126,7 +126,7 @@ if(WIN32)
     set(WINXP winxp.h winxp.cpp)
 endif(WIN32)
 
-add_library(common OBJECT
+add_library(xcommon OBJECT
     ${ASM_PRIMITIVES} ${VEC_PRIMITIVES} ${ALTIVEC_PRIMITIVES} ${WINXP}
     primitives.cpp primitives.h
     pixel.cpp dct.cpp lowpassdct.cpp ipfilter.cpp intrapred.cpp loopfilter.cpp

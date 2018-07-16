@@ -1,0 +1,3 @@
+set(X265_VERSION "2.8")
+set(X265_LATEST_TAG "2.8")
+set(X265_TAG_DISTANCE "0")

@@ -8,11 +8,11 @@ find_program(NASM_EXECUTABLE
 )
 
 if(NASM_EXECUTABLE)
-        execute_process(COMMAND ${NASM_EXECUTABLE} -version
-            OUTPUT_VARIABLE nasm_version
-            ERROR_QUIET
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            )
+    execute_process(COMMAND ${NASM_EXECUTABLE} -version
+        OUTPUT_VARIABLE nasm_version
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
     if(nasm_version MATCHES "^NASM version ([0-9\\.]*)")
         set(NASM_VERSION_STRING "${CMAKE_MATCH_1}")
     endif()
