@@ -27,12 +27,13 @@ android {
                 // Use the following syntax when passing arguments to variables:
                 // arguments "-DVAR_NAME=ARGUMENT".
                 arguments "-DANDROID_ARM_NEON=TRUE",
-                        "-DANDROID_TOOLCHAIN=clang",            // 编译器
-                        "-DANDROID_STL=c++_shared",
+                        "-DANDROID_TOOLCHAIN=gcc",            // 编译器
+                        // "-DANDROID_STL=gnustl_static",          // stl库类型
+                        // "-DANDROID_STL=c++_shared",
                         "-DANDROID_PLATFORM=android-19",        // 编译目标系统版本
                         "-DANDROID_NATIVE_API_LEVEL=19",        // native api 级别
                         // "-DANDROID_STL=gnustl_static",          // stl库类型
-                        "-DLIBCXX_FORCE_REBUILD=TRUE",          // llvm libc++库类型
+                        // "-DLIBCXX_FORCE_REBUILD=TRUE",          // llvm libc++库类型
                         // "-G=Android Gradle - Ninja",         // cmake指定构建系统
                         // "-DANDROID_NDK=",                    // NDK根目录
                         // "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=", // cmake输出结果lib目录

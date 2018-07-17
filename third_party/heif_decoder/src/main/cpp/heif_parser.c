@@ -6,7 +6,6 @@
 #include <string.h>
 #include <android/bitmap.h>
 #include <malloc.h>
-#include "x265.h"
 #include "jni_runtime.h"
 #include "tag.h"
 
@@ -21,10 +20,6 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardHeifDecoder, nativeInitHeifParser, jlong
 (JNIEnv *env, jclass class, jobject byte_buffer) {
     uint8_t* buffer = (*env)->GetDirectBufferAddress(env, byte_buffer);
     size_t capacity = (size_t) (*env)->GetDirectBufferCapacity(env, byte_buffer);
-    NalUnitType type = NAL_UNIT_ACCESS_UNIT_DELIMITER;
-    x265_picture picture;
-    x265_param *param = x265_param_alloc();
-    x265_param_free(param);
     return (jlong) 1;
 }
 

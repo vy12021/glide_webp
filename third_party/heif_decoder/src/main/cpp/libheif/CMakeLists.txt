@@ -144,7 +144,7 @@ add_subdirectory(reader)
 
 add_subdirectory(writer)
 if (NOT IOS)
-  add_subdirectory(examples)
+  #add_subdirectory(examples)
 endif()
 
 add_subdirectory(api-cpp)

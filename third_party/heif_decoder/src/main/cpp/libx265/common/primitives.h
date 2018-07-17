@@ -133,7 +133,7 @@ typedef int  (*pixelcmp_ss_t)(const int16_t* fenc, intptr_t fencstride, const in
 typedef sse_t (*pixel_sse_t)(const pixel* fenc, intptr_t fencstride, const pixel* fref, intptr_t frefstride); // fenc is aligned
 typedef sse_t (*pixel_sse_ss_t)(const int16_t* fenc, intptr_t fencstride, const int16_t* fref, intptr_t frefstride);
 typedef sse_t (*pixel_ssd_s_t)(const int16_t* fenc, intptr_t fencstride);
-typedef int(*pixelcmp_ads_t)(int encDC[], uint32_t *sums, int delta, uint16_t *costMvX, int16_t *mvs, int width, int thresh);
+typedef int (*pixelcmp_ads_t)(int encDC[], uint32_t *sums, int delta, uint16_t *costMvX, int16_t *mvs, int width, int thresh);
 typedef void (*pixelcmp_x4_t)(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, const pixel* fref3, intptr_t frefstride, int32_t* res);
 typedef void (*pixelcmp_x3_t)(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, intptr_t frefstride, int32_t* res);
 typedef void (*blockfill_s_t)(int16_t* dst, intptr_t dstride, int16_t val);
@@ -158,7 +158,7 @@ typedef uint32_t (*quant_t)(const int16_t* coef, const int32_t* quantCoeff, int3
 typedef uint32_t (*nquant_t)(const int16_t* coef, const int32_t* quantCoeff, int16_t* qCoef, int qBits, int add, int numCoeff);
 typedef void (*dequant_scaling_t)(const int16_t* src, const int32_t* dequantCoef, int16_t* dst, int num, int mcqp_miper, int shift);
 typedef void (*dequant_normal_t)(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift);
-typedef int(*count_nonzero_t)(const int16_t* quantCoeff);
+typedef int (*count_nonzero_t)(const int16_t* quantCoeff);
 typedef void (*weightp_pp_t)(const pixel* src, pixel* dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*weightp_sp_t)(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*scale1D_t)(pixel* dst, const pixel* src);
@@ -223,8 +223,8 @@ typedef void (*pelFilterChroma_t)(pixel* src, intptr_t srcStep, intptr_t offset,
 
 typedef void (*integralv_t)(uint32_t *sum, intptr_t stride);
 typedef void (*integralh_t)(uint32_t *sum, pixel *pix, intptr_t stride);
-typedef void(*nonPsyRdoQuant_t)(int16_t *m_resiDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, uint32_t blkPos);
-typedef void(*psyRdoQuant_t)(int16_t *m_resiDctCoeff, int16_t *m_fencDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, int64_t *psyScale, uint32_t blkPos);
+typedef void (*nonPsyRdoQuant_t)(int16_t *m_resiDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, uint32_t blkPos);
+typedef void (*psyRdoQuant_t)(int16_t *m_resiDctCoeff, int16_t *m_fencDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, int64_t *psyScale, uint32_t blkPos);
 
 /* Function pointers to optimized encoder primitives. Each pointer can reference
  * either an assembly routine, a SIMD intrinsic primitive, or a C function */

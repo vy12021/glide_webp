@@ -312,7 +312,7 @@ loop_css64:
     bx              lr
 endfunc
 
-/******** Chroma blockcopy********/
+//**************** Chroma blockcopy*******
 function x265_blockcopy_ss_4x8_neon
     lsl             r1, #1
     lsl             r3, #1

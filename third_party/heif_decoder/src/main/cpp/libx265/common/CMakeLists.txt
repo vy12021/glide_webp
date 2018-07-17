@@ -84,6 +84,17 @@ if(ENABLE_ASSEMBLY AND X86)
 endif(ENABLE_ASSEMBLY AND X86)
 
 if(ENABLE_ASSEMBLY AND (ARM OR CROSS_COMPILE_ARM))
+    ################################################################################
+    # cpu neon支持
+    #include_directories(${ANDROID_NDK}/sources/android/cpufeatures)
+    #add_library(cpufeatures STATIC
+    #${ANDROID_NDK}/sources/android/cpufeatures/cpu-features.c)
+    #target_link_libraries(cpufeatures dl)
+    #set(WEBP_DEP_LIBRARIES ${WEBP_DEP_LIBRARIES} cpufeatures)
+    #set(WEBP_DEP_INCLUDE_DIRS ${WEBP_DEP_INCLUDE_DIRS} ${ANDROID_NDK}/sources/android/cpufeatures)
+    #add_definitions(-DHAVE_CPU_FEATURES_H=1)
+    #set(HAVE_CPU_FEATURES_H 1)
+
     set(C_SRCS asm-primitives.cpp pixel.h mc.h ipfilter8.h blockcopy8.h dct8.h loopfilter.h)
 
     # add ARM assembly/intrinsic files here

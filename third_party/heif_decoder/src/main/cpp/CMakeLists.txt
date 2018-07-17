@@ -53,12 +53,14 @@ elseif (${ANDROID_ABI} STREQUAL arm64-v8a)
     set(ARCH_DIR arch-arm64)
 endif ()
 
-include_directories(${ANDROID_NDK}/platforms/${ANDROID_PLATFORM}/${ARCH_DIR}/usr/include
-                    ${ANDROID_NDK}/sysroot/usr/include
-                    ${CURRENT_DIR}/libheif
-                    ${CURRENT_DIR}/libx265)
+link_directories({ANDROID_NDK}/platforms/${ANDROID_PLATFORM}/${ARCH_DIR}/usr/lib/)
 
-add_subdirectory(libx265)
+include_directories(${ANDROID_NDK}/platforms/${ANDROID_PLATFORM}/${ARCH_DIR}/usr/include/
+                    ${ANDROID_NDK}/sysroot/usr/include/
+                    ${CURRENT_DIR}/libheif/
+                    ${CURRENT_DIR}/libx265/)
+
+#add_subdirectory(libx265)
 add_subdirectory(libheif)
 
 add_library(heifparser SHARED
@@ -66,4 +68,9 @@ add_library(heifparser SHARED
     jni_runtime.c
 )
 
-target_link_libraries(heifparser heifjni x265-shared android jnigraphics log)
+target_link_libraries(
+    heifparser
+    heifjni
+#    x265-shared
+    android jnigraphics log
+)

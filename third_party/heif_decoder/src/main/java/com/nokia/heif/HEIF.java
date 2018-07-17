@@ -23,7 +23,8 @@ public final class HEIF {
   private static final String TAG = "HEIF";
 
   static {
-    System.loadLibrary("c++_shared");
+    System.loadLibrary("heif_shared");
+    System.loadLibrary("heif_writer_shared");
     System.loadLibrary("heifjni");
   }
 
