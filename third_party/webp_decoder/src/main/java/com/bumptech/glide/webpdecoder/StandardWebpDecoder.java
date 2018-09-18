@@ -192,8 +192,12 @@ public class StandardWebpDecoder implements WebpDecoder {
 
   @Override
   public int getByteSize() {
-    return rawData.limit() + bitmapProvider.getSize(scratchBitmap) +
-            (scratchPixels.length * BYTES_PER_INTEGER);
+    if (null != scratchBitmap) {
+      return rawData.limit() + bitmapProvider.getSize(scratchBitmap) +
+              (scratchPixels.length * BYTES_PER_INTEGER);
+    } else {
+      return rawData.limit();
+    }
   }
 
   @Nullable
@@ -245,7 +249,6 @@ public class StandardWebpDecoder implements WebpDecoder {
     } else {
       status = STATUS_OPEN_ERROR;
     }
-
     try {
       if (is != null) {
         is.close();
@@ -253,7 +256,6 @@ public class StandardWebpDecoder implements WebpDecoder {
     } catch (IOException e) {
       logw("Error closing stream: " + e.getLocalizedMessage());
     }
-
     return status;
   }
 
@@ -267,7 +269,9 @@ public class StandardWebpDecoder implements WebpDecoder {
       bitmapProvider.release(scratchBitmap);
     }
     scratchBitmap = null;
-    scratchCanvas.setBitmap(null);
+    if (null != scratchCanvas) {
+      scratchCanvas.setBitmap(null);
+    }
     scratchCanvas = null;
     loge("nativeReleaseParser: " + nativeWebpParserPointer);
     nativeReleaseParser(nativeWebpParserPointer);
@@ -313,8 +317,8 @@ public class StandardWebpDecoder implements WebpDecoder {
     this.sampleSize = sampleSize;
     downsampledWidth = header.getWidth() / this.sampleSize;
     downsampledHeight = header.getHeight() / this.sampleSize;
-    scratchPixels = bitmapProvider.obtainIntArray(downsampledWidth * downsampledHeight);
     if (savePrevious) {
+      scratchPixels = bitmapProvider.obtainIntArray(downsampledWidth * downsampledHeight);
       scratchBitmap = getNextBitmap();
       scratchCanvas = new Canvas(scratchBitmap);
     }
@@ -353,7 +357,7 @@ public class StandardWebpDecoder implements WebpDecoder {
    */
   private Bitmap setPixels(WebpFrame currentFrame, WebpFrame previousFrame, WebpFrame nextFrame) {
     // Clear all pixels when meet first frame and drop prev image from last loop
-    if (previousFrame == null) {
+    if (null != scratchBitmap && previousFrame == null) {
       Arrays.fill(scratchPixels, COLOR_TRANSPARENT_BLACK);
       scratchCanvas.drawColor(COLOR_TRANSPARENT_BLACK, PorterDuff.Mode.CLEAR);
     }
@@ -363,44 +367,46 @@ public class StandardWebpDecoder implements WebpDecoder {
     nativeGetWebpFrame(this.nativeWebpParserPointer, result, getCurrentFrameIndex() + 1);
     logw("nativeGetWebpFrame cost: " + ((System.nanoTime() - before) / 1000000f) + " ms");
 
-    if (((null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) ||
-            currentFrame.blend == WebpFrame.BLEND_NONE)) {
-      int windowX, windowY;
-      int frameW, frameH;
-      if (null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) {
-        // Clear the previous frame rectangle.
-        windowX = previousFrame.offsetX;
-        windowY = previousFrame.offsetY;
-        frameW = previousFrame.width;
-        frameH = previousFrame.height;
-      } else {  // curr->blend_method == WEBP_MUX_NO_BLEND.
-        // We simulate no-blending behavior by first clearing the current frame
-        // rectangle (to a checker-board) and then alpha-blending against it.
-        windowX = currentFrame.offsetX;
-        windowY = currentFrame.offsetY;
-        frameW = currentFrame.width;
-        frameH = currentFrame.height;
-      }
-      // Only update the requested area, not the whole canvas.
-      scratchCanvas.setBitmap(scratchBitmap);
-      scratchCanvas.clipRect(windowX / sampleSize, windowY / sampleSize,
-              (windowX + frameW) / sampleSize, (windowY + frameH) / sampleSize);
-      if (null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) {
-        scratchCanvas.drawColor(header.bgColor, PorterDuff.Mode.CLEAR);
+    if (null != scratchBitmap) {
+      if (((null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) ||
+              currentFrame.blend == WebpFrame.BLEND_NONE)) {
+        int windowX, windowY;
+        int frameW, frameH;
+        if (null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) {
+          // Clear the previous frame rectangle.
+          windowX = previousFrame.offsetX;
+          windowY = previousFrame.offsetY;
+          frameW = previousFrame.width;
+          frameH = previousFrame.height;
+        } else {  // curr->blend_method == WEBP_MUX_NO_BLEND.
+          // We simulate no-blending behavior by first clearing the current frame
+          // rectangle (to a checker-board) and then alpha-blending against it.
+          windowX = currentFrame.offsetX;
+          windowY = currentFrame.offsetY;
+          frameW = currentFrame.width;
+          frameH = currentFrame.height;
+        }
+        // Only update the requested area, not the whole canvas.
+        scratchCanvas.setBitmap(scratchBitmap);
+        scratchCanvas.clipRect(windowX / sampleSize, windowY / sampleSize,
+                (windowX + frameW) / sampleSize, (windowY + frameH) / sampleSize);
+        if (null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) {
+          scratchCanvas.drawColor(header.bgColor, PorterDuff.Mode.CLEAR);
+        } else {
+          scratchCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+        }
+        scratchCanvas.drawBitmap(result, 0, 0, null);
       } else {
-        scratchCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+        src.set(0, 0, result.getWidth(), result.getHeight());
+        dst.set(currentFrame.offsetX / sampleSize, currentFrame.offsetY / sampleSize,
+                (currentFrame.offsetX + currentFrame.width) / sampleSize,
+                (currentFrame.offsetY + currentFrame.height) / sampleSize);
+        scratchCanvas.drawBitmap(result, src, dst, null);
+        scratchBitmap.getPixels(scratchPixels, 0, downsampledWidth,
+                0, 0, downsampledWidth, downsampledHeight);
+        result.setPixels(scratchPixels, 0, downsampledWidth,
+                0, 0, downsampledWidth, downsampledHeight);
       }
-      scratchCanvas.drawBitmap(result, 0, 0, null);
-    } else {
-      src.set(0, 0, result.getWidth(), result.getHeight());
-      dst.set(currentFrame.offsetX / sampleSize, currentFrame.offsetY / sampleSize,
-              (currentFrame.offsetX + currentFrame.width) / sampleSize,
-              (currentFrame.offsetY + currentFrame.height) / sampleSize);
-      scratchCanvas.drawBitmap(result, src, dst, null);
-      scratchBitmap.getPixels(scratchPixels, 0, downsampledWidth,
-              0, 0, downsampledWidth, downsampledHeight);
-      result.setPixels(scratchPixels, 0, downsampledWidth,
-              0, 0, downsampledWidth, downsampledHeight);
     }
 
     return result;
