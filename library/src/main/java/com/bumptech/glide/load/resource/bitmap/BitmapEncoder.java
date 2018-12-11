@@ -72,8 +72,8 @@ public class BitmapEncoder implements ResourceEncoder<Bitmap> {
       @NonNull Options options) {
     final Bitmap bitmap = resource.get();
     Bitmap.CompressFormat format = getFormat(bitmap, options);
-    GlideTrace.
-        beginSectionFormat("encode: [%dx%d] %s", bitmap.getWidth(), bitmap.getHeight(), format);
+    GlideTrace.beginSectionFormat("encode: [%dx%d] %s",
+            bitmap.getWidth(), bitmap.getHeight(), format);
     try {
       long start = LogTime.getLogTime();
       int quality = options.get(COMPRESSION_QUALITY);

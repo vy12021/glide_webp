@@ -74,11 +74,11 @@ public class StandardWebpDecoder implements WebpDecoder {
   @IntRange(from = 0)
   private int framePointer;
   /**
-   * Parsed Webp header.
+   * The webp header parsed.
    */
   private WebpHeader header;
   /**
-   * Decode status;
+   * Decode status
    */
   @WebpDecodeStatus
   private int status;
@@ -305,7 +305,6 @@ public class StandardWebpDecoder implements WebpDecoder {
     if (0 == (this.nativeWebpParserPointer = nativeInitWebpParser(rawData))) {
       throw new RuntimeException("nativeInitWebpParser failed");
     }
-    Log.d(TAG, "nativeInitWebpParser: " + nativeWebpParserPointer);
     // No point in specially saving an old frame if we're never going to use it.
     boolean savePrevious = false;
     for (WebpFrame frame : header.frames) {

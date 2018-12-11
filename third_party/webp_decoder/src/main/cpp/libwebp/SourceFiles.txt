@@ -1,4 +1,4 @@
-# 各模块的源文件清单
+# File list
 
 aux_source_directory(src/dec WEBP_DEC_SRCS)
 aux_source_directory(src/demux WEBP_DEMUX_SRCS)

@@ -605,7 +605,6 @@ public final class Downsampler {
 
     if (options.inJustDecodeBounds) {
       is.reset();
-
     }
     return result;
   }

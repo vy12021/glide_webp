@@ -25,7 +25,7 @@ public class WebpActivity extends Activity {
 
   private static final String TAG = "WebpActivity";
 
-  List<String> webpUris = new ArrayList<>();
+  private List<String> webpUris = new ArrayList<>();
   private RecyclerView recyclerView;
 
   @Override
@@ -44,7 +44,6 @@ public class WebpActivity extends Activity {
     });
     for (int i = 0; i <= 17; i++) {
       webpUris.add("http://www.teslaliu.com/webp (" + i + ").webp");
-      // webpUris.add("https://img-ws.doupai.cc/o_1ci9papeq1u1c1nbtj7m1f8gti12a.webp");
     }
   }
 
@@ -83,6 +82,5 @@ public class WebpActivity extends Activity {
   @Override
   protected void onDestroy() {
     super.onDestroy();
-    Glide.tearDown();
   }
 }

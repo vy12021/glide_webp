@@ -25,20 +25,20 @@ android {
                 // Use the following syntax when passing arguments to variables:
                 // arguments "-DVAR_NAME=ARGUMENT".
                 arguments "-DANDROID_ARM_NEON=TRUE",
-                        "-DANDROID_TOOLCHAIN=clang",            // 编译器
-                        "-DANDROID_PLATFORM=android-19",        // 编译目标系统版本
-                        "-DANDROID_NATIVE_API_LEVEL=19",        // native api 级别
-                        // "-DANDROID_STL=gnustl_static",          // stl库类型
-                        "-DLIBCXX_FORCE_REBUILD=TRUE",          // llvm libc++库类型
-                        "-DANDROID_ABI=armeabi-v7a",            // 编译目标平台
-                        // "-DANDROID_ABI=arm64-v8a",              // 编译目标平台
-                        // "-G=Android Gradle - Ninja",         // cmake指定构建系统
-                        // "-DANDROID_NDK=",                    // NDK根目录
-                        // "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=", // cmake输出结果lib目录
-                        "-DCMAKE_BUILD_TYPE=Release",             // 编译构建方式Release
-                        // "-DCMAKE_MAKE_PROGRAM=ninja",        // cmake指定make程序
-                        // "-DCMAKE_TOOLCHAIN_FILE=path",       // cmake编译链工具地址,默认指向android.toolchain.cmake= $NDK/build/cmake/
-                        "-DANDROID_CPP_FEATURES=rtti exceptions"    // c++特性
+                        "-DANDROID_TOOLCHAIN=clang",
+                        "-DANDROID_PLATFORM=android-19",
+                        "-DANDROID_NATIVE_API_LEVEL=19",
+                        // "-DANDROID_STL=gnustl_static",
+                        "-DLIBCXX_FORCE_REBUILD=TRUE",
+                        "-DANDROID_ABI=armeabi-v7a",
+                        // "-DANDROID_ABI=arm64-v8a",
+                        // "-G=Android Gradle - Ninja",
+                        // "-DANDROID_NDK=",
+                        // "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=",
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        // "-DCMAKE_MAKE_PROGRAM=ninja",
+                        // "-DCMAKE_TOOLCHAIN_FILE=path",
+                        "-DANDROID_CPP_FEATURES=rtti exceptions"
             }
         }
     }
