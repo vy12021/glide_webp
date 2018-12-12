@@ -110,7 +110,7 @@ public class GifDrawable extends Drawable implements GifFrameLoader.FrameCallbac
     this(context, gifDecoder, frameTransformation, targetFrameWidth, targetFrameHeight, firstFrame);
   }
 
-   /**
+  /**
    * Constructor for GifDrawable.
    *
    * @param context             A context.
