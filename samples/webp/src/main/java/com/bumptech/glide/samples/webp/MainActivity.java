@@ -23,7 +23,7 @@ public class MainActivity extends Activity {
     setContentView(R.layout.activity_main);
 
     Glide.with(MainActivity.this)
-            .load("https://img.zishuovideo.com/e54006b57ed32ccccb48a150f7c45a93.webp")
+            .load("https://img.zishuovideo.com/13dc191552e57b61c65528fc0dbd0be9.webp")
             .apply(new RequestOptions()
                     .transforms(new BitmapTransformation[] {new CenterCrop(), new RoundedCorners(100)}
                     ))
