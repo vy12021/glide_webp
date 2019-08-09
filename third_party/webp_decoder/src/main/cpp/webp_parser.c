@@ -81,25 +81,25 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeGetWebpFrame, jint)
     config.output.is_external_memory = 1;
     void *pixels;
     AndroidBitmap_lockPixels(env, bitmap, &pixels);
-    config.output.private_memory = pixels;
-    config.output.u.RGBA.stride  = bitmapInfo.stride;
-    config.output.u.RGBA.rgba  = pixels;
-    config.output.u.RGBA.size  = bitmapInfo.height * bitmapInfo.stride;
+    // config.output.private_memory = pixels;
+    config.output.u.RGBA.stride = bitmapInfo.stride;
+    config.output.u.RGBA.rgba   = pixels;
+    config.output.u.RGBA.size   = bitmapInfo.height * bitmapInfo.stride;
     status = WebPDecode(webpParser->iterator.fragment.bytes,
                         webpParser->iterator.fragment.size, &config);
     AndroidBitmap_unlockPixels(env, bitmap);
     WebPFreeDecBuffer(&config.output);
     if (VP8_STATUS_OK != status) {
-        LOGE("webp_parser", "WebPDecode of nativeGetWebpFrame failed!");
+        LOGE("webp_parser", "WebPDecode of nativeGetWebpFrame failed: %d", status);
         return 0;
     }
     return 1;
 }
 
 JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeReleaseParser, void)
-(JNIEnv *env, jclass class, jlong demux_pointer) {
-    if (demux_pointer) {
-        free((void *)demux_pointer);
+(JNIEnv *env, jclass class, jlong demuxer_pointer) {
+    if (demuxer_pointer) {
+        free((void *)demuxer_pointer);
     }
 }
 

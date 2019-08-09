@@ -439,7 +439,7 @@ public class StandardWebpDecoder implements WebpDecoder {
   native static long nativeInitWebpParser(ByteBuffer buffer);
 
   native static int nativeGetWebpFrame(long nativeWebpParserPointer,
-                                               @NonNull Bitmap dst, @IntRange(from = 1) int index);
+                                       @NonNull Bitmap dst, @IntRange(from = 1) int index);
 
   native static void nativeReleaseParser(long nativeWebpParserPointer);
 
