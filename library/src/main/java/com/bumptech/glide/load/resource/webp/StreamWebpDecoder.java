@@ -1,6 +1,6 @@
 package com.bumptech.glide.load.resource.webp;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.Log;
 
 import com.bumptech.glide.load.ImageHeaderParser;

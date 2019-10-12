@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 dependencies {
-    api ('com.android.support:recyclerview-v7:27.1.1')
+    api ("androidx.recyclerview:recyclerview:${ANDROID_X_VERSION}")
     implementation project(':library')
     annotationProcessor project(':annotation:compiler')
-    implementation "com.android.support:support-fragment:${ANDROID_SUPPORT_VERSION}"
+    implementation "androidx.fragment:fragment:${ANDROID_X_VERSION}"
 }
 
 android {

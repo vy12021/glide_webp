@@ -1,6 +1,6 @@
 package com.bumptech.glide.webpdecoder;
 
-import android.support.annotation.ColorInt;
+import androidx.annotation.ColorInt;
 
 import java.util.ArrayList;
 import java.util.Arrays;

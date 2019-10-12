@@ -1,7 +1,7 @@
 package com.bumptech.glide.samples.webp;
 
 import android.content.Context;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 
