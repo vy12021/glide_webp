@@ -1,7 +1,7 @@
 package com.bumptech.glide.load.resource.gif;
 
-import android.support.annotation.NonNull;
 import android.util.Log;
+import androidx.annotation.NonNull;
 import com.bumptech.glide.load.EncodeStrategy;
 import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.ResourceEncoder;
@@ -24,8 +24,8 @@ public class GifDrawableEncoder implements ResourceEncoder<GifDrawable> {
   }
 
   @Override
-  public boolean encode(@NonNull Resource<GifDrawable> data, @NonNull File file,
-      @NonNull Options options) {
+  public boolean encode(
+      @NonNull Resource<GifDrawable> data, @NonNull File file, @NonNull Options options) {
     GifDrawable drawable = data.get();
     boolean success = false;
     try {

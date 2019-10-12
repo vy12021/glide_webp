@@ -5,14 +5,15 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.util.Log;
-import com.bumptech.glide.load.DecodeFormat;
+import androidx.annotation.GuardedBy;
+import androidx.annotation.VisibleForTesting;
 import java.io.File;
 
 /**
  * State and constants for interacting with {@link android.graphics.Bitmap.Config#HARDWARE} on
  * Android O+.
  */
-final class HardwareConfigState {
+public final class HardwareConfigState {
   /**
    * The minimum size in pixels a {@link Bitmap} must be in both dimensions to be created with the
    * {@link Bitmap.Config#HARDWARE} configuration.
@@ -22,7 +23,7 @@ final class HardwareConfigState {
    *
    * @see #FD_SIZE_LIST
    */
-  private static final int MIN_HARDWARE_DIMENSION = 128;
+  public static final int DEFAULT_MIN_HARDWARE_DIMENSION = 128;
 
   /**
    * Allows us to check to make sure we're not exceeding the FD limit for a process with hardware
@@ -48,15 +49,28 @@ final class HardwareConfigState {
   /**
    * 700 with an error of 50 Bitmaps in between at two FDs each lets us use up to 800 FDs for
    * hardware Bitmaps.
+   *
+   * <p>Prior to P, the limit per process was 1024 FDs. In P, the limit was updated to 32k FDs per
+   * process.
+   *
+   * <p>Access to this variable will be removed in a future version without deprecation.
    */
-  private static final int MAXIMUM_FDS_FOR_HARDWARE_CONFIGS = 700;
+  public static final int DEFAULT_MAXIMUM_FDS_FOR_HARDWARE_CONFIGS = 700;
 
-  private volatile int decodesSinceLastFdCheck;
-  private volatile boolean isHardwareConfigAllowed = true;
+  private static volatile int fdSizeLimit = DEFAULT_MAXIMUM_FDS_FOR_HARDWARE_CONFIGS;
+  private static volatile int minHardwareDimension = DEFAULT_MIN_HARDWARE_DIMENSION;
 
   private static volatile HardwareConfigState instance;
 
-  static HardwareConfigState getInstance() {
+  private final boolean isHardwareConfigAllowedByDeviceModel;
+
+  @GuardedBy("this")
+  private int decodesSinceLastFdCheck;
+
+  @GuardedBy("this")
+  private boolean isFdSizeBelowHardwareLimit = true;
+
+  public static HardwareConfigState getInstance() {
     if (instance == null) {
       synchronized (HardwareConfigState.class) {
         if (instance == null) {
@@ -67,31 +81,40 @@ final class HardwareConfigState {
     return instance;
   }
 
-  private HardwareConfigState() {
+  @VisibleForTesting
+  HardwareConfigState() {
+    isHardwareConfigAllowedByDeviceModel = isHardwareConfigAllowedByDeviceModel();
     // Singleton constructor.
   }
 
-  @TargetApi(Build.VERSION_CODES.O)
-  @SuppressWarnings("deprecation")
-  boolean setHardwareConfigIfAllowed(
+  public boolean isHardwareConfigAllowed(
       int targetWidth,
       int targetHeight,
-      BitmapFactory.Options optionsWithScaling,
-      DecodeFormat decodeFormat,
       boolean isHardwareConfigAllowed,
       boolean isExifOrientationRequired) {
     if (!isHardwareConfigAllowed
+        || !isHardwareConfigAllowedByDeviceModel
         || Build.VERSION.SDK_INT < Build.VERSION_CODES.O
         || isExifOrientationRequired) {
       return false;
     }
 
-    boolean result =
-        targetWidth >= MIN_HARDWARE_DIMENSION
-            && targetHeight >= MIN_HARDWARE_DIMENSION
-            // Make sure to call isFdSizeBelowHardwareLimit last because it has side affects.
-            && isFdSizeBelowHardwareLimit();
+    return targetWidth >= minHardwareDimension
+        && targetHeight >= minHardwareDimension
+        // Make sure to call isFdSizeBelowHardwareLimit last because it has side affects.
+        && isFdSizeBelowHardwareLimit();
+  }
 
+  @TargetApi(Build.VERSION_CODES.O)
+  boolean setHardwareConfigIfAllowed(
+      int targetWidth,
+      int targetHeight,
+      BitmapFactory.Options optionsWithScaling,
+      boolean isHardwareConfigAllowed,
+      boolean isExifOrientationRequired) {
+    boolean result =
+        isHardwareConfigAllowed(
+            targetWidth, targetHeight, isHardwareConfigAllowed, isExifOrientationRequired);
     if (result) {
       optionsWithScaling.inPreferredConfig = Bitmap.Config.HARDWARE;
       optionsWithScaling.inMutable = false;
@@ -99,20 +122,48 @@ final class HardwareConfigState {
     return result;
   }
 
+  private static boolean isHardwareConfigAllowedByDeviceModel() {
+    if (Build.MODEL == null || Build.MODEL.length() < 7) {
+      return true;
+    }
+    switch (Build.MODEL.substring(0, 7)) {
+      case "SM-N935":
+        // Fall through
+      case "SM-J720":
+        // Fall through
+      case "SM-G960":
+        // Fall through
+      case "SM-G965":
+        // Fall through
+      case "SM-G935":
+        // Fall through
+      case "SM-G930":
+        // Fall through
+      case "SM-A520":
+        // Fall through
+        return Build.VERSION.SDK_INT != Build.VERSION_CODES.O;
+      default:
+        return true;
+    }
+  }
+
   private synchronized boolean isFdSizeBelowHardwareLimit() {
     if (++decodesSinceLastFdCheck >= MINIMUM_DECODES_BETWEEN_FD_CHECKS) {
       decodesSinceLastFdCheck = 0;
       int currentFds = FD_SIZE_LIST.list().length;
-      isHardwareConfigAllowed = currentFds < MAXIMUM_FDS_FOR_HARDWARE_CONFIGS;
+      isFdSizeBelowHardwareLimit = currentFds < fdSizeLimit;
 
-      if (!isHardwareConfigAllowed && Log.isLoggable(Downsampler.TAG, Log.WARN)) {
-        Log.w(Downsampler.TAG,
+      if (!isFdSizeBelowHardwareLimit && Log.isLoggable(Downsampler.TAG, Log.WARN)) {
+        Log.w(
+            Downsampler.TAG,
             "Excluding HARDWARE bitmap config because we're over the file descriptor limit"
-                + ", file descriptors " + currentFds
-                + ", limit " + MAXIMUM_FDS_FOR_HARDWARE_CONFIGS);
+                + ", file descriptors "
+                + currentFds
+                + ", limit "
+                + fdSizeLimit);
       }
     }
 
-    return isHardwareConfigAllowed;
+    return isFdSizeBelowHardwareLimit;
   }
 }

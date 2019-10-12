@@ -1,7 +1,7 @@
 package com.bumptech.glide.signature;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.bumptech.glide.load.Key;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
@@ -18,14 +18,14 @@ public class MediaStoreSignature implements Key {
   /**
    * Constructor for {@link com.bumptech.glide.signature.MediaStoreSignature}.
    *
-   * @param mimeType     The mime type of the media store media. Ok to default to empty string "".
-   *                     See {@link android.provider.MediaStore.Images.ImageColumns#MIME_TYPE} or
-   *                     {@link android.provider.MediaStore.Video.VideoColumns#MIME_TYPE}.
+   * @param mimeType The mime type of the media store media. Ok to default to empty string "". See
+   *     {@link android.provider.MediaStore.Images.ImageColumns#MIME_TYPE} or {@link
+   *     android.provider.MediaStore.Video.VideoColumns#MIME_TYPE}.
    * @param dateModified The date modified time of the media store media. Ok to default to 0. See
-   *                     {@link android.provider.MediaStore.Images.ImageColumns#DATE_MODIFIED} or
-   *                     {@link android.provider.MediaStore.Video.VideoColumns#DATE_MODIFIED}.
-   * @param orientation  The orientation of the media store media. Ok to default to 0. See {@link
-   *                     android.provider.MediaStore.Images.ImageColumns#ORIENTATION}.
+   *     {@link android.provider.MediaStore.Images.ImageColumns#DATE_MODIFIED} or {@link
+   *     android.provider.MediaStore.Video.VideoColumns#DATE_MODIFIED}.
+   * @param orientation The orientation of the media store media. Ok to default to 0. See {@link
+   *     android.provider.MediaStore.Images.ImageColumns#ORIENTATION}.
    */
   public MediaStoreSignature(@Nullable String mimeType, long dateModified, int orientation) {
     this.mimeType = mimeType == null ? "" : mimeType;

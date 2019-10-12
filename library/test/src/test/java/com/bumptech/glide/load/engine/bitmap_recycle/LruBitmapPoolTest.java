@@ -8,12 +8,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import android.graphics.Bitmap;
+import android.os.Build;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,10 +26,9 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
-import org.robolectric.shadows.ShadowBitmap;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 28)
 public class LruBitmapPoolTest {
   private static final int MAX_SIZE = 10;
   private static final Set<Bitmap.Config> ALLOWED_CONFIGS =
@@ -65,12 +65,13 @@ public class LruBitmapPoolTest {
 
   @Test
   public void testBitmapLargerThanPoolIsNotAdded() {
-    strategy = new MockStrategy() {
-      @Override
-      public int getSize(Bitmap bitmap) {
-        return 4;
-      }
-    };
+    strategy =
+        new MockStrategy() {
+          @Override
+          public int getSize(Bitmap bitmap) {
+            return 4;
+          }
+        };
     pool = new LruBitmapPool(3, strategy, ALLOWED_CONFIGS);
     pool.put(createMutableBitmap());
     assertEquals(0, strategy.numRemoves);
@@ -98,9 +99,16 @@ public class LruBitmapPoolTest {
     }
   }
 
+  @Config(sdk = Build.VERSION_CODES.KITKAT)
   @Test
-  public void testTrimMemoryUiHiddenOrLessRemovesHalfOfBitmaps() {
+  public void testTrimMemoryUiHiddenOrLessRemovesHalfOfBitmaps_preM() {
     testTrimMemory(MAX_SIZE, TRIM_MEMORY_UI_HIDDEN, MAX_SIZE / 2);
+  }
+
+  @Config(sdk = Build.VERSION_CODES.M)
+  @Test
+  public void testTrimMemoryUiHiddenOrLessRemovesHalfOfBitmaps_postM() {
+    testTrimMemory(MAX_SIZE, TRIM_MEMORY_UI_HIDDEN, 0);
   }
 
   @Test
@@ -109,14 +117,14 @@ public class LruBitmapPoolTest {
   }
 
   @Test
-  public void testTrimMemoryUiHiddenOrLessRemovesNoBitmapsIfPoolLessThanHalfFull() {
-    testTrimMemory(MAX_SIZE / 2, TRIM_MEMORY_UI_HIDDEN, 0);
+  public void testTrimMemoryRunningCriticalOrLessRemovesNoBitmapsIfPoolLessThanHalfFull() {
+    testTrimMemory(MAX_SIZE / 2, TRIM_MEMORY_RUNNING_CRITICAL, MAX_SIZE / 2);
   }
 
   @Test
   public void testTrimMemoryBackgroundOrGreaterRemovesAllBitmaps() {
-    for (int trimLevel : new int[] { TRIM_MEMORY_BACKGROUND, TRIM_MEMORY_COMPLETE }) {
-      testTrimMemory(MAX_SIZE, trimLevel, MAX_SIZE);
+    for (int trimLevel : new int[] {TRIM_MEMORY_BACKGROUND, TRIM_MEMORY_COMPLETE}) {
+      testTrimMemory(MAX_SIZE, trimLevel, 0);
     }
   }
 
@@ -161,7 +169,7 @@ public class LruBitmapPoolTest {
     LruBitmapPool pool = new LruBitmapPool(MAX_SIZE, strategy, ALLOWED_CONFIGS);
     fillPool(pool, fillSize);
     pool.trimMemory(trimLevel);
-    assertEquals("Failed level=" + trimLevel, expectedSize, strategy.numRemoves);
+    assertEquals("Failed level=" + trimLevel, expectedSize, strategy.bitmaps.size());
   }
 
   @Test
@@ -217,11 +225,12 @@ public class LruBitmapPoolTest {
   }
 
   @Test
+  @Config(sdk = 19)
   public void testBitmapsWithAllowedNullConfigsAreAllowed() {
     pool = new LruBitmapPool(100, strategy, Collections.<Bitmap.Config>singleton(null));
 
     Bitmap bitmap = createMutableBitmap();
-    Shadows.shadowOf(bitmap).setConfig(null);
+    bitmap.setConfig(null);
 
     pool.put(bitmap);
 
@@ -239,10 +248,9 @@ public class LruBitmapPoolTest {
   }
 
   private Bitmap createMutableBitmap(Bitmap.Config config) {
-    Bitmap bitmap = ShadowBitmap.createBitmap(100, 100, config);
+    Bitmap bitmap = Bitmap.createBitmap(100, 100, config);
     Shadows.shadowOf(bitmap).setMutable(true);
     return bitmap;
-
   }
 
   private static class MockStrategy implements LruPoolStrategy {

@@ -11,10 +11,10 @@ import android.graphics.BitmapFactory;
 import android.graphics.ColorSpace;
 import android.net.Uri;
 import android.os.Build;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.NonNull;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.DecodeFormat;
 import com.bumptech.glide.load.Options;
@@ -38,11 +38,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * On API 26, decoding a variety of different images can cause {@link BitmapFactory} with
- * {@link BitmapFactory.Options#inJustDecodeBounds} set to {@code true} to set
- * {@link BitmapFactory.Options#outConfig} to null instead of a valid value, even though the image
- * can be decoded successfully. Glide can mask these failures by decoding some image sources
- * (notably including resource ids) using other data types and decoders.
+ * On API 26, decoding a variety of different images can cause {@link BitmapFactory} with {@link
+ * BitmapFactory.Options#inJustDecodeBounds} set to {@code true} to set {@link
+ * BitmapFactory.Options#outConfig} to null instead of a valid value, even though the image can be
+ * decoded successfully. Glide can mask these failures by decoding some image sources (notably
+ * including resource ids) using other data types and decoders.
  *
  * <p>This test ensures that we've worked around the framework issue by loading a variety of images
  * and image types without the normal fallback behavior.
@@ -51,22 +51,15 @@ import org.junit.runner.RunWith;
 public class LoadResourcesWithDownsamplerTest {
   @Rule public final TearDownGlide tearDownGlide = new TearDownGlide();
   private final ConcurrencyHelper concurrency = new ConcurrencyHelper();
-  private final Context context = InstrumentationRegistry.getTargetContext();
+  private final Context context = ApplicationProvider.getApplicationContext();
 
   @Test
   public void loadJpegResource_withNoOtherLoaders_decodesResource() {
-    Glide.get(context).getRegistry()
-        .prepend(
-            Object.class,
-            InputStream.class,
-            new FakeModelLoader<>(ResourceIds.raw.canonical));
+    Glide.get(context)
+        .getRegistry()
+        .prepend(Object.class, InputStream.class, new FakeModelLoader<>(ResourceIds.raw.canonical));
 
-    Bitmap bitmap =
-        concurrency.get(
-            Glide.with(context)
-                .asBitmap()
-                .load(new Object())
-                .submit());
+    Bitmap bitmap = concurrency.get(Glide.with(context).asBitmap().load(new Object()).submit());
     assertThat(bitmap).isNotNull();
   }
 
@@ -74,18 +67,12 @@ public class LoadResourcesWithDownsamplerTest {
   public void loadWideGamutJpegResource_withNoOtherLoaders_decodesWideGamutBitmap() {
     assumeTrue(
         "Wide gamut is only available on O+", Build.VERSION.SDK_INT >= Build.VERSION_CODES.O);
-    Glide.get(context).getRegistry()
+    Glide.get(context)
+        .getRegistry()
         .prepend(
-            Object.class,
-            InputStream.class,
-            new FakeModelLoader<>(ResourceIds.raw.webkit_logo_p3));
+            Object.class, InputStream.class, new FakeModelLoader<>(ResourceIds.raw.webkit_logo_p3));
 
-    Bitmap bitmap =
-        concurrency.get(
-            Glide.with(context)
-                .asBitmap()
-                .load(new Object())
-                .submit());
+    Bitmap bitmap = concurrency.get(Glide.with(context).asBitmap().load(new Object()).submit());
     assertThat(bitmap).isNotNull();
     assertThat(bitmap.getConfig()).isEqualTo(Bitmap.Config.RGBA_F16);
     assertThat(bitmap.getColorSpace())
@@ -94,52 +81,38 @@ public class LoadResourcesWithDownsamplerTest {
 
   @Test
   public void loadOpaquePngResource_withNoOtherLoaders_decodesResource() {
-    Glide.get(context).getRegistry()
+    Glide.get(context)
+        .getRegistry()
         .prepend(
-            Object.class,
-            InputStream.class,
-            new FakeModelLoader<>(ResourceIds.raw.canonical_png));
+            Object.class, InputStream.class, new FakeModelLoader<>(ResourceIds.raw.canonical_png));
 
-    Bitmap bitmap =
-        concurrency.get(
-            Glide.with(context)
-                .asBitmap()
-                .load(new Object())
-                .submit());
+    Bitmap bitmap = concurrency.get(Glide.with(context).asBitmap().load(new Object()).submit());
     assertThat(bitmap).isNotNull();
   }
 
   @Test
   public void loadTransparentPngResource_withNoOtherLoaders_decodesResource() {
-    Glide.get(context).getRegistry()
+    Glide.get(context)
+        .getRegistry()
         .prepend(
             Object.class,
             InputStream.class,
             new FakeModelLoader<>(ResourceIds.raw.canonical_transparent_png));
 
-    Bitmap bitmap =
-        concurrency.get(
-            Glide.with(context)
-                .asBitmap()
-                .load(new Object())
-                .submit());
+    Bitmap bitmap = concurrency.get(Glide.with(context).asBitmap().load(new Object()).submit());
     assertThat(bitmap).isNotNull();
   }
 
   @Test
   public void loadTransparentGifResource_withNoOtherLoaders_decodesResource() {
-    Glide.get(context).getRegistry()
+    Glide.get(context)
+        .getRegistry()
         .prepend(
             Object.class,
             InputStream.class,
             new FakeModelLoader<>(ResourceIds.raw.transparent_gif));
 
-    Bitmap bitmap =
-        concurrency.get(
-            Glide.with(context)
-                .asBitmap()
-                .load(new Object())
-                .submit());
+    Bitmap bitmap = concurrency.get(Glide.with(context).asBitmap().load(new Object()).submit());
     assertThat(bitmap).isNotNull();
   }
 
@@ -149,7 +122,8 @@ public class LoadResourcesWithDownsamplerTest {
         "Hardware Bitmaps are only supported on O+",
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O);
 
-    Glide.get(context).getRegistry()
+    Glide.get(context)
+        .getRegistry()
         .prepend(
             Object.class,
             InputStream.class,
@@ -170,41 +144,25 @@ public class LoadResourcesWithDownsamplerTest {
   @Test
   public void loadTransparentGifResource_withNoOtherLoaders_fromBytes_decodesResource() {
     byte[] data = getBytes(ResourceIds.raw.transparent_gif);
-    Bitmap bitmap =
-        concurrency.get(
-            Glide.with(context)
-                .asBitmap()
-                .load(data)
-                .submit());
+    Bitmap bitmap = concurrency.get(Glide.with(context).asBitmap().load(data).submit());
     assertThat(bitmap).isNotNull();
   }
 
   @Test
   public void loadOpaqueGifResource_withNoOtherLoaders_decodesResource() {
-    Glide.get(context).getRegistry()
+    Glide.get(context)
+        .getRegistry()
         .prepend(
-            Object.class,
-            InputStream.class,
-            new FakeModelLoader<>(ResourceIds.raw.opaque_gif));
+            Object.class, InputStream.class, new FakeModelLoader<>(ResourceIds.raw.opaque_gif));
 
-    Bitmap bitmap =
-        concurrency.get(
-            Glide.with(context)
-                .asBitmap()
-                .load(new Object())
-                .submit());
+    Bitmap bitmap = concurrency.get(Glide.with(context).asBitmap().load(new Object()).submit());
     assertThat(bitmap).isNotNull();
   }
 
   @Test
   public void loadOpaqueGifResource_asBytes_decodesResource() {
     byte[] data = getBytes(ResourceIds.raw.opaque_gif);
-     Bitmap bitmap =
-        concurrency.get(
-            Glide.with(context)
-                .asBitmap()
-                .load(data)
-                .submit());
+    Bitmap bitmap = concurrency.get(Glide.with(context).asBitmap().load(data).submit());
     assertThat(bitmap).isNotNull();
   }
 
@@ -214,11 +172,10 @@ public class LoadResourcesWithDownsamplerTest {
         "Hardware Bitmaps are only supported on O+",
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O);
 
-    Glide.get(context).getRegistry()
+    Glide.get(context)
+        .getRegistry()
         .prepend(
-            Object.class,
-            InputStream.class,
-            new FakeModelLoader<>(ResourceIds.raw.opaque_gif));
+            Object.class, InputStream.class, new FakeModelLoader<>(ResourceIds.raw.opaque_gif));
 
     Bitmap bitmap =
         concurrency.get(
@@ -230,7 +187,6 @@ public class LoadResourcesWithDownsamplerTest {
                 .submit());
     assertThat(bitmap).isNotNull();
   }
-
 
   private byte[] getBytes(int resourceId) {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -257,9 +213,8 @@ public class LoadResourcesWithDownsamplerTest {
     return os.toByteArray();
   }
 
-  private class FakeModelLoader<T> implements
-      ModelLoader<T, InputStream>,
-      ModelLoaderFactory<T, InputStream> {
+  private class FakeModelLoader<T>
+      implements ModelLoader<T, InputStream>, ModelLoaderFactory<T, InputStream> {
 
     private final int resourceId;
 
@@ -267,10 +222,10 @@ public class LoadResourcesWithDownsamplerTest {
       this.resourceId = resourceId;
     }
 
-    @android.support.annotation.Nullable
+    @androidx.annotation.Nullable
     @Override
-    public LoadData<InputStream> buildLoadData(@NonNull Object o, int width, int height,
-        @NonNull Options options) {
+    public LoadData<InputStream> buildLoadData(
+        @NonNull Object o, int width, int height, @NonNull Options options) {
       return new LoadData<>(new ObjectKey(o), new Fetcher());
     }
 
@@ -286,20 +241,19 @@ public class LoadResourcesWithDownsamplerTest {
     }
 
     @Override
-    public void teardown() { }
+    public void teardown() {}
 
     private final class Fetcher implements DataFetcher<InputStream> {
       private InputStream inputStream;
 
       @Override
-      public void loadData(@NonNull Priority priority,
-          @NonNull DataCallback<? super InputStream> callback) {
+      public void loadData(
+          @NonNull Priority priority, @NonNull DataCallback<? super InputStream> callback) {
         inputStream = getInputStreamForResource(context, resourceId);
         callback.onDataReady(inputStream);
       }
 
-      private InputStream getInputStreamForResource(
-          Context context, @DrawableRes int resourceId) {
+      private InputStream getInputStreamForResource(Context context, @DrawableRes int resourceId) {
         Resources resources = context.getResources();
         try {
           Uri parse =

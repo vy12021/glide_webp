@@ -1,8 +1,5 @@
 package com.bumptech.glide.annotation.compiler;
 
-import static com.bumptech.glide.annotation.compiler.ProcessorUtil.checkResult;
-import static com.bumptech.glide.annotation.compiler.ProcessorUtil.nonNull;
-
 import com.bumptech.glide.annotation.GlideExtension;
 import com.bumptech.glide.annotation.GlideType;
 import com.google.common.base.Function;
@@ -37,6 +34,7 @@ import javax.lang.model.util.Elements;
  * methods from {@link GlideExtension}s and {@link GlideType}.
  *
  * <p>Generated {@code com.bumptech.glide.RequestManager} implementations look like this:
+ *
  * <pre>
  * <code>
  * public final class GeneratedRequestManager extends RequestManager {
@@ -54,19 +52,14 @@ import javax.lang.model.util.Elements;
  * </pre>
  */
 final class RequestManagerGenerator {
-  private static final String GLIDE_QUALIFIED_NAME =
-      "com.bumptech.glide.Glide";
-  private static final String REQUEST_MANAGER_QUALIFIED_NAME =
-      "com.bumptech.glide.RequestManager";
-  private static final String LIFECYCLE_QUALIFIED_NAME =
-      "com.bumptech.glide.manager.Lifecycle";
+  private static final String GLIDE_QUALIFIED_NAME = "com.bumptech.glide.Glide";
+  private static final String REQUEST_MANAGER_QUALIFIED_NAME = "com.bumptech.glide.RequestManager";
+  private static final String LIFECYCLE_QUALIFIED_NAME = "com.bumptech.glide.manager.Lifecycle";
   private static final String REQUEST_MANAGER_TREE_NODE_QUALIFIED_NAME =
       "com.bumptech.glide.manager.RequestManagerTreeNode";
-  private static final ClassName CONTEXT_CLASS_NAME =
-      ClassName.get("android.content", "Context");
+  private static final ClassName CONTEXT_CLASS_NAME = ClassName.get("android.content", "Context");
 
-  private static final String GENERATED_REQUEST_MANAGER_SIMPLE_NAME =
-      "GlideRequests";
+  private static final String GENERATED_REQUEST_MANAGER_SIMPLE_NAME = "GlideRequests";
 
   private ProcessingEnvironment processingEnv;
   private final ProcessorUtil processorUtil;
@@ -98,16 +91,20 @@ final class RequestManagerGenerator {
   }
 
   TypeSpec generate(
-      String generatedCodePackageName, @Nullable TypeSpec requestOptions, TypeSpec requestBuilder,
+      String generatedCodePackageName,
+      @Nullable TypeSpec requestOptions,
+      TypeSpec requestBuilder,
       Set<String> glideExtensions) {
     generatedRequestBuilderClassName = ClassName.get(generatedCodePackageName, requestBuilder.name);
     return TypeSpec.classBuilder(GENERATED_REQUEST_MANAGER_SIMPLE_NAME)
         .superclass(requestManagerClassName)
-        .addJavadoc("Includes all additions from methods in {@link $T}s\n"
+        .addJavadoc(
+            "Includes all additions from methods in {@link $T}s\n"
                 + "annotated with {@link $T}\n"
                 + "\n"
                 + "<p>Generated code, do not modify\n",
-            GlideExtension.class, GlideType.class)
+            GlideExtension.class,
+            GlideType.class)
         .addAnnotation(
             AnnotationSpec.builder(SuppressWarnings.class)
                 .addMember("value", "$S", "deprecation")
@@ -120,8 +117,9 @@ final class RequestManagerGenerator {
         .addMethods(generateRequestManagerRequestBuilderMethodOverrides())
         .addMethods(
             FluentIterable.from(
-                Collections.singletonList(
-                    generateOverrideSetRequestOptions(generatedCodePackageName, requestOptions)))
+                    Collections.singletonList(
+                        generateOverrideSetRequestOptions(
+                            generatedCodePackageName, requestOptions)))
                 .filter(Predicates.<MethodSpec>notNull()))
         .build();
   }
@@ -129,47 +127,49 @@ final class RequestManagerGenerator {
   private MethodSpec generateCallSuperConstructor() {
     return MethodSpec.constructorBuilder()
         .addModifiers(Modifier.PUBLIC)
-        .addParameter(ParameterSpec.builder(ClassName.get(glideType), "glide")
-            .addAnnotation(nonNull())
-            .build()
-        )
-        .addParameter(ParameterSpec.builder(ClassName.get(lifecycleType), "lifecycle")
-            .addAnnotation(nonNull())
-            .build()
-        )
-        .addParameter(ParameterSpec.builder(ClassName.get(requestManagerTreeNodeType), "treeNode")
-            .addAnnotation(nonNull())
-            .build()
-        )
-        .addParameter(ParameterSpec.builder(CONTEXT_CLASS_NAME, "context")
-            .addAnnotation(nonNull())
-            .build()
-        )
+        .addParameter(
+            ParameterSpec.builder(ClassName.get(glideType), "glide")
+                .addAnnotation(processorUtil.nonNull())
+                .build())
+        .addParameter(
+            ParameterSpec.builder(ClassName.get(lifecycleType), "lifecycle")
+                .addAnnotation(processorUtil.nonNull())
+                .build())
+        .addParameter(
+            ParameterSpec.builder(ClassName.get(requestManagerTreeNodeType), "treeNode")
+                .addAnnotation(processorUtil.nonNull())
+                .build())
+        .addParameter(
+            ParameterSpec.builder(CONTEXT_CLASS_NAME, "context")
+                .addAnnotation(processorUtil.nonNull())
+                .build())
         .addStatement("super(glide, lifecycle, treeNode, context)")
         .build();
   }
 
   private MethodSpec generateAsMethod(String generatedCodePackageName, TypeSpec requestBuilder) {
     TypeVariableName resourceType = TypeVariableName.get("ResourceType");
-    ParameterizedTypeName classOfResouceType = ParameterizedTypeName
-        .get(ClassName.get(Class.class), resourceType);
+    ParameterizedTypeName classOfResouceType =
+        ParameterizedTypeName.get(ClassName.get(Class.class), resourceType);
 
     ClassName generatedRequestBuilderClassName =
         ClassName.get(generatedCodePackageName, requestBuilder.name);
 
-    ParameterizedTypeName requestBuilderOfResourceType = ParameterizedTypeName
-        .get(generatedRequestBuilderClassName, resourceType);
+    ParameterizedTypeName requestBuilderOfResourceType =
+        ParameterizedTypeName.get(generatedRequestBuilderClassName, resourceType);
 
     return MethodSpec.methodBuilder("as")
         .addModifiers(Modifier.PUBLIC)
         .addAnnotation(Override.class)
-        .addAnnotation(checkResult())
-        .addAnnotation(nonNull())
+        .addAnnotation(processorUtil.checkResult())
+        .addAnnotation(processorUtil.nonNull())
         .addTypeVariable(TypeVariableName.get("ResourceType"))
         .returns(requestBuilderOfResourceType)
-        .addParameter(classOfResouceType.annotated(AnnotationSpec.builder(nonNull()).build()),
+        .addParameter(
+            classOfResouceType.annotated(AnnotationSpec.builder(processorUtil.nonNull()).build()),
             "resourceClass")
-        .addStatement("return new $T<>(glide, this, resourceClass, context)",
+        .addStatement(
+            "return new $T<>(glide, this, resourceClass, context)",
             this.generatedRequestBuilderClassName)
         .build();
   }
@@ -178,13 +178,15 @@ final class RequestManagerGenerator {
   private List<MethodSpec> generateRequestManagerRequestManagerMethodOverrides(
       final String generatedPackageName) {
     return FluentIterable.from(
-        processorUtil.findInstanceMethodsReturning(requestManagerType, requestManagerType))
-        .transform(new Function<ExecutableElement, MethodSpec>() {
-          @Override
-          public MethodSpec apply(@Nullable ExecutableElement input) {
-            return generateRequestManagerRequestManagerMethodOverride(generatedPackageName, input);
-          }
-        })
+            processorUtil.findInstanceMethodsReturning(requestManagerType, requestManagerType))
+        .transform(
+            new Function<ExecutableElement, MethodSpec>() {
+              @Override
+              public MethodSpec apply(@Nullable ExecutableElement input) {
+                return generateRequestManagerRequestManagerMethodOverride(
+                    generatedPackageName, input);
+              }
+            })
         .toList();
   }
 
@@ -192,12 +194,13 @@ final class RequestManagerGenerator {
       String generatedPackageName, ExecutableElement method) {
     ClassName generatedRequestManagerName =
         ClassName.get(generatedPackageName, GENERATED_REQUEST_MANAGER_SIMPLE_NAME);
-    Builder returns = ProcessorUtil.overriding(method)
-        .addAnnotation(nonNull())
-        .returns(generatedRequestManagerName);
+    Builder returns =
+        ProcessorUtil.overriding(method)
+            .addAnnotation(processorUtil.nonNull())
+            .returns(generatedRequestManagerName);
     return returns
-        .addCode(ProcessorUtil.generateCastingSuperCall(
-            generatedRequestManagerName, returns.build()))
+        .addCode(
+            ProcessorUtil.generateCastingSuperCall(generatedRequestManagerName, returns.build()))
         .build();
   }
 
@@ -206,24 +209,26 @@ final class RequestManagerGenerator {
     // Without the erasure, this is a RequestBuilder<Y>. A RequestBuilder<X> is not assignable to a
     // RequestBuilder<Y>. After type erasure this is a RequestBuilder. A RequestBuilder<X> is
     // assignable to the raw RequestBuilder.
-    TypeMirror rawRequestBuilder = processingEnv.getTypeUtils()
-        .erasure(requestBuilderType.asType());
+    TypeMirror rawRequestBuilder =
+        processingEnv.getTypeUtils().erasure(requestBuilderType.asType());
 
     return FluentIterable.from(
-        processorUtil.findInstanceMethodsReturning(requestManagerType, rawRequestBuilder))
-        .filter(new Predicate<ExecutableElement>() {
-          @Override
-          public boolean apply(ExecutableElement input) {
-            // Skip the <T> as(Class<T>) method.
-            return !input.getSimpleName().toString().equals("as");
-          }
-        })
-        .transform(new Function<ExecutableElement, MethodSpec>() {
-          @Override
-          public MethodSpec apply(ExecutableElement input) {
-            return generateRequestManagerRequestBuilderMethodOverride(input);
-          }
-        })
+            processorUtil.findInstanceMethodsReturning(requestManagerType, rawRequestBuilder))
+        .filter(
+            new Predicate<ExecutableElement>() {
+              @Override
+              public boolean apply(ExecutableElement input) {
+                // Skip the <T> as(Class<T>) method.
+                return !input.getSimpleName().toString().equals("as");
+              }
+            })
+        .transform(
+            new Function<ExecutableElement, MethodSpec>() {
+              @Override
+              public MethodSpec apply(ExecutableElement input) {
+                return generateRequestManagerRequestBuilderMethodOverride(input);
+              }
+            })
         .toList();
   }
 
@@ -241,8 +246,8 @@ final class RequestManagerGenerator {
     ParameterizedTypeName generatedRequestBuilderOfType =
         ParameterizedTypeName.get(generatedRequestBuilderClassName, ClassName.get(typeArgument));
 
-    MethodSpec.Builder builder = ProcessorUtil.overriding(methodToOverride)
-        .returns(generatedRequestBuilderOfType);
+    MethodSpec.Builder builder =
+        ProcessorUtil.overriding(methodToOverride).returns(generatedRequestBuilderOfType);
     builder.addCode(
         ProcessorUtil.generateCastingSuperCall(generatedRequestBuilderOfType, builder.build()));
 
@@ -252,12 +257,12 @@ final class RequestManagerGenerator {
     return builder.build();
   }
 
-  private List<MethodSpec> generateExtensionRequestManagerMethods(
-      Set<String> glideExtensions) {
+  private List<MethodSpec> generateExtensionRequestManagerMethods(Set<String> glideExtensions) {
     List<ExecutableElement> requestManagerExtensionMethods =
         processorUtil.findAnnotatedElementsInClasses(glideExtensions, GlideType.class);
 
-    return Lists.transform(requestManagerExtensionMethods,
+    return Lists.transform(
+        requestManagerExtensionMethods,
         new Function<ExecutableElement, MethodSpec>() {
           @Override
           public MethodSpec apply(ExecutableElement input) {
@@ -277,8 +282,11 @@ final class RequestManagerGenerator {
 
   private MethodSpec generateAdditionalRequestManagerMethodLegacy(
       ExecutableElement extensionMethod) {
-    String returnType = processorUtil.findClassValuesFromAnnotationOnClassAsNames(extensionMethod,
-        GlideType.class).iterator().next();
+    String returnType =
+        processorUtil
+            .findClassValuesFromAnnotationOnClassAsNames(extensionMethod, GlideType.class)
+            .iterator()
+            .next();
     ClassName returnTypeClassName = ClassName.bestGuess(returnType);
     ParameterizedTypeName parameterizedTypeName =
         ParameterizedTypeName.get(generatedRequestBuilderClassName, returnTypeClassName);
@@ -287,20 +295,24 @@ final class RequestManagerGenerator {
         .addModifiers(Modifier.PUBLIC)
         .returns(parameterizedTypeName)
         .addJavadoc(processorUtil.generateSeeMethodJavadoc(extensionMethod))
-        .addAnnotation(nonNull())
-        .addAnnotation(checkResult())
+        .addAnnotation(processorUtil.nonNull())
+        .addAnnotation(processorUtil.checkResult())
         .addStatement(
             "$T requestBuilder = this.as($T.class)", parameterizedTypeName, returnTypeClassName)
-        .addStatement("$T.$N(requestBuilder)",
-            extensionMethod.getEnclosingElement(), extensionMethod.getSimpleName())
+        .addStatement(
+            "$T.$N(requestBuilder)",
+            extensionMethod.getEnclosingElement(),
+            extensionMethod.getSimpleName())
         .addStatement("return requestBuilder")
         .build();
   }
 
-  private MethodSpec generateAdditionalRequestManagerMethodNew(
-      ExecutableElement extensionMethod) {
-    String returnType = processorUtil.findClassValuesFromAnnotationOnClassAsNames(extensionMethod,
-        GlideType.class).iterator().next();
+  private MethodSpec generateAdditionalRequestManagerMethodNew(ExecutableElement extensionMethod) {
+    String returnType =
+        processorUtil
+            .findClassValuesFromAnnotationOnClassAsNames(extensionMethod, GlideType.class)
+            .iterator()
+            .next();
     ClassName returnTypeClassName = ClassName.bestGuess(returnType);
     ParameterizedTypeName parameterizedTypeName =
         ParameterizedTypeName.get(generatedRequestBuilderClassName, returnTypeClassName);
@@ -309,8 +321,8 @@ final class RequestManagerGenerator {
         .addModifiers(Modifier.PUBLIC)
         .returns(parameterizedTypeName)
         .addJavadoc(processorUtil.generateSeeMethodJavadoc(extensionMethod))
-        .addAnnotation(nonNull())
-        .addAnnotation(checkResult())
+        .addAnnotation(processorUtil.nonNull())
+        .addAnnotation(processorUtil.checkResult())
         .addStatement(
             "return ($T) $T.$N(this.as($T.class))",
             parameterizedTypeName,
@@ -321,9 +333,9 @@ final class RequestManagerGenerator {
   }
 
   /**
-   * The {@code RequestOptions} subclass should always be our
-   * generated subclass type to avoid inadvertent errors where a different subclass is applied that
-   * accidentally wipes out some logic in overidden methods in our generated subclass.
+   * The {@code RequestOptions} subclass should always be our generated subclass type to avoid
+   * inadvertent errors where a different subclass is applied that accidentally wipes out some logic
+   * in overidden methods in our generated subclass.
    */
   @Nullable
   private MethodSpec generateOverrideSetRequestOptions(
@@ -334,8 +346,7 @@ final class RequestManagerGenerator {
 
     Elements elementUtils = processingEnv.getElementUtils();
     TypeElement requestOptionsType =
-        elementUtils.getTypeElement(
-            RequestOptionsGenerator.REQUEST_OPTIONS_QUALIFIED_NAME);
+        elementUtils.getTypeElement(RequestOptionsGenerator.REQUEST_OPTIONS_QUALIFIED_NAME);
 
     // This class may have just been generated and therefore may not be found if we try to obtain
     // it via Elements, so use just the String version instead.
@@ -350,14 +361,16 @@ final class RequestManagerGenerator {
         .addModifiers(Modifier.PROTECTED)
         .addParameter(
             ParameterSpec.builder(ClassName.get(requestOptionsType), parameterName)
-                .addAnnotation(nonNull())
+                .addAnnotation(processorUtil.nonNull())
                 .build())
-        .beginControlFlow("if ($N instanceof $L)",
-            parameterName, generatedRequestOptionsQualifiedName)
+        .beginControlFlow(
+            "if ($N instanceof $L)", parameterName, generatedRequestOptionsQualifiedName)
         .addStatement("super.$N($N)", methodName, parameterName)
         .nextControlFlow("else")
-        .addStatement("super.setRequestOptions(new $L().apply($N))",
-            generatedRequestOptionsQualifiedName, parameterName)
+        .addStatement(
+            "super.setRequestOptions(new $L().apply($N))",
+            generatedRequestOptionsQualifiedName,
+            parameterName)
         .endControlFlow()
         .build();
   }

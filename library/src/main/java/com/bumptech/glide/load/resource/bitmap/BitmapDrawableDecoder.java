@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.ResourceDecoder;
 import com.bumptech.glide.load.engine.Resource;
@@ -29,8 +29,8 @@ public class BitmapDrawableDecoder<DataType> implements ResourceDecoder<DataType
   }
 
   /**
-   * @deprecated Use {@link #BitmapDrawableDecoder(Context, ResourceDecoder)}, {@code bitmapPool}
-   * is ignored.
+   * @deprecated Use {@link #BitmapDrawableDecoder(Context, ResourceDecoder)}, {@code bitmapPool} is
+   *     ignored.
    */
   @Deprecated
   public BitmapDrawableDecoder(
@@ -52,8 +52,8 @@ public class BitmapDrawableDecoder<DataType> implements ResourceDecoder<DataType
   }
 
   @Override
-  public Resource<BitmapDrawable> decode(@NonNull DataType source, int width, int height,
-      @NonNull Options options)
+  public Resource<BitmapDrawable> decode(
+      @NonNull DataType source, int width, int height, @NonNull Options options)
       throws IOException {
     Resource<Bitmap> bitmapResource = decoder.decode(source, width, height, options);
     return LazyBitmapDrawableResource.obtain(resources, bitmapResource);

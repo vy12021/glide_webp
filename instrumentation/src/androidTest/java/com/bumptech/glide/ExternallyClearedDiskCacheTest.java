@@ -5,8 +5,8 @@ import static org.mockito.Mockito.mock;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.bumptech.glide.load.Key;
 import com.bumptech.glide.load.engine.cache.DiskCache;
 import com.bumptech.glide.load.engine.cache.DiskCache.Factory;
@@ -32,7 +32,7 @@ public class ExternallyClearedDiskCacheTest {
 
   @Before
   public void setUp() {
-    context = InstrumentationRegistry.getTargetContext();
+    context = ApplicationProvider.getApplicationContext();
     cacheDir = context.getCacheDir();
   }
 
@@ -71,18 +71,16 @@ public class ExternallyClearedDiskCacheTest {
     Glide.init(
         context,
         new GlideBuilder()
-            .setDiskCache(new Factory() {
-              @Override
-              public DiskCache build() {
-                return cache;
-              }
-            }));
+            .setDiskCache(
+                new Factory() {
+                  @Override
+                  public DiskCache build() {
+                    return cache;
+                  }
+                }));
 
     Drawable drawable =
-        concurrency.get(
-            Glide.with(context)
-                .load(ResourceIds.raw.canonical)
-                .submit());
+        concurrency.get(Glide.with(context).load(ResourceIds.raw.canonical).submit());
     assertThat(drawable).isNotNull();
   }
 
@@ -95,17 +93,15 @@ public class ExternallyClearedDiskCacheTest {
     Glide.init(
         context,
         new GlideBuilder()
-            .setDiskCache(new Factory() {
-              @Override
-              public DiskCache build() {
-                return cache;
-              }
-            }));
+            .setDiskCache(
+                new Factory() {
+                  @Override
+                  public DiskCache build() {
+                    return cache;
+                  }
+                }));
 
-    Drawable drawable =
-        concurrency.get(Glide.with(context)
-            .load(raw.canonical)
-            .submit());
+    Drawable drawable = concurrency.get(Glide.with(context).load(raw.canonical).submit());
     assertThat(drawable).isNotNull();
   }
 

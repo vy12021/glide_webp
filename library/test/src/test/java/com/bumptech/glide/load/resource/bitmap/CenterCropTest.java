@@ -1,8 +1,8 @@
 package com.bumptech.glide.load.resource.bitmap;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.doAnswer;
@@ -31,11 +31,10 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
-import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 28)
 public class CenterCropTest {
   @Rule public final KeyTester keyTester = new KeyTester();
   @Mock private Resource<Bitmap> resource;
@@ -81,8 +80,7 @@ public class CenterCropTest {
 
   @Test
   public void testReturnsGivenResourceIfMatchesSizeExactly() {
-    Resource<Bitmap> result =
-        centerCrop.transform(context, resource, bitmapWidth, bitmapHeight);
+    Resource<Bitmap> result = centerCrop.transform(context, resource, bitmapWidth, bitmapHeight);
 
     assertEquals(resource, result);
   }
@@ -102,8 +100,9 @@ public class CenterCropTest {
   }
 
   @Test
+  @Config(sdk = 19)
   public void testAsksBitmapPoolForArgb8888IfInConfigIsNull() {
-    Shadows.shadowOf(bitmap).setConfig(null);
+    bitmap.setConfig(null);
 
     centerCrop.transform(context, resource, 10, 10);
 
@@ -116,8 +115,8 @@ public class CenterCropTest {
     int expectedWidth = 75;
     int expectedHeight = 74;
 
-    for (int[] dimens : new int[][] { new int[] { 800, 200 }, new int[] { 450, 100 },
-        new int[] { 78, 78 } }) {
+    for (int[] dimens :
+        new int[][] {new int[] {800, 200}, new int[] {450, 100}, new int[] {78, 78}}) {
       Bitmap toTransform = Bitmap.createBitmap(dimens[0], dimens[1], Bitmap.Config.ARGB_4444);
       when(resource.get()).thenReturn(toTransform);
 
@@ -134,8 +133,7 @@ public class CenterCropTest {
     int expectedWidth = 100;
     int expectedHeight = 100;
 
-    for (int[] dimens : new int[][] { new int[] { 50, 90 }, new int[] { 150, 2 },
-        new int[] { 78, 78 } }) {
+    for (int[] dimens : new int[][] {new int[] {50, 90}, new int[] {150, 2}, new int[] {78, 78}}) {
       Bitmap toTransform = Bitmap.createBitmap(dimens[0], dimens[1], Bitmap.Config.ARGB_4444);
       when(resource.get()).thenReturn(toTransform);
 
@@ -149,14 +147,12 @@ public class CenterCropTest {
 
   @Test
   public void testEquals() throws NoSuchAlgorithmException {
-    doAnswer(new Util.WriteDigest("other")).when(transformation)
+    doAnswer(new Util.WriteDigest("other"))
+        .when(transformation)
         .updateDiskCacheKey(any(MessageDigest.class));
     keyTester
-        .addEquivalenceGroup(
-            new CenterCrop(),
-            new CenterCrop())
-        .addEquivalenceGroup(
-            transformation)
+        .addEquivalenceGroup(new CenterCrop(), new CenterCrop())
+        .addEquivalenceGroup(transformation)
         .addRegressionTest(
             new CenterCrop(), "68bd5819c42b37efbe7124bb851443a6388ee3e2e9034213da6eaa15381d3457")
         .test();

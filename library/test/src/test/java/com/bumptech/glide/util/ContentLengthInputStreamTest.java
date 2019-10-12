@@ -2,8 +2,8 @@ package com.bumptech.glide.util;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
@@ -18,7 +18,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class ContentLengthInputStreamTest {
   @Mock private InputStream wrapped;
 
@@ -37,8 +37,7 @@ public class ContentLengthInputStreamTest {
   }
 
   @Test
-  public void testAvailable_withNullContentLength_returnsWrappedAvailable()
-      throws IOException {
+  public void testAvailable_withNullContentLength_returnsWrappedAvailable() throws IOException {
     InputStream is = ContentLengthInputStream.obtain(wrapped, null /*contentLengthHeader*/);
     int expected = 1234;
     when(wrapped.available()).thenReturn(expected);

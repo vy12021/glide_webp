@@ -7,8 +7,8 @@ import static com.bumptech.glide.load.ImageHeaderParser.ImageType.PNG_A;
 import static com.bumptech.glide.load.ImageHeaderParser.ImageType.UNKNOWN;
 import static com.bumptech.glide.load.ImageHeaderParser.ImageType.WEBP;
 
-import android.support.annotation.NonNull;
 import android.util.Log;
+import androidx.annotation.NonNull;
 import com.bumptech.glide.load.ImageHeaderParser;
 import com.bumptech.glide.load.engine.bitmap_recycle.ArrayPool;
 import com.bumptech.glide.util.Preconditions;
@@ -18,9 +18,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 
-/**
- * A class for parsing the exif orientation and other data from an image header.
- */
+/** A class for parsing the exif orientation and other data from an image header. */
 public final class DefaultImageHeaderParser implements ImageHeaderParser {
   // Due to https://code.google.com/p/android/issues/detail?id=97751.
   // TAG needs to be under 23 chars, so "Default" > "Dflt".
@@ -41,7 +39,7 @@ public final class DefaultImageHeaderParser implements ImageHeaderParser {
   static final int SEGMENT_START_ID = 0xFF;
   static final int EXIF_SEGMENT_TYPE = 0xE1;
   private static final int ORIENTATION_TAG_TYPE = 0x0112;
-  private static final int[] BYTES_PER_FORMAT = { 0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8 };
+  private static final int[] BYTES_PER_FORMAT = {0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8};
   // WebP-related
   // "RIFF"
   private static final int RIFF_HEADER = 0x52494646;
@@ -73,14 +71,16 @@ public final class DefaultImageHeaderParser implements ImageHeaderParser {
   @Override
   public int getOrientation(@NonNull InputStream is, @NonNull ArrayPool byteArrayPool)
       throws IOException {
-    return getOrientation(new StreamReader(Preconditions.checkNotNull(is)),
+    return getOrientation(
+        new StreamReader(Preconditions.checkNotNull(is)),
         Preconditions.checkNotNull(byteArrayPool));
   }
 
   @Override
   public int getOrientation(@NonNull ByteBuffer byteBuffer, @NonNull ArrayPool byteArrayPool)
       throws IOException {
-    return getOrientation(new ByteBufferReader(Preconditions.checkNotNull(byteBuffer)),
+    return getOrientation(
+        new ByteBufferReader(Preconditions.checkNotNull(byteBuffer)),
         Preconditions.checkNotNull(byteArrayPool));
   }
 
@@ -145,7 +145,7 @@ public final class DefaultImageHeaderParser implements ImageHeaderParser {
    * not an image) it will return a default value rather than throwing an exception.
    *
    * @return The exif orientation if present or -1 if the header couldn't be parsed or doesn't
-   * contain an orientation
+   *     contain an orientation
    */
   private int getOrientation(Reader reader, ArrayPool byteArrayPool) throws IOException {
     final int magicNumber = reader.getUInt16();
@@ -178,9 +178,13 @@ public final class DefaultImageHeaderParser implements ImageHeaderParser {
     int read = reader.read(tempArray, exifSegmentLength);
     if (read != exifSegmentLength) {
       if (Log.isLoggable(TAG, Log.DEBUG)) {
-        Log.d(TAG, "Unable to read exif segment data"
-            + ", length: " + exifSegmentLength
-            + ", actually read: " + read);
+        Log.d(
+            TAG,
+            "Unable to read exif segment data"
+                + ", length: "
+                + exifSegmentLength
+                + ", actually read: "
+                + read);
       }
       return UNKNOWN_ORIENTATION;
     }
@@ -240,10 +244,15 @@ public final class DefaultImageHeaderParser implements ImageHeaderParser {
         long skipped = reader.skip(segmentLength);
         if (skipped != segmentLength) {
           if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "Unable to skip enough data"
-                + ", type: " + segmentType
-                + ", wanted to skip: " + segmentLength
-                + ", but actually skipped: " + skipped);
+            Log.d(
+                TAG,
+                "Unable to skip enough data"
+                    + ", type: "
+                    + segmentType
+                    + ", wanted to skip: "
+                    + segmentLength
+                    + ", but actually skipped: "
+                    + skipped);
           }
           return -1;
         }
@@ -304,8 +313,16 @@ public final class DefaultImageHeaderParser implements ImageHeaderParser {
       }
 
       if (Log.isLoggable(TAG, Log.DEBUG)) {
-        Log.d(TAG, "Got tagIndex=" + i + " tagType=" + tagType + " formatCode=" + formatCode
-            + " componentCount=" + componentCount);
+        Log.d(
+            TAG,
+            "Got tagIndex="
+                + i
+                + " tagType="
+                + tagType
+                + " formatCode="
+                + formatCode
+                + " componentCount="
+                + componentCount);
       }
 
       final int byteCount = componentCount + BYTES_PER_FORMAT[formatCode];
@@ -331,7 +348,7 @@ public final class DefaultImageHeaderParser implements ImageHeaderParser {
         continue;
       }
 
-      //assume componentCount == 1 && fmtCode == 3
+      // assume componentCount == 1 && fmtCode == 3
       return segmentData.getInt16(tagValueOffset);
     }
 
@@ -352,9 +369,7 @@ public final class DefaultImageHeaderParser implements ImageHeaderParser {
     private final ByteBuffer data;
 
     RandomAccessReader(byte[] data, int length) {
-      this.data = (ByteBuffer) ByteBuffer.wrap(data)
-          .order(ByteOrder.BIG_ENDIAN)
-          .limit(length);
+      this.data = (ByteBuffer) ByteBuffer.wrap(data).order(ByteOrder.BIG_ENDIAN).limit(length);
     }
 
     void order(ByteOrder byteOrder) {
@@ -380,9 +395,13 @@ public final class DefaultImageHeaderParser implements ImageHeaderParser {
 
   private interface Reader {
     int getUInt16() throws IOException;
+
     short getUInt8() throws IOException;
+
     long skip(long total) throws IOException;
+
     int read(byte[] buffer, int byteCount) throws IOException;
+
     int getByte() throws IOException;
   }
 

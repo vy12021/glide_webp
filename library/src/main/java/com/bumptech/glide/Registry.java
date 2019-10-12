@@ -1,8 +1,8 @@
 package com.bumptech.glide;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.util.Pools.Pool;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.util.Pools.Pool;
 import com.bumptech.glide.load.Encoder;
 import com.bumptech.glide.load.ImageHeaderParser;
 import com.bumptech.glide.load.Options;
@@ -74,15 +74,15 @@ public class Registry {
    *
    * <p>The {@link Encoder} will be used both for the exact data class and any subtypes. For
    * example, registering an {@link Encoder} for {@link java.io.InputStream} will result in the
-   * {@link Encoder} being used for
-   * {@link android.content.res.AssetFileDescriptor.AutoCloseInputStream},
-   * {@link java.io.FileInputStream} and any other subclass.
+   * {@link Encoder} being used for {@link
+   * android.content.res.AssetFileDescriptor.AutoCloseInputStream}, {@link java.io.FileInputStream}
+   * and any other subclass.
    *
-   * <p>If multiple {@link Encoder}s are registered for the same type or super type, the
-   * {@link Encoder} that is registered first will be used.
+   * <p>If multiple {@link Encoder}s are registered for the same type or super type, the {@link
+   * Encoder} that is registered first will be used.
    *
    * @deprecated Use the equivalent {@link #append(Class, Class, ModelLoaderFactory)} method
-   * instead.
+   *     instead.
    */
   @NonNull
   @Deprecated
@@ -96,12 +96,12 @@ public class Registry {
    *
    * <p>The {@link Encoder} will be used both for the exact data class and any subtypes. For
    * example, registering an {@link Encoder} for {@link java.io.InputStream} will result in the
-   * {@link Encoder} being used for
-   * {@link android.content.res.AssetFileDescriptor.AutoCloseInputStream},
-   * {@link java.io.FileInputStream} and any other subclass.
+   * {@link Encoder} being used for {@link
+   * android.content.res.AssetFileDescriptor.AutoCloseInputStream}, {@link java.io.FileInputStream}
+   * and any other subclass.
    *
-   * <p>If multiple {@link Encoder}s are registered for the same type or super type, the
-   * {@link Encoder} that is registered first will be used.
+   * <p>If multiple {@link Encoder}s are registered for the same type or super type, the {@link
+   * Encoder} that is registered first will be used.
    *
    * @see #prepend(Class, Encoder)
    */
@@ -112,13 +112,12 @@ public class Registry {
   }
 
   /**
-   * Prepends the given {@link Encoder} into the list of available {@link Encoder}s
-   * so that it is attempted before all later and default {@link Encoder}s for the given
-   * data class.
+   * Prepends the given {@link Encoder} into the list of available {@link Encoder}s so that it is
+   * attempted before all later and default {@link Encoder}s for the given data class.
    *
-   * <p>This method allows you to replace the default {@link Encoder} because it ensures
-   * the registered {@link Encoder} will run first. If multiple {@link Encoder}s are registered for
-   * the same type or super type, the {@link Encoder} that is registered first will be used.
+   * <p>This method allows you to replace the default {@link Encoder} because it ensures the
+   * registered {@link Encoder} will run first. If multiple {@link Encoder}s are registered for the
+   * same type or super type, the {@link Encoder} that is registered first will be used.
    *
    * @see #append(Class, Encoder)
    */
@@ -129,24 +128,23 @@ public class Registry {
   }
 
   /**
-   * Appends the given {@link ResourceDecoder} onto the list of all available
-   * {@link ResourceDecoder}s allowing it to be used if all earlier and default
-   * {@link ResourceDecoder}s for the given types fail (or there are none).
+   * Appends the given {@link ResourceDecoder} onto the list of all available {@link
+   * ResourceDecoder}s allowing it to be used if all earlier and default {@link ResourceDecoder}s
+   * for the given types fail (or there are none).
    *
    * <p>If you're attempting to replace an existing {@link ResourceDecoder} or would like to ensure
-   * that your {@link ResourceDecoder} gets the chance to run before an existing
-   * {@link ResourceDecoder}, use {@link #prepend(Class, Class, ResourceDecoder)}. This method is
-   * best for new types of resources and data or as a way to add an additional fallback decoder
-   * for an existing type of data.
+   * that your {@link ResourceDecoder} gets the chance to run before an existing {@link
+   * ResourceDecoder}, use {@link #prepend(Class, Class, ResourceDecoder)}. This method is best for
+   * new types of resources and data or as a way to add an additional fallback decoder for an
+   * existing type of data.
    *
    * @see #append(String, Class, Class, ResourceDecoder)
    * @see #prepend(Class, Class, ResourceDecoder)
-   *
-   * @param dataClass The data that will be decoded from
-   * ({@link java.io.InputStream}, {@link java.io.FileDescriptor} etc).
+   * @param dataClass The data that will be decoded from ({@link java.io.InputStream}, {@link
+   *     java.io.FileDescriptor} etc).
    * @param resourceClass The resource that will be decoded to ({@link android.graphics.Bitmap},
-   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable},
-   * {@link com.bumptech.glide.load.resource.gif.GifDrawable} etc).
+   *    {@link com.bumptech.glide.load.resource.webp.WebpDrawable},
+   *    {@link com.bumptech.glide.load.resource.gif.GifDrawable} etc).
    * @param decoder The {@link ResourceDecoder} to register.
    */
   @NonNull
@@ -164,20 +162,19 @@ public class Registry {
    * the given types in this bucket fail (or there are none).
    *
    * <p>If you're attempting to replace an existing {@link ResourceDecoder} or would like to ensure
-   * that your {@link ResourceDecoder} gets the chance to run before an existing
-   * {@link ResourceDecoder}, use {@link #prepend(Class, Class, ResourceDecoder)}. This method is
-   * best for new types of resources and data or as a way to add an additional fallback decoder
-   * for an existing type of data.
+   * that your {@link ResourceDecoder} gets the chance to run before an existing {@link
+   * ResourceDecoder}, use {@link #prepend(Class, Class, ResourceDecoder)}. This method is best for
+   * new types of resources and data or as a way to add an additional fallback decoder for an
+   * existing type of data.
    *
    * @see #prepend(String, Class, Class, ResourceDecoder)
    * @see #setResourceDecoderBucketPriorityList(List)
-   *
    * @param bucket The bucket identifier to add this decoder to.
-   * @param dataClass The data that will be decoded from
-   * ({@link java.io.InputStream}, {@link java.io.FileDescriptor} etc).
+   * @param dataClass The data that will be decoded from ({@link java.io.InputStream}, {@link
+   *     java.io.FileDescriptor} etc).
    * @param resourceClass The resource that will be decoded to ({@link android.graphics.Bitmap},
-   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable},
-   * {@link com.bumptech.glide.load.resource.gif.GifDrawable} etc).
+   *    {@link com.bumptech.glide.load.resource.webp.WebpDrawable},
+   *    {@link com.bumptech.glide.load.resource.gif.GifDrawable} etc).
    * @param decoder The {@link ResourceDecoder} to register.
    */
   @NonNull
@@ -191,24 +188,22 @@ public class Registry {
   }
 
   /**
-   * Prepends the given {@link ResourceDecoder} into the list of all available
-   * {@link ResourceDecoder}s so that it is attempted before all later and default
-   * {@link ResourceDecoder}s for the given types.
+   * Prepends the given {@link ResourceDecoder} into the list of all available {@link
+   * ResourceDecoder}s so that it is attempted before all later and default {@link ResourceDecoder}s
+   * for the given types.
    *
-   * <p>This method allows you to replace the default {@link ResourceDecoder} because it ensures
-   * the registered {@link ResourceDecoder} will run first. You can use the
-   * {@link ResourceDecoder#handles(Object, Options)} to fall back to the default
-   * {@link ResourceDecoder}s if you only want to change the default functionality for certain
-   * types of data.
+   * <p>This method allows you to replace the default {@link ResourceDecoder} because it ensures the
+   * registered {@link ResourceDecoder} will run first. You can use the {@link
+   * ResourceDecoder#handles(Object, Options)} to fall back to the default {@link ResourceDecoder}s
+   * if you only want to change the default functionality for certain types of data.
    *
    * @see #prepend(String, Class, Class, ResourceDecoder)
    * @see #append(Class, Class, ResourceDecoder)
-   *
-   * @param dataClass The data that will be decoded from
-   * ({@link java.io.InputStream}, {@link java.io.FileDescriptor} etc).
+   * @param dataClass The data that will be decoded from ({@link java.io.InputStream}, {@link
+   *     java.io.FileDescriptor} etc).
    * @param resourceClass The resource that will be decoded to ({@link android.graphics.Bitmap},
-   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable},
-   * {@link com.bumptech.glide.load.resource.gif.GifDrawable} etc).
+   *    {@link com.bumptech.glide.load.resource.webp.WebpDrawable},
+   *    {@link com.bumptech.glide.load.resource.gif.GifDrawable} etc).
    * @param decoder The {@link ResourceDecoder} to register.
    */
   @NonNull
@@ -222,24 +217,23 @@ public class Registry {
 
   /**
    * Prepends the given {@link ResourceDecoder} into the list of available {@link ResourceDecoder}s
-   * in the same bucket so that it is attempted before all later and default
-   * {@link ResourceDecoder}s for the given types in that bucket.
+   * in the same bucket so that it is attempted before all later and default {@link
+   * ResourceDecoder}s for the given types in that bucket.
    *
    * <p>This method allows you to replace the default {@link ResourceDecoder} for this bucket
    * because it ensures the registered {@link ResourceDecoder} will run first. You can use the
-   * {@link ResourceDecoder#handles(Object, Options)} to fall back to the default
-   * {@link ResourceDecoder}s if you only want to change the default functionality for certain
-   * types of data.
+   * {@link ResourceDecoder#handles(Object, Options)} to fall back to the default {@link
+   * ResourceDecoder}s if you only want to change the default functionality for certain types of
+   * data.
    *
    * @see #append(String, Class, Class, ResourceDecoder)
    * @see #setResourceDecoderBucketPriorityList(List)
-   *
    * @param bucket The bucket identifier to add this decoder to.
-   * @param dataClass The data that will be decoded from
-   * ({@link java.io.InputStream}, {@link java.io.FileDescriptor} etc).
+   * @param dataClass The data that will be decoded from ({@link java.io.InputStream}, {@link
+   *     java.io.FileDescriptor} etc).
    * @param resourceClass The resource that will be decoded to ({@link android.graphics.Bitmap},
-   * {@link com.bumptech.glide.load.resource.webp.WebpDrawable},
-   * {@link com.bumptech.glide.load.resource.gif.GifDrawable} etc).
+   *    {@link com.bumptech.glide.load.resource.webp.WebpDrawable},
+   *    {@link com.bumptech.glide.load.resource.gif.GifDrawable} etc).
    * @param decoder The {@link ResourceDecoder} to register.
    */
   @NonNull
@@ -257,20 +251,22 @@ public class Registry {
    * which are identified as a unique string. Glide will attempt to decode using decoders in the
    * highest priority bucket before moving on to the next one.
    *
-   * <p>The default order is [{@link #BUCKET_GIF}, {@link #BUCKET_BITMAP},
+   * <p>The default order is [{@link #BUCKET_WEBP}, {@link #BUCKET_GIF}, {@link #BUCKET_BITMAP},
    * {@link #BUCKET_BITMAP_DRAWABLE}].
    *
    * <p>When registering decoders, you can use these buckets to specify the ordering relative only
    * to other decoders in that bucket.
+   *
    * @see #append(String, Class, Class, ResourceDecoder)
    * @see #prepend(String, Class, Class, ResourceDecoder)
-   *
    * @param buckets The list of bucket identifiers in order from highest priority to least priority.
    */
   // Final to avoid a PMD error.
   @NonNull
   public final Registry setResourceDecoderBucketPriorityList(@NonNull List<String> buckets) {
-    List<String> modifiedBuckets = new ArrayList<>(buckets);
+    // See #3296 and https://bugs.openjdk.java.net/browse/JDK-6260652.
+    List<String> modifiedBuckets = new ArrayList<>(buckets.size());
+    modifiedBuckets.addAll(buckets);
     modifiedBuckets.add(0, BUCKET_PREPEND_ALL);
     modifiedBuckets.add(BUCKET_APPEND_ALL);
     decoderRegistry.setBucketPriorityList(modifiedBuckets);
@@ -285,7 +281,8 @@ public class Registry {
    * <p>The {@link ResourceEncoder} will be used both for the exact resource class and any subtypes.
    * For example, registering an {@link ResourceEncoder} for
    * {@link android.graphics.drawable.Drawable} (not recommended) will result in the
-   * {@link ResourceEncoder} being used for {@link android.graphics.drawable.BitmapDrawable},
+   * {@link ResourceEncoder} being used for
+   * {@link android.graphics.drawable.BitmapDrawable} and
    * {@link com.bumptech.glide.load.resource.webp.WebpDrawable} and
    * {@link com.bumptech.glide.load.resource.gif.GifDrawable} and any other subclass.
    *
@@ -330,8 +327,8 @@ public class Registry {
    * so that it is attempted before all later and default {@link ResourceEncoder}s for the given
    * data type.
    *
-   * <p>This method allows you to replace the default {@link ResourceEncoder} because it ensures
-   * the registered {@link ResourceEncoder} will run first. If multiple {@link ResourceEncoder}s are
+   * <p>This method allows you to replace the default {@link ResourceEncoder} because it ensures the
+   * registered {@link ResourceEncoder} will run first. If multiple {@link ResourceEncoder}s are
    * registered for the same type or super type, the {@link ResourceEncoder} that is registered
    * first will be used.
    *
@@ -358,15 +355,16 @@ public class Registry {
    * Registers the given {@link ResourceTranscoder} to convert from the given resource {@link Class}
    * to the given transcode {@link Class}.
    *
-   * @param resourceClass The class that will be transcoded from (e.g.
-   * {@link android.graphics.Bitmap}).
-   * @param transcodeClass The class that will be transcoded to (e.g.
-   * {@link android.graphics.drawable.BitmapDrawable}).
+   * @param resourceClass The class that will be transcoded from (e.g. {@link
+   *     android.graphics.Bitmap}).
+   * @param transcodeClass The class that will be transcoded to (e.g. {@link
+   *     android.graphics.drawable.BitmapDrawable}).
    * @param transcoder The {@link ResourceTranscoder} to register.
    */
   @NonNull
   public <TResource, Transcode> Registry register(
-      @NonNull Class<TResource> resourceClass, @NonNull Class<Transcode> transcodeClass,
+      @NonNull Class<TResource> resourceClass,
+      @NonNull Class<Transcode> transcodeClass,
       @NonNull ResourceTranscoder<TResource, Transcode> transcoder) {
     transcoderRegistry.register(resourceClass, transcodeClass, transcoder);
     return this;
@@ -387,26 +385,25 @@ public class Registry {
    * constructed {@link ModelLoader} will be tried after all default and previously registered
    * {@link ModelLoader}s for the given model and data classes.
    *
-   * <p>If you're attempting to replace an existing {@link ModelLoader}, use
-   * {@link #prepend(Class, Class, ModelLoaderFactory)}. This method is best for new types of models
-   * and/or data or as a way to add an additional fallback loader for an existing type of
-   * model/data.
+   * <p>If you're attempting to replace an existing {@link ModelLoader}, use {@link #prepend(Class,
+   * Class, ModelLoaderFactory)}. This method is best for new types of models and/or data or as a
+   * way to add an additional fallback loader for an existing type of model/data.
    *
    * <p>If multiple {@link ModelLoaderFactory}s are registered for the same model and/or data
-   * classes, the {@link ModelLoader}s they produce will be attempted in the order the
-   * {@link ModelLoaderFactory}s were registered. Only if all {@link ModelLoader}s fail will the
-   * entire request fail.
+   * classes, the {@link ModelLoader}s they produce will be attempted in the order the {@link
+   * ModelLoaderFactory}s were registered. Only if all {@link ModelLoader}s fail will the entire
+   * request fail.
    *
    * @see #prepend(Class, Class, ModelLoaderFactory)
    * @see #replace(Class, Class, ModelLoaderFactory)
-   *
    * @param modelClass The model class (e.g. URL, file path).
-   * @param dataClass  the data class (e.g. {@link java.io.InputStream},
-   * {@link java.io.FileDescriptor}).
+   * @param dataClass the data class (e.g. {@link java.io.InputStream}, {@link
+   *     java.io.FileDescriptor}).
    */
   @NonNull
   public <Model, Data> Registry append(
-      @NonNull Class<Model> modelClass, @NonNull Class<Data> dataClass,
+      @NonNull Class<Model> modelClass,
+      @NonNull Class<Data> dataClass,
       @NonNull ModelLoaderFactory<Model, Data> factory) {
     modelLoaderRegistry.append(modelClass, dataClass, factory);
     return this;
@@ -418,26 +415,26 @@ public class Registry {
    * {@link ModelLoader}s for the given model and data classes.
    *
    * <p>If you're attempting to add additional functionality or add a backup that should run only
-   * after the default {@link ModelLoader}s run, use
-   * {@link #append(Class, Class, ModelLoaderFactory)}. This method is best for adding an additional
-   * case to Glide's existing functionality that should run first. This method will still run
-   * Glide's default {@link ModelLoader}s if the prepended {@link ModelLoader}s fail.
+   * after the default {@link ModelLoader}s run, use {@link #append(Class, Class,
+   * ModelLoaderFactory)}. This method is best for adding an additional case to Glide's existing
+   * functionality that should run first. This method will still run Glide's default {@link
+   * ModelLoader}s if the prepended {@link ModelLoader}s fail.
    *
    * <p>If multiple {@link ModelLoaderFactory}s are registered for the same model and/or data
-   * classes, the {@link ModelLoader}s they produce will be attempted in the order the
-   * {@link ModelLoaderFactory}s were registered. Only if all {@link ModelLoader}s fail will the
-   * entire request fail.
+   * classes, the {@link ModelLoader}s they produce will be attempted in the order the {@link
+   * ModelLoaderFactory}s were registered. Only if all {@link ModelLoader}s fail will the entire
+   * request fail.
    *
    * @see #append(Class, Class, ModelLoaderFactory)
    * @see #replace(Class, Class, ModelLoaderFactory)
-   *
    * @param modelClass The model class (e.g. URL, file path).
-   * @param dataClass  the data class (e.g. {@link java.io.InputStream},
-   * {@link java.io.FileDescriptor}).
+   * @param dataClass the data class (e.g. {@link java.io.InputStream}, {@link
+   *     java.io.FileDescriptor}).
    */
   @NonNull
   public <Model, Data> Registry prepend(
-      @NonNull Class<Model> modelClass, @NonNull Class<Data> dataClass,
+      @NonNull Class<Model> modelClass,
+      @NonNull Class<Data> dataClass,
       @NonNull ModelLoaderFactory<Model, Data> factory) {
     modelLoaderRegistry.prepend(modelClass, dataClass, factory);
     return this;
@@ -448,23 +445,21 @@ public class Registry {
    * and model class and replaces all of them with the single {@link ModelLoader} provided.
    *
    * <p>If you're attempting to add additional functionality or add a backup that should run only
-   * after the default {@link ModelLoader}s run, use
-   * {@link #append(Class, Class, ModelLoaderFactory)}. This method should be used only when you
-   * want to ensure that Glide's default {@link ModelLoader}s do not run.
+   * after the default {@link ModelLoader}s run, use {@link #append(Class, Class,
+   * ModelLoaderFactory)}. This method should be used only when you want to ensure that Glide's
+   * default {@link ModelLoader}s do not run.
    *
    * <p>One good use case for this method is when you want to replace Glide's default networking
-   * library with your OkHttp, Volley, or your own implementation. Using
-   * {@link #prepend(Class, Class, ModelLoaderFactory)} or
-   * {@link #append(Class, Class, ModelLoaderFactory)} may still allow Glide's default networking
-   * library to run in some cases. Using this method will ensure that only your networking library
-   * will run and that the request will fail otherwise.
+   * library with your OkHttp, Volley, or your own implementation. Using {@link #prepend(Class,
+   * Class, ModelLoaderFactory)} or {@link #append(Class, Class, ModelLoaderFactory)} may still
+   * allow Glide's default networking library to run in some cases. Using this method will ensure
+   * that only your networking library will run and that the request will fail otherwise.
    *
    * @see #prepend(Class, Class, ModelLoaderFactory)
    * @see #append(Class, Class, ModelLoaderFactory)
-   *
    * @param modelClass The model class (e.g. URL, file path).
-   * @param dataClass  the data class (e.g. {@link java.io.InputStream},
-   * {@link java.io.FileDescriptor}).
+   * @param dataClass the data class (e.g. {@link java.io.InputStream}, {@link
+   *     java.io.FileDescriptor}).
    */
   @NonNull
   public <Model, Data> Registry replace(
@@ -477,7 +472,8 @@ public class Registry {
 
   @Nullable
   public <Data, TResource, Transcode> LoadPath<Data, TResource, Transcode> getLoadPath(
-      @NonNull Class<Data> dataClass, @NonNull Class<TResource> resourceClass,
+      @NonNull Class<Data> dataClass,
+      @NonNull Class<TResource> resourceClass,
       @NonNull Class<Transcode> transcodeClass) {
     LoadPath<Data, TResource, Transcode> result =
         loadPathCache.get(dataClass, resourceClass, transcodeClass);
@@ -502,7 +498,8 @@ public class Registry {
 
   @NonNull
   private <Data, TResource, Transcode> List<DecodePath<Data, TResource, Transcode>> getDecodePaths(
-      @NonNull Class<Data> dataClass, @NonNull Class<TResource> resourceClass,
+      @NonNull Class<Data> dataClass,
+      @NonNull Class<TResource> resourceClass,
       @NonNull Class<Transcode> transcodeClass) {
     List<DecodePath<Data, TResource, Transcode>> decodePaths = new ArrayList<>();
     List<Class<TResource>> registeredResourceClasses =
@@ -520,8 +517,13 @@ public class Registry {
             transcoderRegistry.get(registeredResourceClass, registeredTranscodeClass);
         @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
         DecodePath<Data, TResource, Transcode> path =
-            new DecodePath<>(dataClass, registeredResourceClass, registeredTranscodeClass,
-                decoders, transcoder, throwableListPool);
+            new DecodePath<>(
+                dataClass,
+                registeredResourceClass,
+                registeredTranscodeClass,
+                decoders,
+                transcoder,
+                throwableListPool);
         decodePaths.add(path);
       }
     }
@@ -530,9 +532,11 @@ public class Registry {
 
   @NonNull
   public <Model, TResource, Transcode> List<Class<?>> getRegisteredResourceClasses(
-      @NonNull Class<Model> modelClass, @NonNull Class<TResource> resourceClass,
+      @NonNull Class<Model> modelClass,
+      @NonNull Class<TResource> resourceClass,
       @NonNull Class<Transcode> transcodeClass) {
-    List<Class<?>> result = modelToResourceClassCache.get(modelClass, resourceClass);
+    List<Class<?>> result =
+        modelToResourceClassCache.get(modelClass, resourceClass, transcodeClass);
 
     if (result == null) {
       result = new ArrayList<>();
@@ -541,15 +545,15 @@ public class Registry {
         List<? extends Class<?>> registeredResourceClasses =
             decoderRegistry.getResourceClasses(dataClass, resourceClass);
         for (Class<?> registeredResourceClass : registeredResourceClasses) {
-          List<Class<Transcode>> registeredTranscodeClasses = transcoderRegistry
-              .getTranscodeClasses(registeredResourceClass, transcodeClass);
+          List<Class<Transcode>> registeredTranscodeClasses =
+              transcoderRegistry.getTranscodeClasses(registeredResourceClass, transcodeClass);
           if (!registeredTranscodeClasses.isEmpty() && !result.contains(registeredResourceClass)) {
             result.add(registeredResourceClass);
           }
         }
       }
-      modelToResourceClassCache.put(modelClass, resourceClass,
-          Collections.unmodifiableList(result));
+      modelToResourceClassCache.put(
+          modelClass, resourceClass, transcodeClass, Collections.unmodifiableList(result));
     }
 
     return result;
@@ -586,11 +590,7 @@ public class Registry {
 
   @NonNull
   public <Model> List<ModelLoader<Model, ?>> getModelLoaders(@NonNull Model model) {
-    List<ModelLoader<Model, ?>> result = modelLoaderRegistry.getModelLoaders(model);
-    if (result.isEmpty()) {
-      throw new NoModelLoaderAvailableException(model);
-    }
-    return result;
+    return modelLoaderRegistry.getModelLoaders(model);
   }
 
   @NonNull
@@ -609,33 +609,41 @@ public class Registry {
   // Never serialized by Glide.
   @SuppressWarnings("serial")
   public static class NoModelLoaderAvailableException extends MissingComponentException {
+
     public NoModelLoaderAvailableException(@NonNull Object model) {
-      super("Failed to find any ModelLoaders for model: " + model);
+      super("Failed to find any ModelLoaders registered for model class: " + model.getClass());
     }
 
-    public NoModelLoaderAvailableException(@NonNull Class<?> modelClass,
-        @NonNull Class<?> dataClass) {
+    public <M> NoModelLoaderAvailableException(
+        @NonNull M model, @NonNull List<ModelLoader<M, ?>> matchingButNotHandlingModelLoaders) {
+      super(
+          "Found ModelLoaders for model class: "
+              + matchingButNotHandlingModelLoaders
+              + ", but none that handle this specific model instance: "
+              + model);
+    }
+
+    public NoModelLoaderAvailableException(
+        @NonNull Class<?> modelClass, @NonNull Class<?> dataClass) {
       super("Failed to find any ModelLoaders for model: " + modelClass + " and data: " + dataClass);
     }
   }
 
-  /**
-   * Thrown when no {@link ResourceEncoder} is registered for a given resource class.
-   */
+  /** Thrown when no {@link ResourceEncoder} is registered for a given resource class. */
   // Never serialized by Glide.
   @SuppressWarnings("serial")
   public static class NoResultEncoderAvailableException extends MissingComponentException {
     public NoResultEncoderAvailableException(@NonNull Class<?> resourceClass) {
-      super("Failed to find result encoder for resource class: " + resourceClass
-          + ", you may need to consider registering a new Encoder for the requested type or"
-          + " DiskCacheStrategy.DATA/DiskCacheStrategy.NONE if caching your transformed resource is"
-          + " unnecessary.");
+      super(
+          "Failed to find result encoder for resource class: "
+              + resourceClass
+              + ", you may need to consider registering a new Encoder for the requested type or"
+              + " DiskCacheStrategy.DATA/DiskCacheStrategy.NONE if caching your transformed"
+              + " resource is unnecessary.");
     }
   }
 
-  /**
-   * Thrown when no {@link Encoder} is registered for a given data class.
-   */
+  /** Thrown when no {@link Encoder} is registered for a given data class. */
   // Never serialized by Glide.
   @SuppressWarnings("serial")
   public static class NoSourceEncoderAvailableException extends MissingComponentException {
@@ -644,9 +652,7 @@ public class Registry {
     }
   }
 
-  /**
-   * Thrown when some necessary component is missing for a load.
-   */
+  /** Thrown when some necessary component is missing for a load. */
   // Never serialized by Glide.
   @SuppressWarnings("serial")
   public static class MissingComponentException extends RuntimeException {
@@ -655,9 +661,7 @@ public class Registry {
     }
   }
 
-  /**
-   * Thrown when no {@link ImageHeaderParser} is registered.
-   */
+  /** Thrown when no {@link ImageHeaderParser} is registered. */
   // Never serialized by Glide.
   @SuppressWarnings("serial")
   public static final class NoImageHeaderParserException extends MissingComponentException {

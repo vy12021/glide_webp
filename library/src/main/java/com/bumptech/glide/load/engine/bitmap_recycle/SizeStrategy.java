@@ -2,18 +2,18 @@ package com.bumptech.glide.load.engine.bitmap_recycle;
 
 import android.graphics.Bitmap;
 import android.os.Build;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.annotation.VisibleForTesting;
 import com.bumptech.glide.util.Synthetic;
 import com.bumptech.glide.util.Util;
 import java.util.NavigableMap;
 
 /**
- * A strategy for reusing bitmaps that relies on
- * {@link Bitmap#reconfigure(int, int, Bitmap.Config)}.
+ * A strategy for reusing bitmaps that relies on {@link Bitmap#reconfigure(int, int,
+ * Bitmap.Config)}.
  *
- * <p> Requires {@link Build.VERSION_CODES#KITKAT KitKat} or higher. </p>
+ * <p>Requires {@link Build.VERSION_CODES#KITKAT KitKat} or higher.
  */
 @RequiresApi(Build.VERSION_CODES.KITKAT)
 final class SizeStrategy implements LruPoolStrategy {
@@ -102,7 +102,8 @@ final class SizeStrategy implements LruPoolStrategy {
     return getBitmapString(size);
   }
 
-  @Synthetic static String getBitmapString(int size) {
+  @Synthetic
+  static String getBitmapString(int size) {
     return "[" + size + "]";
   }
 

@@ -1,7 +1,5 @@
 package com.bumptech.glide.annotation.compiler;
 
-import static com.bumptech.glide.annotation.compiler.ProcessorUtil.nonNull;
-
 import com.bumptech.glide.annotation.Excludes;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
@@ -18,8 +16,14 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * Generates a new implementation of a AppGlideModule that calls all included LibraryGlideModules
@@ -32,6 +36,7 @@ import javax.lang.model.element.TypeElement;
  * runtime.
  *
  * <p>The generated class looks something like this:
+ *
  * <pre>
  * <code>
  *  final class GeneratedAppGlideModuleImpl extends com.bumptech.glide.GeneratedAppGlideModule {
@@ -67,7 +72,7 @@ import javax.lang.model.element.TypeElement;
  *    }
  *
  *    {@literal @java.lang.Override}
- *    {@literal @android.support.annotation.NonNull}
+ *    {@literal @androidx.annotation.NonNull}
  *    public java.util.Set&lt;java.lang.Class&lt;?>> getExcludedModuleClasses() {
  *      return appGlideModule.getExcludedModuleClasses();
  *    }
@@ -78,20 +83,20 @@ import javax.lang.model.element.TypeElement;
 final class AppModuleGenerator {
   static final String GENERATED_ROOT_MODULE_PACKAGE_NAME = "com.bumptech.glide";
   private static final String GLIDE_LOG_TAG = "Glide";
-  private static final String GENERATED_APP_MODULE_IMPL_SIMPLE_NAME =
-      "GeneratedAppGlideModuleImpl";
+  private static final String GENERATED_APP_MODULE_IMPL_SIMPLE_NAME = "GeneratedAppGlideModuleImpl";
   private static final String GENERATED_ROOT_MODULE_SIMPLE_NAME = "GeneratedAppGlideModule";
 
+  private final ProcessingEnvironment processingEnv;
   private final ProcessorUtil processorUtil;
 
-  AppModuleGenerator(ProcessorUtil processorUtil) {
+  AppModuleGenerator(ProcessingEnvironment processingEnv, ProcessorUtil processorUtil) {
+    this.processingEnv = processingEnv;
     this.processorUtil = processorUtil;
   }
 
   TypeSpec generate(TypeElement appGlideModule, Set<String> libraryGlideModuleClassNames) {
     ClassName appGlideModuleClassName = ClassName.get(appGlideModule);
-    List<String> excludedGlideModuleClassNames =
-        getExcludedGlideModuleClassNames(appGlideModule);
+    List<String> excludedGlideModuleClassNames = getExcludedGlideModuleClassNames(appGlideModule);
 
     List<String> orderedLibraryGlideModuleClassNames =
         new ArrayList<>(libraryGlideModuleClassNames);
@@ -114,16 +119,15 @@ final class AppModuleGenerator {
         MethodSpec.methodBuilder("applyOptions")
             .addModifiers(Modifier.PUBLIC)
             .addAnnotation(Override.class)
-            .addParameter(ParameterSpec.builder(
-                ClassName.get("android.content", "Context"), "context")
-                .addAnnotation(nonNull())
-                .build()
-            )
-            .addParameter(ParameterSpec.builder(
-                ClassName.get("com.bumptech.glide", "GlideBuilder"), "builder")
-                .addAnnotation(nonNull())
-                .build()
-            )
+            .addParameter(
+                ParameterSpec.builder(ClassName.get("android.content", "Context"), "context")
+                    .addAnnotation(processorUtil.nonNull())
+                    .build())
+            .addParameter(
+                ParameterSpec.builder(
+                        ClassName.get("com.bumptech.glide", "GlideBuilder"), "builder")
+                    .addAnnotation(processorUtil.nonNull())
+                    .build())
             .addStatement("appGlideModule.applyOptions(context, builder)", appGlideModule)
             .build();
 
@@ -135,21 +139,22 @@ final class AppModuleGenerator {
             .addStatement("return appGlideModule.isManifestParsingEnabled()", appGlideModule)
             .build();
 
-    Builder builder = TypeSpec.classBuilder(GENERATED_APP_MODULE_IMPL_SIMPLE_NAME)
-        .addModifiers(Modifier.FINAL)
-        .addAnnotation(
-            AnnotationSpec.builder(SuppressWarnings.class)
-                .addMember("value", "$S", "deprecation")
-                .build()
-        )
-        .superclass(
-            ClassName.get(GENERATED_ROOT_MODULE_PACKAGE_NAME, GENERATED_ROOT_MODULE_SIMPLE_NAME))
-        .addField(appGlideModuleClassName, "appGlideModule", Modifier.PRIVATE, Modifier.FINAL)
-        .addMethod(constructor)
-        .addMethod(applyOptions)
-        .addMethod(registerComponents)
-        .addMethod(isManifestParsingEnabled)
-        .addMethod(getExcludedModuleClasses);
+    Builder builder =
+        TypeSpec.classBuilder(GENERATED_APP_MODULE_IMPL_SIMPLE_NAME)
+            .addModifiers(Modifier.FINAL)
+            .addAnnotation(
+                AnnotationSpec.builder(SuppressWarnings.class)
+                    .addMember("value", "$S", "deprecation")
+                    .build())
+            .superclass(
+                ClassName.get(
+                    GENERATED_ROOT_MODULE_PACKAGE_NAME, GENERATED_ROOT_MODULE_SIMPLE_NAME))
+            .addField(appGlideModuleClassName, "appGlideModule", Modifier.PRIVATE, Modifier.FINAL)
+            .addMethod(constructor)
+            .addMethod(applyOptions)
+            .addMethod(registerComponents)
+            .addMethod(isManifestParsingEnabled)
+            .addMethod(getExcludedModuleClasses);
 
     ClassName generatedRequestManagerFactoryClassName =
         ClassName.get(
@@ -159,7 +164,7 @@ final class AppModuleGenerator {
     builder.addMethod(
         MethodSpec.methodBuilder("getRequestManagerFactory")
             .addAnnotation(Override.class)
-            .addAnnotation(nonNull())
+            .addAnnotation(processorUtil.nonNull())
             .returns(generatedRequestManagerFactoryClassName)
             .addStatement("return new $T()", generatedRequestManagerFactoryClassName)
             .build());
@@ -175,17 +180,19 @@ final class AppModuleGenerator {
         ParameterizedTypeName.get(ClassName.get(Set.class), classOfWildcardOfObjet);
     ParameterizedTypeName hashSetOfClassOfWildcardOfObject =
         ParameterizedTypeName.get(ClassName.get(HashSet.class), classOfWildcardOfObjet);
-    MethodSpec.Builder builder = MethodSpec.methodBuilder("getExcludedModuleClasses")
-        .addModifiers(Modifier.PUBLIC)
-        .addAnnotation(Override.class)
-        .addAnnotation(nonNull())
-        .returns(setOfClassOfWildcardOfObject);
+    MethodSpec.Builder builder =
+        MethodSpec.methodBuilder("getExcludedModuleClasses")
+            .addModifiers(Modifier.PUBLIC)
+            .addAnnotation(Override.class)
+            .addAnnotation(processorUtil.nonNull())
+            .returns(setOfClassOfWildcardOfObject);
 
     if (excludedClassNames.isEmpty()) {
       builder.addStatement("return $T.emptySet()", Collections.class);
     } else {
       builder.addStatement(
-          "$T excludedClasses = new $T()", setOfClassOfWildcardOfObject,
+          "$T excludedClasses = new $T()",
+          setOfClassOfWildcardOfObject,
           hashSetOfClassOfWildcardOfObject);
       for (String excludedClassName : excludedClassNames) {
         // TODO: Remove this when we no longer support manifest parsing.
@@ -206,21 +213,18 @@ final class AppModuleGenerator {
         MethodSpec.methodBuilder("registerComponents")
             .addModifiers(Modifier.PUBLIC)
             .addAnnotation(Override.class)
-            .addParameter(ParameterSpec.builder(
-                ClassName.get("android.content", "Context"), "context")
-                .addAnnotation(nonNull())
-                .build()
-            )
-            .addParameter(ParameterSpec.builder(
-                ClassName.get("com.bumptech.glide", "Glide"), "glide")
-                .addAnnotation(nonNull())
-                .build()
-            )
-            .addParameter(ParameterSpec.builder(
-                ClassName.get("com.bumptech.glide", "Registry"), "registry")
-                .addAnnotation(nonNull())
-                .build()
-            );
+            .addParameter(
+                ParameterSpec.builder(ClassName.get("android.content", "Context"), "context")
+                    .addAnnotation(processorUtil.nonNull())
+                    .build())
+            .addParameter(
+                ParameterSpec.builder(ClassName.get("com.bumptech.glide", "Glide"), "glide")
+                    .addAnnotation(processorUtil.nonNull())
+                    .build())
+            .addParameter(
+                ParameterSpec.builder(ClassName.get("com.bumptech.glide", "Registry"), "registry")
+                    .addAnnotation(processorUtil.nonNull())
+                    .build());
 
     for (String glideModule : libraryGlideModuleClassNames) {
       if (excludedGlideModuleClassNames.contains(glideModule)) {
@@ -235,26 +239,77 @@ final class AppModuleGenerator {
     return registerComponents.build();
   }
 
-  private MethodSpec generateConstructor(ClassName appGlideModule,
+  private boolean doesAppGlideModuleConstructorAcceptContext(ClassName appGlideModule) {
+    TypeElement appGlideModuleType =
+        processingEnv.getElementUtils().getTypeElement(appGlideModule.reflectionName());
+
+    for (Element enclosed : appGlideModuleType.getEnclosedElements()) {
+      if (enclosed.getKind() == ElementKind.CONSTRUCTOR) {
+        ExecutableElement constructor = (ExecutableElement) enclosed;
+        List<? extends VariableElement> parameters = constructor.getParameters();
+        if (parameters.isEmpty()) {
+          return false;
+        } else if (parameters.size() > 1) {
+          throw new IllegalStateException(
+              "Constructor for "
+                  + appGlideModule
+                  + " accepts too many parameters"
+                  + ", it should accept no parameters, or a single Context");
+        } else {
+          VariableElement parameter = parameters.get(0);
+          TypeMirror parameterType = parameter.asType();
+          TypeMirror contextType =
+              processingEnv.getElementUtils().getTypeElement("android.content.Context").asType();
+          if (!processingEnv.getTypeUtils().isSameType(parameterType, contextType)) {
+            throw new IllegalStateException("Unrecognized type: " + parameterType);
+          }
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private MethodSpec generateConstructor(
+      ClassName appGlideModule,
       Collection<String> libraryGlideModuleClassNames,
       Collection<String> excludedGlideModuleClassNames) {
-    MethodSpec.Builder constructorBuilder = MethodSpec.constructorBuilder();
-    constructorBuilder.addStatement("appGlideModule = new $T()", appGlideModule);
+    MethodSpec.Builder constructorBuilder =
+        MethodSpec.constructorBuilder()
+            .addModifiers(Modifier.PUBLIC)
+            .addParameter(
+                ParameterSpec.builder(ClassName.get("android.content", "Context"), "context")
+                    .build());
+
+    if (doesAppGlideModuleConstructorAcceptContext(appGlideModule)) {
+      constructorBuilder.addStatement("appGlideModule = new $T(context)", appGlideModule);
+    } else {
+      constructorBuilder.addStatement("appGlideModule = new $T()", appGlideModule);
+    }
 
     ClassName androidLogName = ClassName.get("android.util", "Log");
 
     // Add some log lines to indicate to developers which modules where discovered.
-    constructorBuilder.beginControlFlow("if ($T.isLoggable($S, $T.DEBUG))",
-        androidLogName, GLIDE_LOG_TAG, androidLogName);
-    constructorBuilder.addStatement("$T.d($S, $S)", androidLogName, GLIDE_LOG_TAG,
+    constructorBuilder.beginControlFlow(
+        "if ($T.isLoggable($S, $T.DEBUG))", androidLogName, GLIDE_LOG_TAG, androidLogName);
+    constructorBuilder.addStatement(
+        "$T.d($S, $S)",
+        androidLogName,
+        GLIDE_LOG_TAG,
         "Discovered AppGlideModule from annotation: " + appGlideModule);
     // Excluded GlideModule classes from the manifest are logged in Glide's singleton.
     for (String glideModule : libraryGlideModuleClassNames) {
       if (excludedGlideModuleClassNames.contains(glideModule)) {
-        constructorBuilder.addStatement("$T.d($S, $S)", androidLogName, GLIDE_LOG_TAG,
+        constructorBuilder.addStatement(
+            "$T.d($S, $S)",
+            androidLogName,
+            GLIDE_LOG_TAG,
             "AppGlideModule excludes LibraryGlideModule from annotation: " + glideModule);
       } else {
-        constructorBuilder.addStatement("$T.d($S, $S)", androidLogName, GLIDE_LOG_TAG,
+        constructorBuilder.addStatement(
+            "$T.d($S, $S)",
+            androidLogName,
+            GLIDE_LOG_TAG,
             "Discovered LibraryGlideModule from annotation: " + glideModule);
       }
     }
@@ -263,8 +318,8 @@ final class AppModuleGenerator {
   }
 
   private List<String> getExcludedGlideModuleClassNames(TypeElement appGlideModule) {
-    Set<String> names = processorUtil.findClassValuesFromAnnotationOnClassAsNames(
-        appGlideModule, Excludes.class);
+    Set<String> names =
+        processorUtil.findClassValuesFromAnnotationOnClassAsNames(appGlideModule, Excludes.class);
     List<String> result = new ArrayList<>(names);
     Collections.sort(result);
     return result;

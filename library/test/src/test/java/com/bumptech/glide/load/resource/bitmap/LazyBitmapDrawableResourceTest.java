@@ -17,10 +17,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
-import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE)
 public class LazyBitmapDrawableResourceTest {
   @Mock private Resource<Bitmap> bitmapResource;
   private LazyBitmapDrawableResource resource;
@@ -65,7 +63,7 @@ public class LazyBitmapDrawableResourceTest {
   @Test
   public void get_returnsDrawableContainingWrappedBitmap() {
     BitmapDrawable drawable = resource.get();
-    assertThat(drawable.getBitmap()).isSameAs(bitmap);
+    assertThat(drawable.getBitmap()).isSameInstanceAs(bitmap);
   }
 
   @Test
@@ -83,8 +81,7 @@ public class LazyBitmapDrawableResourceTest {
     verify(bitmapResource).initialize();
   }
 
-  private interface InitializableBitmapResource extends Initializable,
-      Resource<Bitmap> {
+  private interface InitializableBitmapResource extends Initializable, Resource<Bitmap> {
     // Intentionally empty.
   }
 }

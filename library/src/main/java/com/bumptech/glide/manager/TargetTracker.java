@@ -1,6 +1,6 @@
 package com.bumptech.glide.manager;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.util.Util;
 import java.util.Collections;
@@ -9,8 +9,8 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 /**
- * Holds the set of {@link Target}s currently active for a
- * {@link com.bumptech.glide.RequestManager} and forwards on lifecycle events.
+ * Holds the set of {@link Target}s currently active for a {@link com.bumptech.glide.RequestManager}
+ * and forwards on lifecycle events.
  */
 public final class TargetTracker implements LifecycleListener {
   private final Set<Target<?>> targets =

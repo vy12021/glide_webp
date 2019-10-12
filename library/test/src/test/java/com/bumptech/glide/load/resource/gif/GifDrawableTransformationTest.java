@@ -1,10 +1,10 @@
 package com.bumptech.glide.load.resource.gif;
 
 import static com.bumptech.glide.tests.Util.mockResource;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -34,7 +34,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class GifDrawableTransformationTest {
   @Rule public final KeyTester keyTester = new KeyTester();
   @Mock private Transformation<Bitmap> wrapped;
@@ -86,10 +86,13 @@ public class GifDrawableTransformationTest {
 
   @Test
   public void testEquals() throws NoSuchAlgorithmException {
-    doAnswer(new Util.WriteDigest("first")).when(wrapped)
+    doAnswer(new Util.WriteDigest("first"))
+        .when(wrapped)
         .updateDiskCacheKey(isA(MessageDigest.class));
-    @SuppressWarnings("unchecked") Transformation<Bitmap> other = mock(Transformation.class);
-    doAnswer(new Util.WriteDigest("other")).when(other)
+    @SuppressWarnings("unchecked")
+    Transformation<Bitmap> other = mock(Transformation.class);
+    doAnswer(new Util.WriteDigest("other"))
+        .when(other)
         .updateDiskCacheKey(isA(MessageDigest.class));
     keyTester
         .addEquivalenceGroup(

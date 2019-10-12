@@ -1,14 +1,14 @@
 package com.bumptech.glide.integration.recyclerview;
 
-import android.support.annotation.NonNull;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.widget.AbsListView;
 import android.widget.ListView;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
- * Converts {@link android.support.v7.widget.RecyclerView.OnScrollListener} events to
- * {@link AbsListView} scroll events.
+ * Converts {@link androidx.recyclerview.widget.RecyclerView.OnScrollListener} events to {@link
+ * AbsListView} scroll events.
  *
  * <p>Requires that the the recycler view be using a {@link LinearLayoutManager} subclass.
  */
@@ -53,7 +53,8 @@ public final class RecyclerToListViewScrollListener extends RecyclerView.OnScrol
     int visibleCount = Math.abs(firstVisible - layoutManager.findLastVisibleItemPosition());
     int itemCount = recyclerView.getAdapter().getItemCount();
 
-    if (firstVisible != lastFirstVisible || visibleCount != lastVisibleCount
+    if (firstVisible != lastFirstVisible
+        || visibleCount != lastVisibleCount
         || itemCount != lastItemCount) {
       scrollListener.onScroll(null, firstVisible, visibleCount, itemCount);
       lastFirstVisible = firstVisible;

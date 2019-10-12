@@ -4,8 +4,8 @@ import static com.bumptech.glide.test.GlideOptions.skipMemoryCacheOf;
 import static com.bumptech.glide.test.Matchers.anyDrawable;
 import static com.bumptech.glide.test.Matchers.anyDrawableTarget;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
 
@@ -17,10 +17,10 @@ import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.widget.AbsListView.LayoutParams;
 import android.widget.ImageView;
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.executor.GlideExecutor;
@@ -59,7 +59,7 @@ public class LoadBytesTest {
   @Before
   public void setUp() throws IOException {
     MockitoAnnotations.initMocks(this);
-    context = InstrumentationRegistry.getTargetContext();
+    context = ApplicationProvider.getApplicationContext();
 
     imageView = new ImageView(context);
     int[] dimensions = getCanonicalDimensions();
@@ -72,10 +72,12 @@ public class LoadBytesTest {
     // started before the encode and loads from source).
     ExecutorService executor = Executors.newSingleThreadExecutor();
     GlideExecutor glideExecutor = MockGlideExecutor.newTestExecutor(executor);
-    Glide.init(context, new GlideBuilder()
-        .setAnimationExecutor(glideExecutor)
-        .setDiskCacheExecutor(glideExecutor)
-        .setSourceExecutor(glideExecutor));
+    Glide.init(
+        context,
+        new GlideBuilder()
+            .setAnimationExecutor(glideExecutor)
+            .setDiskCacheExecutor(glideExecutor)
+            .setSourceExecutor(glideExecutor));
   }
 
   @Test
@@ -84,17 +86,15 @@ public class LoadBytesTest {
     final byte[] canonicalBytes = getCanonicalBytes();
     final byte[] modifiedBytes = getModifiedBytes();
 
-    concurrency.loadOnMainThread(
-        Glide.with(context).load(canonicalBytes), imageView);
+    concurrency.loadOnMainThread(Glide.with(context).load(canonicalBytes), imageView);
     Bitmap firstBitmap = copyFromImageViewDrawable(imageView);
 
-    concurrency.loadOnMainThread(
-        Glide.with(context).load(modifiedBytes), imageView);
+    concurrency.loadOnMainThread(Glide.with(context).load(modifiedBytes), imageView);
     Bitmap secondBitmap = copyFromImageViewDrawable(imageView);
 
     // This assertion alone doesn't catch the case where the second Bitmap is loaded from the result
     // cache of the data from the first Bitmap.
-    BitmapSubject.assertThat(firstBitmap).isNotSameAs(secondBitmap);
+    BitmapSubject.assertThat(firstBitmap).isNotSameInstanceAs(secondBitmap);
 
     Bitmap expectedCanonicalBitmap =
         BitmapFactory.decodeByteArray(canonicalBytes, /*offset=*/ 0, canonicalBytes.length);
@@ -112,22 +112,16 @@ public class LoadBytesTest {
     final byte[] modifiedBytes = getModifiedBytes();
 
     concurrency.loadOnMainThread(
-        GlideApp.with(context)
-            .asDrawable()
-            .load(canonicalBytes),
-        imageView);
+        GlideApp.with(context).asDrawable().load(canonicalBytes), imageView);
     Bitmap firstBitmap = copyFromImageViewDrawable(imageView);
 
     concurrency.loadOnMainThread(
-        GlideApp.with(context)
-            .asDrawable()
-            .load(modifiedBytes),
-        imageView);
+        GlideApp.with(context).asDrawable().load(modifiedBytes), imageView);
     Bitmap secondBitmap = copyFromImageViewDrawable(imageView);
 
     // This assertion alone doesn't catch the case where the second Bitmap is loaded from the result
     // cache of the data from the first Bitmap.
-    BitmapSubject.assertThat(firstBitmap).isNotSameAs(secondBitmap);
+    BitmapSubject.assertThat(firstBitmap).isNotSameInstanceAs(secondBitmap);
 
     Bitmap expectedCanonicalBitmap =
         BitmapFactory.decodeByteArray(canonicalBytes, /*offset=*/ 0, canonicalBytes.length);
@@ -143,10 +137,7 @@ public class LoadBytesTest {
       throws IOException {
     final byte[] canonicalBytes = getCanonicalBytes();
     concurrency.loadOnMainThread(
-        Glide.with(context)
-            .load(canonicalBytes)
-            .apply(skipMemoryCacheOf(false)),
-        imageView);
+        Glide.with(context).load(canonicalBytes).apply(skipMemoryCacheOf(false)), imageView);
 
     Glide.with(context).clear(imageView);
 
@@ -157,8 +148,9 @@ public class LoadBytesTest {
             .apply(skipMemoryCacheOf(false)),
         imageView);
 
-    verify(requestListener).onResourceReady(
-        anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.MEMORY_CACHE), anyBoolean());
+    verify(requestListener)
+        .onResourceReady(
+            anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.MEMORY_CACHE), anyBoolean());
   }
 
   @Test
@@ -166,10 +158,7 @@ public class LoadBytesTest {
       throws IOException {
     final byte[] canonicalBytes = getCanonicalBytes();
     concurrency.loadOnMainThread(
-        Glide.with(context)
-            .asDrawable()
-            .load(canonicalBytes)
-            .apply(skipMemoryCacheOf(false)),
+        Glide.with(context).asDrawable().load(canonicalBytes).apply(skipMemoryCacheOf(false)),
         imageView);
 
     Glide.with(context).clear(imageView);
@@ -182,27 +171,30 @@ public class LoadBytesTest {
             .apply(skipMemoryCacheOf(false)),
         imageView);
 
-    verify(requestListener).onResourceReady(
-        anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.MEMORY_CACHE), anyBoolean());
+    verify(requestListener)
+        .onResourceReady(
+            anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.MEMORY_CACHE), anyBoolean());
   }
 
   @Test
   public void loadFromRequestManager_withSameByteArray_validDiskCacheStrategy_returnsFromDiskCache()
       throws IOException {
     byte[] data = getCanonicalBytes();
-    Target<Drawable> target = concurrency.wait(
-        GlideApp.with(context)
-            .load(data)
-            .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
-            .submit());
+    Target<Drawable> target =
+        concurrency.wait(
+            GlideApp.with(context)
+                .load(data)
+                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                .submit());
     GlideApp.with(context).clear(target);
 
-    concurrency.runOnMainThread(new Runnable() {
-      @Override
-      public void run() {
-        GlideApp.get(context).clearMemory();
-      }
-    });
+    concurrency.runOnMainThread(
+        new Runnable() {
+          @Override
+          public void run() {
+            GlideApp.get(context).clearMemory();
+          }
+        });
 
     concurrency.wait(
         GlideApp.with(context)
@@ -224,20 +216,22 @@ public class LoadBytesTest {
   public void loadFromRequestBuilder_withSameByteArray_validDiskCacheStrategy_returnsFromDiskCache()
       throws IOException {
     byte[] data = getCanonicalBytes();
-    Target<Drawable> target = concurrency.wait(
-        GlideApp.with(context)
-            .asDrawable()
-            .load(data)
-            .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
-            .submit());
+    Target<Drawable> target =
+        concurrency.wait(
+            GlideApp.with(context)
+                .asDrawable()
+                .load(data)
+                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                .submit());
     GlideApp.with(context).clear(target);
 
-    concurrency.runOnMainThread(new Runnable() {
-      @Override
-      public void run() {
-        GlideApp.get(context).clearMemory();
-      }
-    });
+    concurrency.runOnMainThread(
+        new Runnable() {
+          @Override
+          public void run() {
+            GlideApp.get(context).clearMemory();
+          }
+        });
 
     concurrency.wait(
         GlideApp.with(context)
@@ -260,11 +254,8 @@ public class LoadBytesTest {
   public void loadFromRequestManager_withSameByteArray_memoryCacheEnabled_returnsFromCache()
       throws IOException {
     byte[] data = getCanonicalBytes();
-    Target<Drawable> target = concurrency.wait(
-        GlideApp.with(context)
-            .load(data)
-            .skipMemoryCache(false)
-            .submit());
+    Target<Drawable> target =
+        concurrency.wait(GlideApp.with(context).load(data).skipMemoryCache(false).submit());
     GlideApp.with(context).clear(target);
 
     concurrency.wait(
@@ -274,20 +265,18 @@ public class LoadBytesTest {
             .listener(requestListener)
             .submit());
 
-    verify(requestListener).onResourceReady(
-        anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.MEMORY_CACHE), anyBoolean());
+    verify(requestListener)
+        .onResourceReady(
+            anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.MEMORY_CACHE), anyBoolean());
   }
 
   @Test
   public void loadFromRequestBuilder_withSameByteArray_memoryCacheEnabled_returnsFromCache()
       throws IOException {
     byte[] data = getCanonicalBytes();
-    Target<Drawable> target = concurrency.wait(
-        GlideApp.with(context)
-            .asDrawable()
-            .load(data)
-            .skipMemoryCache(false)
-            .submit());
+    Target<Drawable> target =
+        concurrency.wait(
+            GlideApp.with(context).asDrawable().load(data).skipMemoryCache(false).submit());
     GlideApp.with(context).clear(target);
 
     concurrency.wait(
@@ -298,104 +287,83 @@ public class LoadBytesTest {
             .listener(requestListener)
             .submit());
 
-    verify(requestListener).onResourceReady(
-        anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.MEMORY_CACHE), anyBoolean());
+    verify(requestListener)
+        .onResourceReady(
+            anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.MEMORY_CACHE), anyBoolean());
   }
 
   @Test
   public void loadFromRequestManager_withSameByteArray_returnsFromLocal() throws IOException {
     byte[] data = getCanonicalBytes();
-    Target<Drawable> target = concurrency.wait(
-        GlideApp.with(context)
-            .load(data)
-            .submit());
+    Target<Drawable> target = concurrency.wait(GlideApp.with(context).load(data).submit());
     GlideApp.with(context).clear(target);
 
-    concurrency.wait(
-        GlideApp.with(context)
-            .load(data)
-            .listener(requestListener)
-            .submit());
+    concurrency.wait(GlideApp.with(context).load(data).listener(requestListener).submit());
 
-    verify(requestListener).onResourceReady(
-        anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.LOCAL), anyBoolean());
+    verify(requestListener)
+        .onResourceReady(
+            anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.LOCAL), anyBoolean());
   }
 
   @Test
   public void loadFromRequestBuilder_withSameByteArray_returnsFromLocal() throws IOException {
     byte[] data = getCanonicalBytes();
-    Target<Drawable> target = concurrency.wait(
-        GlideApp.with(context)
-            .asDrawable()
-            .load(data)
-            .submit());
+    Target<Drawable> target =
+        concurrency.wait(GlideApp.with(context).asDrawable().load(data).submit());
     GlideApp.with(context).clear(target);
 
     concurrency.wait(
-        GlideApp.with(context)
-            .asDrawable()
-            .load(data)
-            .listener(requestListener)
-            .submit());
+        GlideApp.with(context).asDrawable().load(data).listener(requestListener).submit());
 
-    verify(requestListener).onResourceReady(
-        anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.LOCAL), anyBoolean());
+    verify(requestListener)
+        .onResourceReady(
+            anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.LOCAL), anyBoolean());
   }
 
   @Test
   public void loadFromRequestManager_withSameByteArrayAndMissingFromMemory_returnsFromLocal()
-       throws IOException {
+      throws IOException {
     byte[] data = getCanonicalBytes();
-    Target<Drawable> target = concurrency.wait(
-        GlideApp.with(context)
-            .load(data)
-            .submit());
+    Target<Drawable> target = concurrency.wait(GlideApp.with(context).load(data).submit());
     GlideApp.with(context).clear(target);
 
-    concurrency.runOnMainThread(new Runnable() {
-      @Override
-      public void run() {
-        GlideApp.get(context).clearMemory();
-      }
-    });
+    concurrency.runOnMainThread(
+        new Runnable() {
+          @Override
+          public void run() {
+            GlideApp.get(context).clearMemory();
+          }
+        });
 
-    concurrency.wait(
-        GlideApp.with(context)
-            .load(data)
-            .listener(requestListener)
-            .submit());
+    concurrency.wait(GlideApp.with(context).load(data).listener(requestListener).submit());
 
-    verify(requestListener).onResourceReady(
-        anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.LOCAL), anyBoolean());
+    verify(requestListener)
+        .onResourceReady(
+            anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.LOCAL), anyBoolean());
   }
 
   @Test
   public void loadFromRequestBuilder_withSameByteArrayAndMissingFromMemory_returnsFromLocal()
-       throws IOException {
+      throws IOException {
     byte[] data = getCanonicalBytes();
-    Target<Drawable> target = concurrency.wait(
-        GlideApp.with(context)
-            .asDrawable()
-            .load(data)
-            .submit());
+    Target<Drawable> target =
+        concurrency.wait(GlideApp.with(context).asDrawable().load(data).submit());
     GlideApp.with(context).clear(target);
 
-    concurrency.runOnMainThread(new Runnable() {
-      @Override
-      public void run() {
-        GlideApp.get(context).clearMemory();
-      }
-    });
+    concurrency.runOnMainThread(
+        new Runnable() {
+          @Override
+          public void run() {
+            GlideApp.get(context).clearMemory();
+          }
+        });
 
     concurrency.wait(
-        GlideApp.with(context)
-            .asDrawable()
-            .load(data)
-            .listener(requestListener)
-            .submit());
+        GlideApp.with(context).asDrawable().load(data).listener(requestListener).submit());
 
-    verify(requestListener).onResourceReady(
-        anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.LOCAL), anyBoolean());
+    verify(requestListener)
+        .onResourceReady(
+            anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.LOCAL), anyBoolean());
   }
 
   @Test
@@ -409,12 +377,13 @@ public class LoadBytesTest {
             .load(data)
             .submit());
 
-    concurrency.runOnMainThread(new Runnable() {
-      @Override
-      public void run() {
-        GlideApp.get(context).clearMemory();
-      }
-    });
+    concurrency.runOnMainThread(
+        new Runnable() {
+          @Override
+          public void run() {
+            GlideApp.get(context).clearMemory();
+          }
+        });
 
     concurrency.wait(
         GlideApp.with(context)
@@ -438,18 +407,15 @@ public class LoadBytesTest {
       throws IOException {
     byte[] data = getCanonicalBytes();
     concurrency.wait(
-        GlideApp.with(context)
-            .asDrawable()
-            .skipMemoryCache(false)
-            .load(data)
-            .submit());
+        GlideApp.with(context).asDrawable().skipMemoryCache(false).load(data).submit());
 
-    concurrency.runOnMainThread(new Runnable() {
-      @Override
-      public void run() {
-        GlideApp.get(context).clearMemory();
-      }
-    });
+    concurrency.runOnMainThread(
+        new Runnable() {
+          @Override
+          public void run() {
+            GlideApp.get(context).clearMemory();
+          }
+        });
 
     concurrency.wait(
         GlideApp.with(context)
@@ -459,8 +425,9 @@ public class LoadBytesTest {
             .load(data)
             .submit());
 
-    verify(requestListener).onResourceReady(
-        anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.MEMORY_CACHE), anyBoolean());
+    verify(requestListener)
+        .onResourceReady(
+            anyDrawable(), any(), anyDrawableTarget(), eq(DataSource.MEMORY_CACHE), anyBoolean());
   }
 
   @Test
@@ -483,12 +450,13 @@ public class LoadBytesTest {
             .listener(requestListener)
             .submit());
 
-    verify(requestListener).onResourceReady(
-        anyDrawable(),
-        any(),
-        anyDrawableTarget(),
-        eq(DataSource.DATA_DISK_CACHE),
-        anyBoolean());
+    verify(requestListener)
+        .onResourceReady(
+            anyDrawable(),
+            any(),
+            anyDrawableTarget(),
+            eq(DataSource.DATA_DISK_CACHE),
+            anyBoolean());
   }
 
   private Bitmap copyFromImageViewDrawable(ImageView imageView) {
@@ -505,7 +473,7 @@ public class LoadBytesTest {
     byte[] canonicalBytes = getCanonicalBytes();
     Bitmap bitmap =
         BitmapFactory.decodeByteArray(canonicalBytes, /*offset=*/ 0, canonicalBytes.length);
-    return new int[] { bitmap.getWidth(), bitmap.getHeight() };
+    return new int[] {bitmap.getWidth(), bitmap.getHeight()};
   }
 
   private byte[] getModifiedBytes() throws IOException {

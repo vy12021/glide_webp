@@ -2,12 +2,12 @@ package com.bumptech.glide.manager;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.VisibleForTesting;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.util.Synthetic;
@@ -16,7 +16,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * A view-less {@link android.support.v4.app.Fragment} used to safely store an {@link
+ * A view-less {@link androidx.fragment.app.Fragment} used to safely store an {@link
  * com.bumptech.glide.RequestManager} that can be used to start, stop and manage Glide requests
  * started for targets within the fragment or activity this fragment is a child of.
  *
@@ -59,17 +59,14 @@ public class SupportRequestManagerFragment extends Fragment {
     return lifecycle;
   }
 
-  /**
-   * Returns the current {@link com.bumptech.glide.RequestManager} or null if none is put.
-   */
+  /** Returns the current {@link com.bumptech.glide.RequestManager} or null if none is put. */
   @Nullable
   public RequestManager getRequestManager() {
     return requestManager;
   }
 
   /**
-   * Returns the {@link RequestManagerTreeNode} that provides tree traversal methods relative
-   * to the
+   * Returns the {@link RequestManagerTreeNode} that provides tree traversal methods relative to the
    * associated {@link RequestManager}.
    */
   @NonNull
@@ -98,8 +95,8 @@ public class SupportRequestManagerFragment extends Fragment {
       return Collections.unmodifiableSet(childRequestManagerFragments);
     } else {
       Set<SupportRequestManagerFragment> descendants = new HashSet<>();
-      for (SupportRequestManagerFragment fragment : rootRequestManagerFragment
-          .getDescendantRequestManagerFragments()) {
+      for (SupportRequestManagerFragment fragment :
+          rootRequestManagerFragment.getDescendantRequestManagerFragments()) {
         if (isDescendant(fragment.getParentFragmentUsingHint())) {
           descendants.add(fragment);
         }
@@ -114,9 +111,22 @@ public class SupportRequestManagerFragment extends Fragment {
    */
   void setParentFragmentHint(@Nullable Fragment parentFragmentHint) {
     this.parentFragmentHint = parentFragmentHint;
-    if (parentFragmentHint != null && parentFragmentHint.getActivity() != null) {
-      registerFragmentWithRoot(parentFragmentHint.getActivity());
+    if (parentFragmentHint == null || parentFragmentHint.getContext() == null) {
+      return;
     }
+    FragmentManager rootFragmentManager = getRootFragmentManager(parentFragmentHint);
+    if (rootFragmentManager == null) {
+      return;
+    }
+    registerFragmentWithRoot(parentFragmentHint.getContext(), rootFragmentManager);
+  }
+
+  @Nullable
+  private static FragmentManager getRootFragmentManager(@NonNull Fragment fragment) {
+    while (fragment.getParentFragment() != null) {
+      fragment = fragment.getParentFragment();
+    }
+    return fragment.getFragmentManager();
   }
 
   @Nullable
@@ -125,9 +135,7 @@ public class SupportRequestManagerFragment extends Fragment {
     return fragment != null ? fragment : parentFragmentHint;
   }
 
-  /**
-   * Returns true if the fragment is a descendant of our parent.
-   */
+  /** Returns true if the fragment is a descendant of our parent. */
   private boolean isDescendant(@NonNull Fragment fragment) {
     Fragment root = getParentFragmentUsingHint();
     Fragment parentFragment;
@@ -140,10 +148,13 @@ public class SupportRequestManagerFragment extends Fragment {
     return false;
   }
 
-  private void registerFragmentWithRoot(@NonNull FragmentActivity activity) {
+  private void registerFragmentWithRoot(
+      @NonNull Context context, @NonNull FragmentManager fragmentManager) {
     unregisterFragmentWithRoot();
     rootRequestManagerFragment =
-        Glide.get(activity).getRequestManagerRetriever().getSupportRequestManagerFragment(activity);
+        Glide.get(context)
+            .getRequestManagerRetriever()
+            .getSupportRequestManagerFragment(context, fragmentManager);
     if (!equals(rootRequestManagerFragment)) {
       rootRequestManagerFragment.addChildRequestManagerFragment(this);
     }
@@ -159,8 +170,18 @@ public class SupportRequestManagerFragment extends Fragment {
   @Override
   public void onAttach(Context context) {
     super.onAttach(context);
+
+    FragmentManager rootFragmentManager = getRootFragmentManager(this);
+    if (rootFragmentManager == null) {
+      if (Log.isLoggable(TAG, Log.WARN)) {
+        // Not expected to occur; ancestor fragments should be attached before descendants.
+        Log.w(TAG, "Unable to register fragment with root, ancestor detached");
+      }
+      return;
+    }
+
     try {
-      registerFragmentWithRoot(getActivity());
+      registerFragmentWithRoot(getContext(), rootFragmentManager);
     } catch (IllegalStateException e) {
       // OnAttach can be called after the activity is destroyed, see #497.
       if (Log.isLoggable(TAG, Log.WARN)) {
@@ -203,7 +224,7 @@ public class SupportRequestManagerFragment extends Fragment {
   private class SupportFragmentRequestManagerTreeNode implements RequestManagerTreeNode {
 
     @Synthetic
-    SupportFragmentRequestManagerTreeNode() { }
+    SupportFragmentRequestManagerTreeNode() {}
 
     @NonNull
     @Override

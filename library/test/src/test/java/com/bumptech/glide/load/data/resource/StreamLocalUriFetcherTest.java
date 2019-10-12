@@ -1,6 +1,6 @@
 package com.bumptech.glide.load.data.resource;
 
-import static org.mockito.Matchers.isA;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Matchers.isNotNull;
 import static org.mockito.Mockito.verify;
 
@@ -25,10 +25,11 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadow.api.Shadow;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18, shadows = { ContentResolverShadow.class })
+@Config(
+    sdk = 18,
+    shadows = {ContentResolverShadow.class})
 public class StreamLocalUriFetcherTest {
-  @Mock
-  private DataFetcher.DataCallback<InputStream> callback;
+  @Mock private DataFetcher.DataCallback<InputStream> callback;
 
   @Before
   public void setUp() {

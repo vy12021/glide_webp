@@ -1,6 +1,5 @@
 package com.bumptech.glide.annotation.compiler;
 
-import static com.bumptech.glide.annotation.compiler.ProcessorUtil.nonNull;
 import static com.bumptech.glide.annotation.compiler.ProcessorUtil.nonNulls;
 
 import com.bumptech.glide.annotation.GlideOption;
@@ -20,7 +19,6 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
 
@@ -77,7 +75,8 @@ final class GlideExtensionValidator {
     if (!element.getModifiers().contains(Modifier.PRIVATE)) {
       throw new IllegalArgumentException(
           "RequestOptionsExtensions must be public, with private constructors and only static"
-              + " methods. Found a non-private constructor in: " + getEnclosingClassName(element));
+              + " methods. Found a non-private constructor in: "
+              + getEnclosingClassName(element));
     }
     ExecutableElement executableElement = (ExecutableElement) element;
     if (!executableElement.getParameters().isEmpty()) {
@@ -89,78 +88,77 @@ final class GlideExtensionValidator {
   }
 
   private void validateGlideOption(ExecutableElement executableElement) {
-    if (returnsVoid(executableElement)) {
-      validateDeprecatedGlideOption(executableElement);
-    } else {
-      validateNewGlideOption(executableElement);
-    }
-  }
-
-  private void validateNewGlideOption(ExecutableElement executableElement) {
-    validateNewGlideOptionAnnotations(executableElement);
+    validateGlideOptionAnnotations(executableElement);
     validateGlideOptionParameters(executableElement);
     TypeMirror returnType = executableElement.getReturnType();
-    if (!isRequestOptions(returnType)) {
-      throw new IllegalArgumentException("@GlideOption methods should return a RequestOptions"
-          + " object, but " + getQualifiedMethodName(executableElement) + " returns " + returnType
-          + ". If you're using old style @GlideOption methods, your method may have a void return"
-          + " type, but doing so is deprecated and support will be removed in a future version");
+    if (!isBaseRequestOptions(returnType)) {
+      throw new IllegalArgumentException(
+          "@GlideOption methods should return a"
+              + " BaseRequestOptions<?> object, but "
+              + getQualifiedMethodName(executableElement)
+              + " returns "
+              + returnType
+              + ". If you're using old style @GlideOption methods, your"
+              + " method may have a void return type, but doing so is deprecated and support will"
+              + " be removed in a future version");
     }
     validateGlideOptionOverride(executableElement);
   }
 
-  private void validateNewGlideOptionAnnotations(ExecutableElement executableElement) {
+  private void validateGlideOptionAnnotations(ExecutableElement executableElement) {
     validateAnnotatedNonNull(executableElement);
-  }
-
-  private void validateDeprecatedGlideOption(ExecutableElement executableElement) {
-    validateStaticVoid(executableElement, GlideOption.class);
-    validateGlideOptionParameters(executableElement);
-    validateGlideOptionOverride(executableElement);
   }
 
   private static void validateGlideOptionParameters(ExecutableElement executableElement) {
     if (executableElement.getParameters().isEmpty()) {
-      throw new IllegalArgumentException("@GlideOption methods must take a "
-          + "RequestOptions object as their first parameter, but "
-          + getQualifiedMethodName(executableElement) + " has none");
+      throw new IllegalArgumentException(
+          "@GlideOption methods must take a "
+              + "BaseRequestOptions<?> object as their first parameter, but "
+              + getQualifiedMethodName(executableElement)
+              + " has none");
     }
     VariableElement first = executableElement.getParameters().get(0);
     TypeMirror expected = first.asType();
-    if (!isRequestOptions(expected)) {
-      throw new IllegalArgumentException("@GlideOption methods must take a"
-          + " RequestOptions object as their first parameter, but the first parameter in "
-          + getQualifiedMethodName(executableElement) + " is " + expected);
+    if (!isBaseRequestOptions(expected)) {
+      throw new IllegalArgumentException(
+          "@GlideOption methods must take a"
+              + " BaseRequestOptions<?> object as their first parameter, but the first parameter"
+              + " in "
+              + getQualifiedMethodName(executableElement)
+              + " is "
+              + expected);
     }
   }
 
-  private static boolean isRequestOptions(TypeMirror typeMirror) {
-    return typeMirror.toString().equals("com.bumptech.glide.request.RequestOptions");
+  private static boolean isBaseRequestOptions(TypeMirror typeMirror) {
+    return typeMirror.toString().equals("com.bumptech.glide.request.BaseRequestOptions<?>");
   }
 
   private void validateGlideOptionOverride(ExecutableElement element) {
     int overrideType = processorUtil.getOverrideType(element);
-    boolean isOverridingRequestOptionsMethod = isMethodInRequestOptions(element);
-    if (isOverridingRequestOptionsMethod && overrideType == GlideOption.OVERRIDE_NONE) {
-      throw new IllegalArgumentException("Accidentally attempting to override a method in"
-          + " RequestOptions. Add an 'override' value in the @GlideOption annotation"
-          + " if this is intentional. Offending method: "
-          + getQualifiedMethodName(element));
-    } else if (!isOverridingRequestOptionsMethod && overrideType != GlideOption.OVERRIDE_NONE) {
-      throw new IllegalArgumentException("Requested to override an existing method in"
-          + " RequestOptions, but no such method was found. Offending method: "
-          + getQualifiedMethodName(element));
+    boolean isOverridingBaseRequestOptionsMethod = isMethodInBaseRequestOptions(element);
+    if (isOverridingBaseRequestOptionsMethod && overrideType == GlideOption.OVERRIDE_NONE) {
+      throw new IllegalArgumentException(
+          "Accidentally attempting to override a method in"
+              + " BaseRequestOptions. Add an 'override' value in the @GlideOption annotation"
+              + " if this is intentional. Offending method: "
+              + getQualifiedMethodName(element));
+    } else if (!isOverridingBaseRequestOptionsMethod && overrideType != GlideOption.OVERRIDE_NONE) {
+      throw new IllegalArgumentException(
+          "Requested to override an existing method in"
+              + " BaseRequestOptions, but no such method was found. Offending method: "
+              + getQualifiedMethodName(element));
     }
   }
 
-  private boolean isMethodInRequestOptions(ExecutableElement toFind) {
+  private boolean isMethodInBaseRequestOptions(ExecutableElement toFind) {
     // toFind is a method in a GlideExtension whose first argument is a BaseRequestOptions<?> type.
     // Since we're comparing against methods in BaseRequestOptions itself, we need to drop that
     // first type.
     TypeElement requestOptionsType =
         processingEnvironment
             .getElementUtils()
-            .getTypeElement(RequestOptionsGenerator.REQUEST_OPTIONS_QUALIFIED_NAME);
+            .getTypeElement(RequestOptionsGenerator.BASE_REQUEST_OPTIONS_QUALIFIED_NAME);
     List<String> toFindParameterNames = getComparableParameterNames(toFind, true /*skipFirst*/);
     String toFindSimpleName = toFind.getSimpleName().toString();
     for (Element element : requestOptionsType.getEnclosedElements()) {
@@ -193,36 +191,32 @@ final class GlideExtensionValidator {
   }
 
   private void validateGlideType(ExecutableElement executableElement) {
-    if (returnsVoid(executableElement)) {
-      validateDeprecatedGlideType(executableElement);
-    } else {
-      validateNewGlideType(executableElement);
-    }
-  }
-
-  private void validateNewGlideType(ExecutableElement executableElement) {
     TypeMirror returnType = executableElement.getReturnType();
-    validateNewGlideTypeAnnotations(executableElement);
+    validateGlideTypeAnnotations(executableElement);
     if (!isRequestBuilder(returnType) || !typeMatchesExpected(returnType, executableElement)) {
       String expectedClassName = getGlideTypeValue(executableElement);
-      throw new IllegalArgumentException("@GlideType methods should return a RequestBuilder<"
-          + expectedClassName + "> object, but " + getQualifiedMethodName(executableElement)
-          + " returns: " + returnType + ". If you're using old style @GlideType methods, your"
-          + " method may have a void return type, but doing so is deprecated and support will be"
-          + " removed in a future version");
+      throw new IllegalArgumentException(
+          "@GlideType methods should return a RequestBuilder<"
+              + expectedClassName
+              + "> object, but "
+              + getQualifiedMethodName(executableElement)
+              + " returns: "
+              + returnType
+              + ". If you're using old style @GlideType methods, your"
+              + " method may have a void return type, but doing so is deprecated and support will"
+              + " be removed in a future version");
     }
     validateGlideTypeParameters(executableElement);
   }
 
   private String getGlideTypeValue(ExecutableElement executableElement) {
-    return
-        processorUtil
-            .findClassValuesFromAnnotationOnClassAsNames(
-                executableElement, GlideType.class).iterator().next();
+    return processorUtil
+        .findClassValuesFromAnnotationOnClassAsNames(executableElement, GlideType.class)
+        .iterator()
+        .next();
   }
 
-  private boolean typeMatchesExpected(
-      TypeMirror returnType, ExecutableElement executableElement) {
+  private boolean typeMatchesExpected(TypeMirror returnType, ExecutableElement executableElement) {
     if (!(returnType instanceof DeclaredType)) {
       return false;
     }
@@ -240,40 +234,40 @@ final class GlideExtensionValidator {
     return toCompare.toString().equals("com.bumptech.glide.RequestBuilder");
   }
 
-  private static void validateDeprecatedGlideType(ExecutableElement executableElement) {
-    validateStaticVoid(executableElement, GlideType.class);
-    validateGlideTypeParameters(executableElement);
-  }
-
   private static void validateGlideTypeParameters(ExecutableElement executableElement) {
     if (executableElement.getParameters().size() != 1) {
-      throw new IllegalArgumentException("@GlideType methods must take a"
-          + " RequestBuilder object as their first and only parameter, but given multiple for: "
-          + getQualifiedMethodName(executableElement));
+      throw new IllegalArgumentException(
+          "@GlideType methods must take a"
+              + " RequestBuilder object as their first and only parameter, but given multiple for: "
+              + getQualifiedMethodName(executableElement));
     }
 
     VariableElement first = executableElement.getParameters().get(0);
     TypeMirror argumentType = first.asType();
     if (!argumentType.toString().startsWith("com.bumptech.glide.RequestBuilder")) {
-      throw new IllegalArgumentException("@GlideType methods must take a"
-          + " RequestBuilder object as their first and only parameter, but given: " + argumentType
-          + " for: " + getQualifiedMethodName(executableElement));
+      throw new IllegalArgumentException(
+          "@GlideType methods must take a"
+              + " RequestBuilder object as their first and only parameter, but given: "
+              + argumentType
+              + " for: "
+              + getQualifiedMethodName(executableElement));
     }
   }
 
-  private void validateNewGlideTypeAnnotations(ExecutableElement executableElement) {
+  private void validateGlideTypeAnnotations(ExecutableElement executableElement) {
     validateAnnotatedNonNull(executableElement);
   }
 
   private void validateAnnotatedNonNull(ExecutableElement executableElement) {
     Set<String> annotationNames =
         FluentIterable.from(executableElement.getAnnotationMirrors())
-            .transform(new Function<AnnotationMirror, String>() {
-              @Override
-              public String apply(AnnotationMirror input) {
-                return input.getAnnotationType().asElement().toString();
-              }
-            })
+            .transform(
+                new Function<AnnotationMirror, String>() {
+                  @Override
+                  public String apply(AnnotationMirror input) {
+                    return input.getAnnotationType().asElement().toString();
+                  }
+                })
             .toSet();
     boolean noNonNull = true;
     for (ClassName nonNull : nonNulls()) {
@@ -283,34 +277,16 @@ final class GlideExtensionValidator {
       }
     }
     if (noNonNull) {
-      processingEnvironment.getMessager().printMessage(
-          Kind.WARNING,
-          getQualifiedMethodName(executableElement)
-              + " is missing the " + nonNull().reflectionName() + " annotation,"
-              + " please add it to ensure that your extension methods are always returning non-null"
-              + " values");
+      processingEnvironment
+          .getMessager()
+          .printMessage(
+              Kind.WARNING,
+              getQualifiedMethodName(executableElement)
+                  + " is missing the "
+                  + processorUtil.nonNull().reflectionName()
+                  + " annotation,"
+                  + " please add it to ensure that your extension methods are always returning"
+                  + " non-null values");
     }
-  }
-
-  private static void validateStatic(ExecutableElement executableElement, Class<?> clazz) {
-    if (!executableElement.getModifiers().contains(Modifier.STATIC)) {
-      throw new IllegalArgumentException("@" + clazz.getSimpleName() + " methods must be static");
-    }
-  }
-
-  private static boolean returnsVoid(ExecutableElement executableElement) {
-    TypeMirror returnType = executableElement.getReturnType();
-    return returnType.getKind() == TypeKind.VOID;
-  }
-
-  private static void validateVoid(ExecutableElement executableElement, Class<?> clazz) {
-    if (!returnsVoid(executableElement)) {
-      throw new IllegalArgumentException("@" + clazz.getSimpleName() + " methods must return void");
-    }
-  }
-
-  private static void validateStaticVoid(ExecutableElement executableElement, Class<?> clazz) {
-    validateStatic(executableElement, clazz);
-    validateVoid(executableElement, clazz);
   }
 }

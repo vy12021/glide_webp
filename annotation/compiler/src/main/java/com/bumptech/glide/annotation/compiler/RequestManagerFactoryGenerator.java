@@ -1,7 +1,5 @@
 package com.bumptech.glide.annotation.compiler;
 
-import static com.bumptech.glide.annotation.compiler.ProcessorUtil.nonNull;
-
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
@@ -12,12 +10,13 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
 /**
- * Generates an implementation of
- * {@code com.bumptech.glide.manager.RequestManagerRetriever.RequestManagerFactory} that returns a
+ * Generates an implementation of {@code
+ * com.bumptech.glide.manager.RequestManagerRetriever.RequestManagerFactory} that returns a
  * generated {@code com.bumptech.glide.RequestManager} implementation.
  *
  * <p>Generated {@code com.bumptech.glide.manager.RequestManagerRetriever.RequestManagerFactory}
  * classes look like this:
+ *
  * <pre>
  * <code>
  * public class GeneratedRequestManagerFactory
@@ -32,21 +31,16 @@ import javax.lang.model.util.Elements;
  * </pre>
  */
 final class RequestManagerFactoryGenerator {
-  private static final String GLIDE_QUALIFIED_NAME =
-      "com.bumptech.glide.Glide";
-  private static final String LIFECYCLE_QUALIFIED_NAME =
-      "com.bumptech.glide.manager.Lifecycle";
+  private static final String GLIDE_QUALIFIED_NAME = "com.bumptech.glide.Glide";
+  private static final String LIFECYCLE_QUALIFIED_NAME = "com.bumptech.glide.manager.Lifecycle";
   private static final String REQUEST_MANAGER_TREE_NODE_QUALIFIED_NAME =
       "com.bumptech.glide.manager.RequestManagerTreeNode";
   private static final String REQUEST_MANAGER_FACTORY_QUALIFIED_NAME =
       "com.bumptech.glide.manager.RequestManagerRetriever.RequestManagerFactory";
-  private static final String REQUEST_MANAGER_QUALIFIED_NAME =
-      "com.bumptech.glide.RequestManager";
-  private static final ClassName CONTEXT_CLASS_NAME =
-      ClassName.get("android.content", "Context");
+  private static final String REQUEST_MANAGER_QUALIFIED_NAME = "com.bumptech.glide.RequestManager";
+  private static final ClassName CONTEXT_CLASS_NAME = ClassName.get("android.content", "Context");
 
-  static final String GENERATED_REQUEST_MANAGER_FACTORY_PACKAGE_NAME =
-      "com.bumptech.glide";
+  static final String GENERATED_REQUEST_MANAGER_FACTORY_PACKAGE_NAME = "com.bumptech.glide";
   static final String GENERATED_REQUEST_MANAGER_FACTORY_SIMPLE_NAME =
       "GeneratedRequestManagerFactory";
 
@@ -55,8 +49,10 @@ final class RequestManagerFactoryGenerator {
   private final TypeElement requestManagerTreeNodeType;
   private final TypeElement requestManagerFactoryInterface;
   private final ClassName requestManagerClassName;
+  private final ProcessorUtil processorUtil;
 
-  RequestManagerFactoryGenerator(ProcessingEnvironment processingEnv) {
+  RequestManagerFactoryGenerator(ProcessingEnvironment processingEnv, ProcessorUtil processorUtil) {
+    this.processorUtil = processorUtil;
     Elements elementUtils = processingEnv.getElementUtils();
     glideType = elementUtils.getTypeElement(GLIDE_QUALIFIED_NAME);
     lifecycleType = elementUtils.getTypeElement(LIFECYCLE_QUALIFIED_NAME);
@@ -68,7 +64,6 @@ final class RequestManagerFactoryGenerator {
 
     TypeElement requestManagerType = elementUtils.getTypeElement(REQUEST_MANAGER_QUALIFIED_NAME);
     requestManagerClassName = ClassName.get(requestManagerType);
-
   }
 
   TypeSpec generate(String generatedCodePackageName, TypeSpec generatedRequestManagerSpec) {
@@ -80,30 +75,28 @@ final class RequestManagerFactoryGenerator {
             MethodSpec.methodBuilder("build")
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Override.class)
-                .addAnnotation(nonNull())
+                .addAnnotation(processorUtil.nonNull())
                 .returns(requestManagerClassName)
-                .addParameter(ParameterSpec.builder(ClassName.get(glideType), "glide")
-                    .addAnnotation(nonNull())
-                    .build()
-                )
-                .addParameter(ParameterSpec.builder(ClassName.get(lifecycleType), "lifecycle")
-                    .addAnnotation(nonNull())
-                    .build()
-                )
+                .addParameter(
+                    ParameterSpec.builder(ClassName.get(glideType), "glide")
+                        .addAnnotation(processorUtil.nonNull())
+                        .build())
+                .addParameter(
+                    ParameterSpec.builder(ClassName.get(lifecycleType), "lifecycle")
+                        .addAnnotation(processorUtil.nonNull())
+                        .build())
                 .addParameter(
                     ParameterSpec.builder(ClassName.get(requestManagerTreeNodeType), "treeNode")
-                        .addAnnotation(nonNull())
-                        .build()
-                )
-                .addParameter(ParameterSpec.builder(CONTEXT_CLASS_NAME, "context")
-                    .addAnnotation(nonNull())
-                    .build()
-                )
+                        .addAnnotation(processorUtil.nonNull())
+                        .build())
+                .addParameter(
+                    ParameterSpec.builder(CONTEXT_CLASS_NAME, "context")
+                        .addAnnotation(processorUtil.nonNull())
+                        .build())
                 .addStatement(
                     "return new $T(glide, lifecycle, treeNode, context)",
                     ClassName.get(generatedCodePackageName, generatedRequestManagerSpec.name))
-                .build()
-        )
+                .build())
         .build();
   }
 }

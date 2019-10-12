@@ -1,8 +1,8 @@
 package com.bumptech.glide.test;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.test.InstrumentationRegistry;
+import androidx.annotation.NonNull;
+import androidx.test.InstrumentationRegistry;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.DataSource;
@@ -47,8 +47,8 @@ public final class MockModelLoader<ModelT, DataT> implements ModelLoader<ModelT,
   }
 
   @Override
-  public LoadData<DataT> buildLoadData(@NonNull ModelT modelT, int width, int height,
-      @NonNull Options options) {
+  public LoadData<DataT> buildLoadData(
+      @NonNull ModelT modelT, int width, int height, @NonNull Options options) {
     return new LoadData<>(new ObjectKey(modelT), new MockDataFetcher<>(data));
   }
 

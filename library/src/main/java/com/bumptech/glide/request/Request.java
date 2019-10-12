@@ -1,13 +1,8 @@
 package com.bumptech.glide.request;
 
-/**
- * A request that loads a resource for an {@link com.bumptech.glide.request.target.Target}.
- */
+/** A request that loads a resource for an {@link com.bumptech.glide.request.target.Target}. */
 public interface Request {
-
-  /**
-   * Starts an asynchronous load.
-   */
+  /** Starts an asynchronous load. */
   void begin();
 
   /**
@@ -18,35 +13,30 @@ public interface Request {
   void clear();
 
   /**
-   * Returns true if this request is running and has not completed or failed.
+   * Similar to {@link #clear} for in progress requests (or portions of a request), but does nothing
+   * if the request is already complete.
+   *
+   * <p>Unlike {@link #clear()}, this method allows implementations to act differently on subparts
+   * of a request. For example if a Request has both a thumbnail and a primary request and the
+   * thumbnail portion of the request is complete, this method allows only the primary portion of
+   * the request to be paused without clearing the previously completed thumbnail portion.
    */
+  void pause();
+
+  /** Returns true if this request is running and has not completed or failed. */
   boolean isRunning();
 
-  /**
-   * Returns true if the request has completed successfully.
-   */
+  /** Returns true if the request has completed successfully. */
   boolean isComplete();
 
-  /**
-   * Returns true if a non-placeholder resource is put. For Requests that load more than one
-   * resource, isResourceSet may return true even if {@link #isComplete()}} returns false.
-   */
-  boolean isResourceSet();
-
-  /**
-   * Returns true if the request has been cleared.
-   */
+  /** Returns true if the request has been cleared. */
   boolean isCleared();
 
   /**
-   * Returns true if the request has failed.
+   * Returns true if a resource is set, even if the request is not yet complete or the primary
+   * request has failed.
    */
-  boolean isFailed();
-
-  /**
-   * Recycles the request object and releases its resources.
-   */
-  void recycle();
+  boolean isAnyResourceSet();
 
   /**
    * Returns {@code true} if this {@link Request} is equivalent to the given {@link Request} (has
@@ -55,10 +45,10 @@ public interface Request {
    * <p>This method is identical to {@link Object#equals(Object)} except that it's specific to
    * {@link Request} subclasses. We do not use {@link Object#equals(Object)} directly because we
    * track {@link Request}s in collections like {@link java.util.Set} and it's perfectly legitimate
-   * to have two different {@link Request} objects for two different
-   * {@link com.bumptech.glide.request.target.Target}s (for example). Using a similar but different
-   * method let's us selectively compare {@link Request} objects to each other when it's useful in
-   * specific scenarios.
+   * to have two different {@link Request} objects for two different {@link
+   * com.bumptech.glide.request.target.Target}s (for example). Using a similar but different method
+   * let's us selectively compare {@link Request} objects to each other when it's useful in specific
+   * scenarios.
    */
   boolean isEquivalentTo(Request other);
 }

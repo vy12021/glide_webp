@@ -2,8 +2,8 @@ package com.bumptech.glide.load.resource.bitmap;
 
 import static com.bumptech.glide.tests.Util.anyContext;
 import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -37,7 +37,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 @SuppressWarnings("deprecation")
 public class BitmapDrawableTransformationTest {
   @Rule public final KeyTester keyTester = new KeyTester();
@@ -71,15 +71,15 @@ public class BitmapDrawableTransformationTest {
   public void testReturnsOriginalResourceIfTransformationDoesNotTransform() {
     int outWidth = 123;
     int outHeight = 456;
-    when(wrapped.transform(
-        anyContext(), Util.<Bitmap>anyResource(), eq(outWidth), eq(outHeight)))
-        .thenAnswer(new Answer<Resource<Bitmap>>() {
-          @SuppressWarnings("unchecked")
-          @Override
-          public Resource<Bitmap> answer(InvocationOnMock invocation) throws Throwable {
-            return (Resource<Bitmap>) invocation.getArguments()[1];
-          }
-        });
+    when(wrapped.transform(anyContext(), Util.<Bitmap>anyResource(), eq(outWidth), eq(outHeight)))
+        .thenAnswer(
+            new Answer<Resource<Bitmap>>() {
+              @SuppressWarnings("unchecked")
+              @Override
+              public Resource<Bitmap> answer(InvocationOnMock invocation) throws Throwable {
+                return (Resource<Bitmap>) invocation.getArguments()[1];
+              }
+            });
 
     Resource<BitmapDrawable> transformed =
         transformation.transform(context, drawableResourceToTransform, outWidth, outHeight);
@@ -124,16 +124,17 @@ public class BitmapDrawableTransformationTest {
 
   @Test
   public void testEquals() throws NoSuchAlgorithmException {
-    doAnswer(new Util.WriteDigest("wrapped")).when(wrapped)
+    doAnswer(new Util.WriteDigest("wrapped"))
+        .when(wrapped)
         .updateDiskCacheKey(any(MessageDigest.class));
-    @SuppressWarnings("unchecked") Transformation<Bitmap> other = mock(Transformation.class);
-    doAnswer(new Util.WriteDigest("other")).when(other)
+    @SuppressWarnings("unchecked")
+    Transformation<Bitmap> other = mock(Transformation.class);
+    doAnswer(new Util.WriteDigest("other"))
+        .when(other)
         .updateDiskCacheKey(any(MessageDigest.class));
 
     keyTester
-        .addEquivalenceGroup(
-            transformation,
-            new BitmapDrawableTransformation(wrapped))
+        .addEquivalenceGroup(transformation, new BitmapDrawableTransformation(wrapped))
         .addEquivalenceGroup(new BitmapDrawableTransformation(other))
         .addEquivalenceGroup(wrapped)
         .addRegressionTest(

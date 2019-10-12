@@ -16,7 +16,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class ImageViewTargetFactoryTest {
   private ImageViewTargetFactory factory;
   private ImageView view;
@@ -37,8 +37,10 @@ public class ImageViewTargetFactoryTest {
 
   @Test
   public void testReturnsTargetForBitmapDrawables() {
-    BitmapDrawable drawable = new BitmapDrawable(RuntimeEnvironment.application.getResources(),
-        Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_4444));
+    BitmapDrawable drawable =
+        new BitmapDrawable(
+            RuntimeEnvironment.application.getResources(),
+            Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_4444));
 
     Target<BitmapDrawable> target = factory.buildTarget(view, BitmapDrawable.class);
     target.onResourceReady(drawable, null);

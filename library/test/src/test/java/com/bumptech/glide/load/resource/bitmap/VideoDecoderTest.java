@@ -2,8 +2,8 @@ package com.bumptech.glide.load.resource.bitmap;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,7 +29,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 27)
+@Config(sdk = 27)
 public class VideoDecoderTest {
   @Mock private ParcelFileDescriptor resource;
   @Mock private VideoDecoder.MediaMetadataRetrieverFactory factory;
@@ -120,7 +120,7 @@ public class VideoDecoderTest {
     when(retriever.getScaledFrameAtTime(-1, MediaMetadataRetriever.OPTION_CLOSEST_SYNC, 100, 100))
         .thenReturn(expected);
 
-    assertThat(decoder.decode(resource, 100, 100, options).get()).isSameAs(expected);
+    assertThat(decoder.decode(resource, 100, 100, options).get()).isSameInstanceAs(expected);
   }
 
   @Test
@@ -131,7 +131,7 @@ public class VideoDecoderTest {
 
     verify(retriever, never()).getScaledFrameAtTime(anyLong(), anyInt(), anyInt(), anyInt());
     assertThat(decoder.decode(resource, Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL, options).get())
-        .isSameAs(expected);
+        .isSameInstanceAs(expected);
   }
 
   @Test
@@ -143,7 +143,7 @@ public class VideoDecoderTest {
 
     verify(retriever, never()).getScaledFrameAtTime(anyLong(), anyInt(), anyInt(), anyInt());
     assertThat(decoder.decode(resource, Target.SIZE_ORIGINAL, 100, options).get())
-        .isSameAs(expected);
+        .isSameInstanceAs(expected);
   }
 
   @Test
@@ -155,6 +155,6 @@ public class VideoDecoderTest {
 
     verify(retriever, never()).getScaledFrameAtTime(anyLong(), anyInt(), anyInt(), anyInt());
     assertThat(decoder.decode(resource, 100, Target.SIZE_ORIGINAL, options).get())
-        .isSameAs(expected);
+        .isSameInstanceAs(expected);
   }
 }

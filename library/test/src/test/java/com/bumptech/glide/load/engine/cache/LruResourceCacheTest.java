@@ -14,7 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import android.content.ComponentCallbacks2;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.bumptech.glide.load.Key;
 import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.util.LruCache;
@@ -163,14 +163,15 @@ public class LruResourceCacheTest {
     Resource<?> third = getResource(30);
     Key thirdKey = new MockKey();
     cache.put(thirdKey, third);
-    cache.setResourceRemovedListener(new ResourceRemovedListener() {
-      @Override
-      public void onResourceRemoved(@NonNull Resource<?> removed) {
-        if (removed == first) {
-          cache.put(firstKey, first);
-        }
-      }
-    });
+    cache.setResourceRemovedListener(
+        new ResourceRemovedListener() {
+          @Override
+          public void onResourceRemoved(@NonNull Resource<?> removed) {
+            if (removed == first) {
+              cache.put(firstKey, first);
+            }
+          }
+        });
 
     // trims from 100 to 50, having 30+30+30 items, it should trim to 1 item
     cache.trimMemory(ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN);

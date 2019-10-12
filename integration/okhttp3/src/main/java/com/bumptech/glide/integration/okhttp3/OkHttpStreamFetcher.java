@@ -1,7 +1,7 @@
 package com.bumptech.glide.integration.okhttp3;
 
-import android.support.annotation.NonNull;
 import android.util.Log;
+import androidx.annotation.NonNull;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.HttpException;
@@ -17,9 +17,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-/**
- * Fetches an {@link InputStream} using the okhttp library.
- */
+/** Fetches an {@link InputStream} using the okhttp library. */
 public class OkHttpStreamFetcher implements DataFetcher<InputStream>, okhttp3.Callback {
   private static final String TAG = "OkHttpFetcher";
   private final Call.Factory client;
@@ -39,8 +37,8 @@ public class OkHttpStreamFetcher implements DataFetcher<InputStream>, okhttp3.Ca
   }
 
   @Override
-  public void loadData(@NonNull Priority priority,
-      @NonNull final DataCallback<? super InputStream> callback) {
+  public void loadData(
+      @NonNull Priority priority, @NonNull final DataCallback<? super InputStream> callback) {
     Request.Builder requestBuilder = new Request.Builder().url(url.toStringUrl());
     for (Map.Entry<String, String> headerEntry : url.getHeaders().entrySet()) {
       String key = headerEntry.getKey();

@@ -4,8 +4,8 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
@@ -25,9 +25,7 @@ public class BitmapDrawableTranscoder implements ResourceTranscoder<Bitmap, Bitm
     this(context.getResources());
   }
 
-  /**
-   * @deprecated Use {@link #BitmapDrawableTranscoder(Resources)}, {@code bitmapPool} is unused.
-   */
+  /** @deprecated Use {@link #BitmapDrawableTranscoder(Resources)}, {@code bitmapPool} is unused. */
   @Deprecated
   public BitmapDrawableTranscoder(
       @NonNull Resources resources, @SuppressWarnings("unused") BitmapPool bitmapPool) {
@@ -40,8 +38,8 @@ public class BitmapDrawableTranscoder implements ResourceTranscoder<Bitmap, Bitm
 
   @Nullable
   @Override
-  public Resource<BitmapDrawable> transcode(@NonNull Resource<Bitmap> toTranscode,
-      @NonNull Options options) {
+  public Resource<BitmapDrawable> transcode(
+      @NonNull Resource<Bitmap> toTranscode, @NonNull Options options) {
     return LazyBitmapDrawableResource.obtain(resources, toTranscode);
   }
 }

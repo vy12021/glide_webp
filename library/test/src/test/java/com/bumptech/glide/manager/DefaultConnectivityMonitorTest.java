@@ -1,7 +1,7 @@
 package com.bumptech.glide.manager;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -29,12 +29,11 @@ import org.robolectric.shadows.ShadowConnectivityManager;
 import org.robolectric.shadows.ShadowNetworkInfo;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18, shadows = PermissionConnectivityManager.class)
+@Config(sdk = 18, shadows = PermissionConnectivityManager.class)
 public class DefaultConnectivityMonitorTest {
   @Mock private ConnectivityMonitor.ConnectivityListener listener;
   private DefaultConnectivityMonitor monitor;
   private ConnectivityHarness harness;
-
 
   @Before
   public void setUp() {
@@ -161,8 +160,9 @@ public class DefaultConnectivityMonitorTest {
     private final PermissionConnectivityManager shadowConnectivityManager;
 
     public ConnectivityHarness() {
-      ConnectivityManager connectivityManager = (ConnectivityManager) RuntimeEnvironment.application
-          .getSystemService(Context.CONNECTIVITY_SERVICE);
+      ConnectivityManager connectivityManager =
+          (ConnectivityManager)
+              RuntimeEnvironment.application.getSystemService(Context.CONNECTIVITY_SERVICE);
       shadowConnectivityManager = Shadow.extract(connectivityManager);
     }
 
@@ -178,7 +178,7 @@ public class DefaultConnectivityMonitorTest {
 
     void broadcast() {
       Intent connected = new Intent(ConnectivityManager.CONNECTIVITY_ACTION);
-      ShadowApplication.getInstance().sendBroadcast(connected);
+      RuntimeEnvironment.application.sendBroadcast(connected);
     }
   }
 

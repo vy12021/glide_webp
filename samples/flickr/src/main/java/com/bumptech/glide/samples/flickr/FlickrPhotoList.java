@@ -7,16 +7,16 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.ListPreloader;
 import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader;
@@ -77,24 +77,24 @@ public class FlickrPhotoList extends Fragment implements PhotoViewer {
     }
 
     final GlideRequests glideRequests = GlideApp.with(this);
-    fullRequest = glideRequests
-        .asDrawable()
-        .centerCrop()
-        .placeholder(new ColorDrawable(Color.GRAY));
+    fullRequest =
+        glideRequests.asDrawable().centerCrop().placeholder(new ColorDrawable(Color.GRAY));
 
-    thumbRequest = glideRequests
-        .asDrawable()
-        .diskCacheStrategy(DiskCacheStrategy.DATA)
-        .override(Api.SQUARE_THUMB_SIZE)
-        .transition(withCrossFade());
+    thumbRequest =
+        glideRequests
+            .asDrawable()
+            .diskCacheStrategy(DiskCacheStrategy.DATA)
+            .override(Api.SQUARE_THUMB_SIZE)
+            .transition(withCrossFade());
 
-    list.setRecyclerListener(new RecyclerView.RecyclerListener() {
-      @Override
-      public void onViewRecycled(RecyclerView.ViewHolder holder) {
-        PhotoTitleViewHolder vh = (PhotoTitleViewHolder) holder;
-        glideRequests.clear(vh.imageView);
-      }
-    });
+    list.setRecyclerListener(
+        new RecyclerView.RecyclerListener() {
+          @Override
+          public void onViewRecycled(RecyclerView.ViewHolder holder) {
+            PhotoTitleViewHolder vh = (PhotoTitleViewHolder) holder;
+            glideRequests.clear(vh.imageView);
+          }
+        });
 
     if (savedInstanceState != null) {
       int index = savedInstanceState.getInt(STATE_POSITION_INDEX);
@@ -142,17 +142,16 @@ public class FlickrPhotoList extends Fragment implements PhotoViewer {
     @Override
     public void onBindViewHolder(PhotoTitleViewHolder holder, int position) {
       final Photo current = photos.get(position);
-      fullRequest.load(current)
-          .thumbnail(thumbRequest.load(current))
-          .into(holder.imageView);
+      fullRequest.load(current).thumbnail(thumbRequest.load(current)).into(holder.imageView);
 
-      holder.imageView.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-          Intent intent = FullscreenActivity.getIntent(getActivity(), current);
-          startActivity(intent);
-        }
-      });
+      holder.imageView.setOnClickListener(
+          new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+              Intent intent = FullscreenActivity.getIntent(getActivity(), current);
+              startActivity(intent);
+            }
+          });
 
       holder.titleView.setText(current.getTitle());
     }

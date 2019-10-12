@@ -2,7 +2,7 @@ package com.bumptech.glide.load.model;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -21,7 +21,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class AssetUriLoaderTest {
   private static final int IMAGE_SIDE = 10;
 
@@ -43,6 +43,7 @@ public class AssetUriLoaderTest {
     assertEquals(
         fetcher,
         Preconditions.checkNotNull(
-            loader.buildLoadData(assetUri, IMAGE_SIDE, IMAGE_SIDE, new Options())).fetcher);
+                loader.buildLoadData(assetUri, IMAGE_SIDE, IMAGE_SIDE, new Options()))
+            .fetcher);
   }
 }

@@ -1,7 +1,7 @@
 package com.bumptech.glide.load.resource.bitmap;
 
 import android.graphics.Bitmap;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.ResourceDecoder;
 import com.bumptech.glide.load.engine.Resource;
@@ -31,8 +31,8 @@ public class StreamBitmapDecoder implements ResourceDecoder<InputStream, Bitmap>
   }
 
   @Override
-  public Resource<Bitmap> decode(@NonNull InputStream source, int width, int height,
-      @NonNull Options options)
+  public Resource<Bitmap> decode(
+      @NonNull InputStream source, int width, int height, @NonNull Options options)
       throws IOException {
 
     // Use to fix the mark limit to avoid allocating buffers that fit entire images.
@@ -76,7 +76,8 @@ public class StreamBitmapDecoder implements ResourceDecoder<InputStream, Bitmap>
     private final RecyclableBufferedInputStream bufferedStream;
     private final ExceptionCatchingInputStream exceptionStream;
 
-    UntrustedCallbacks(RecyclableBufferedInputStream bufferedStream,
+    UntrustedCallbacks(
+        RecyclableBufferedInputStream bufferedStream,
         ExceptionCatchingInputStream exceptionStream) {
       this.bufferedStream = bufferedStream;
       this.exceptionStream = exceptionStream;

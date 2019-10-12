@@ -1,7 +1,7 @@
 package com.bumptech.glide.load.model.stream;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.bumptech.glide.load.Option;
 import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.data.HttpUrlFetcher;
@@ -25,8 +25,8 @@ public class HttpGlideUrlLoader implements ModelLoader<GlideUrl, InputStream> {
    *
    * <p>Defaults to 2500ms.
    */
-  public static final Option<Integer> TIMEOUT = Option.memory(
-      "com.bumptech.glide.load.model.stream.HttpGlideUrlLoader.Timeout", 2500);
+  public static final Option<Integer> TIMEOUT =
+      Option.memory("com.bumptech.glide.load.model.stream.HttpGlideUrlLoader.Timeout", 2500);
 
   @Nullable private final ModelCache<GlideUrl, GlideUrl> modelCache;
 
@@ -39,8 +39,8 @@ public class HttpGlideUrlLoader implements ModelLoader<GlideUrl, InputStream> {
   }
 
   @Override
-  public LoadData<InputStream> buildLoadData(@NonNull GlideUrl model, int width, int height,
-      @NonNull Options options) {
+  public LoadData<InputStream> buildLoadData(
+      @NonNull GlideUrl model, int width, int height, @NonNull Options options) {
     // GlideUrls memoize parsed URLs so caching them saves a few object instantiations and time
     // spent parsing urls.
     GlideUrl url = model;
@@ -60,9 +60,7 @@ public class HttpGlideUrlLoader implements ModelLoader<GlideUrl, InputStream> {
     return true;
   }
 
-  /**
-   * The default factory for {@link HttpGlideUrlLoader}s.
-   */
+  /** The default factory for {@link HttpGlideUrlLoader}s. */
   public static class Factory implements ModelLoaderFactory<GlideUrl, InputStream> {
     private final ModelCache<GlideUrl, GlideUrl> modelCache = new ModelCache<>(500);
 

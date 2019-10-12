@@ -1,12 +1,9 @@
 package com.bumptech.glide;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.Log;
 import com.bumptech.glide.test.AppModuleWithExcludes;
-import java.lang.Class;
-import java.lang.Override;
-import java.lang.SuppressWarnings;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -14,7 +11,7 @@ import java.util.Set;
 final class GeneratedAppGlideModuleImpl extends GeneratedAppGlideModule {
   private final AppModuleWithExcludes appGlideModule;
 
-  GeneratedAppGlideModuleImpl() {
+  public GeneratedAppGlideModuleImpl(Context context) {
     appGlideModule = new AppModuleWithExcludes();
     if (Log.isLoggable("Glide", Log.DEBUG)) {
       Log.d("Glide", "Discovered AppGlideModule from annotation: com.bumptech.glide.test.AppModuleWithExcludes");

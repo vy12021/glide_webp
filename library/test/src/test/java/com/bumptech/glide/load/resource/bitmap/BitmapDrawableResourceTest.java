@@ -17,7 +17,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class BitmapDrawableResourceTest {
   private BitmapDrawableResourceHarness harness;
 
@@ -42,8 +42,8 @@ public class BitmapDrawableResourceTest {
 
   @Test
   public void testReturnsSizeFromGivenBitmap() {
-    assertEquals(harness.bitmap.getHeight() * harness.bitmap.getRowBytes(),
-        harness.create().getSize());
+    assertEquals(
+        harness.bitmap.getHeight() * harness.bitmap.getRowBytes(), harness.create().getSize());
   }
 
   @Test

@@ -5,8 +5,8 @@ import static org.junit.Assert.assertThrows;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.bumptech.glide.test.BitmapRegressionTester;
 import com.bumptech.glide.test.CanonicalBitmap;
 import com.bumptech.glide.test.GlideApp;
@@ -35,7 +35,7 @@ public class FitCenterRegressionTest {
 
   @Before
   public void setUp() {
-    context = InstrumentationRegistry.getTargetContext();
+    context = ApplicationProvider.getApplicationContext();
     bitmapRegressionTester = new BitmapRegressionTester(getClass(), testName);
     canonical = new CanonicalBitmap();
   }
@@ -46,11 +46,7 @@ public class FitCenterRegressionTest {
 
     Bitmap result =
         bitmapRegressionTester.test(
-            GlideApp.with(context)
-                .asBitmap()
-                .load(canonical.getBitmap())
-                .fitCenter()
-                .override(50));
+            GlideApp.with(context).asBitmap().load(canonical.getBitmap()).fitCenter().override(50));
 
     assertThat(result.getWidth()).isEqualTo(50);
     assertThat(result.getHeight()).isEqualTo(37);
@@ -65,10 +61,10 @@ public class FitCenterRegressionTest {
     Bitmap result =
         bitmapRegressionTester.test(
             GlideApp.with(context)
-              .asBitmap()
-              .load(canonical.getBitmap())
-              .fitCenter()
-              .override(multipliedWidth));
+                .asBitmap()
+                .load(canonical.getBitmap())
+                .fitCenter()
+                .override(multipliedWidth));
 
     assertThat(result.getWidth()).isEqualTo(multipliedWidth);
     assertThat(result.getHeight()).isEqualTo(multipliedHeight);
@@ -80,10 +76,10 @@ public class FitCenterRegressionTest {
     Bitmap result =
         bitmapRegressionTester.test(
             GlideApp.with(context)
-              .asBitmap()
-              .load(canonical.getBitmap())
-              .fitCenter()
-              .override(canonical.getWidth() / 10, canonical.getHeight()));
+                .asBitmap()
+                .load(canonical.getBitmap())
+                .fitCenter()
+                .override(canonical.getWidth() / 10, canonical.getHeight()));
 
     assertThat(result.getWidth()).isEqualTo(canonical.getWidth() / 10);
     assertThat(result.getHeight()).isEqualTo(canonical.getHeight() / 10);
@@ -92,13 +88,13 @@ public class FitCenterRegressionTest {
   @Test
   public void fitCenter_withShortRectangle_fitsWithinMaintainingAspectRatio()
       throws ExecutionException, InterruptedException {
-     Bitmap result =
+    Bitmap result =
         bitmapRegressionTester.test(
             GlideApp.with(context)
-              .asBitmap()
-              .load(canonical.getBitmap())
-              .fitCenter()
-              .override(canonical.getWidth(), canonical.getHeight() / 2));
+                .asBitmap()
+                .load(canonical.getBitmap())
+                .fitCenter()
+                .override(canonical.getWidth(), canonical.getHeight() / 2));
 
     assertThat(result.getWidth()).isEqualTo(canonical.getWidth() / 2);
     assertThat(result.getHeight()).isEqualTo(canonical.getHeight() / 2);
@@ -116,8 +112,7 @@ public class FitCenterRegressionTest {
         new ThrowingRunnable() {
           @Override
           public void run() throws Throwable {
-            GlideApp
-                .with(context)
+            GlideApp.with(context)
                 .asBitmap()
                 .load(canonical.getBitmap())
                 .fitCenter()

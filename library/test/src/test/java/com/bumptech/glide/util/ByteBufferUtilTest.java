@@ -12,7 +12,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class ByteBufferUtilTest {
   private static final int BUFFER_SIZE = 16384;
 
@@ -36,9 +36,7 @@ public class ByteBufferUtilTest {
     testFromStream(12 * BUFFER_SIZE + 12345);
   }
 
-  /**
-   * All tests are basically the same thing but with different amounts of data.
-   */
+  /** All tests are basically the same thing but with different amounts of data. */
   private void testFromStream(int dataLength) throws IOException {
     byte[] bytes = createByteData(dataLength);
     InputStream byteStream = new ByteArrayInputStream(bytes);

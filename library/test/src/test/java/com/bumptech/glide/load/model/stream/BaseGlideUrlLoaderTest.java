@@ -2,14 +2,14 @@ package com.bumptech.glide.load.model.stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.bumptech.glide.load.Key;
 import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.data.DataFetcher;
@@ -29,7 +29,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class BaseGlideUrlLoaderTest {
 
   @Mock private ModelCache<Object, GlideUrl> modelCache;
@@ -82,20 +82,20 @@ public class BaseGlideUrlLoaderTest {
 
     urlLoader.resultUrl = "fakeUrl";
     when(wrapped.buildLoadData(any(GlideUrl.class), eq(width), eq(height), eq(options)))
-        .thenAnswer(new Answer<ModelLoader.LoadData<InputStream>>() {
-          @Override
-          public ModelLoader.LoadData<InputStream> answer(InvocationOnMock invocationOnMock) {
-            GlideUrl glideUrl = (GlideUrl) invocationOnMock.getArguments()[0];
-            assertEquals(urlLoader.resultUrl, glideUrl.toStringUrl());
-            return new ModelLoader.LoadData<>(mock(Key.class), fetcher);
-
-          }
-        });
+        .thenAnswer(
+            new Answer<ModelLoader.LoadData<InputStream>>() {
+              @Override
+              public ModelLoader.LoadData<InputStream> answer(InvocationOnMock invocationOnMock) {
+                GlideUrl glideUrl = (GlideUrl) invocationOnMock.getArguments()[0];
+                assertEquals(urlLoader.resultUrl, glideUrl.toStringUrl());
+                return new ModelLoader.LoadData<>(mock(Key.class), fetcher);
+              }
+            });
     assertEquals(
         fetcher,
         Preconditions.checkNotNull(
-            urlLoader.buildLoadData(
-                new GlideUrl(urlLoader.resultUrl), width, height, options)).fetcher);
+                urlLoader.buildLoadData(new GlideUrl(urlLoader.resultUrl), width, height, options))
+            .fetcher);
   }
 
   @Test
@@ -105,14 +105,17 @@ public class BaseGlideUrlLoaderTest {
     int width = 400;
     int height = 500;
 
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocationOnMock) {
-        GlideUrl glideUrl = (GlideUrl) invocationOnMock.getArguments()[3];
-        assertEquals(urlLoader.resultUrl, glideUrl.toStringUrl());
-        return null;
-      }
-    }).when(modelCache).put(eq(model), eq(width), eq(height), any(GlideUrl.class));
+    doAnswer(
+            new Answer<Void>() {
+              @Override
+              public Void answer(InvocationOnMock invocationOnMock) {
+                GlideUrl glideUrl = (GlideUrl) invocationOnMock.getArguments()[3];
+                assertEquals(urlLoader.resultUrl, glideUrl.toStringUrl());
+                return null;
+              }
+            })
+        .when(modelCache)
+        .put(eq(model), eq(width), eq(height), any(GlideUrl.class));
 
     urlLoader.buildLoadData(model, width, height, options);
 
@@ -132,14 +135,15 @@ public class BaseGlideUrlLoaderTest {
 
     assertEquals(
         fetcher,
-        Preconditions.checkNotNull(
-            urlLoader.buildLoadData(new Object(), width, height, options)).fetcher);
+        Preconditions.checkNotNull(urlLoader.buildLoadData(new Object(), width, height, options))
+            .fetcher);
   }
 
   private static final class TestLoader extends BaseGlideUrlLoader<Object> {
     String resultUrl;
 
-    TestLoader(ModelLoader<GlideUrl, InputStream> concreteLoader,
+    TestLoader(
+        ModelLoader<GlideUrl, InputStream> concreteLoader,
         ModelCache<Object, GlideUrl> modelCache) {
       super(concreteLoader, modelCache);
     }

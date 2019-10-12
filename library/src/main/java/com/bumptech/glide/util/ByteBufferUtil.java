@@ -1,7 +1,7 @@
 package com.bumptech.glide.util;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -12,9 +12,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * Utilities for interacting with {@link java.nio.ByteBuffer}s.
- */
+/** Utilities for interacting with {@link java.nio.ByteBuffer}s. */
 @SuppressWarnings({"unused", "WeakerAccess"}) // Public API
 public final class ByteBufferUtil {
   // 16 Kb
@@ -90,8 +88,8 @@ public final class ByteBufferUtil {
     }
   }
 
-  public static void toStream(@NonNull ByteBuffer byteBuffer,
-      @NonNull OutputStream os) throws IOException {
+  public static void toStream(@NonNull ByteBuffer byteBuffer, @NonNull OutputStream os)
+      throws IOException {
     SafeArray safeArray = getSafeArray(byteBuffer);
     if (safeArray != null) {
       os.write(safeArray.data, safeArray.offset, safeArray.offset + safeArray.limit);
@@ -111,6 +109,8 @@ public final class ByteBufferUtil {
     }
   }
 
+  // We check the appropriate offsets, so this is a spurious warning.
+  @SuppressWarnings("ByteBufferBackingArray")
   @NonNull
   public static byte[] toBytes(@NonNull ByteBuffer byteBuffer) {
     final byte[] result;
@@ -194,7 +194,7 @@ public final class ByteBufferUtil {
       if (!byteBuffer.hasRemaining()) {
         return -1;
       }
-      return byteBuffer.get();
+      return byteBuffer.get() & 0xFF;
     }
 
     @Override

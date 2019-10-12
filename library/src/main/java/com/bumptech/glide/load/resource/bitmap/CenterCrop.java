@@ -1,7 +1,7 @@
 package com.bumptech.glide.load.resource.bitmap;
 
 import android.graphics.Bitmap;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import java.security.MessageDigest;
 
@@ -10,7 +10,7 @@ import java.security.MessageDigest;
  * the image is greater than the given height or vice versa, and then crop the larger dimension to
  * match the given dimension.
  *
- * Does not maintain the image's aspect ratio
+ * <p>Does not maintain the image's aspect ratio
  */
 public class CenterCrop extends BitmapTransformation {
   private static final String ID = "com.bumptech.glide.load.resource.bitmap.CenterCrop";

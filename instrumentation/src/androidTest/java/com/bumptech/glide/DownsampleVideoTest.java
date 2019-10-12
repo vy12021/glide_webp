@@ -6,8 +6,8 @@ import static org.junit.Assume.assumeTrue;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Build;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.test.ConcurrencyHelper;
@@ -27,7 +27,7 @@ public class DownsampleVideoTest {
 
   @Rule public final TearDownGlide tearDownGlide = new TearDownGlide();
   private final ConcurrencyHelper concurrency = new ConcurrencyHelper();
-  private final Context context = InstrumentationRegistry.getTargetContext();
+  private final Context context = ApplicationProvider.getApplicationContext();
 
   @Before
   public void setUp() {
@@ -62,12 +62,9 @@ public class DownsampleVideoTest {
 
   @Test
   public void loadVideo_downsampleDefault_downsamplesVideo() {
-     Bitmap bitmap =
+    Bitmap bitmap =
         concurrency.get(
-            GlideApp.with(context)
-                .asBitmap()
-                .load(ResourceIds.raw.video)
-                .submit(10, 10));
+            GlideApp.with(context).asBitmap().load(ResourceIds.raw.video).submit(10, 10));
 
     assertThat(bitmap).hasDimensions(10, 18);
   }
@@ -108,7 +105,7 @@ public class DownsampleVideoTest {
     assertThat(bitmap).hasDimensions(540, 960);
   }
 
-    @Test
+  @Test
   public void loadVideo_downsampleAtLeast_doesNotUpscale() {
     Bitmap bitmap =
         concurrency.get(

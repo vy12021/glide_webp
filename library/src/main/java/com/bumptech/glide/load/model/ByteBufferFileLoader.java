@@ -1,7 +1,7 @@
 package com.bumptech.glide.load.model;
 
-import android.support.annotation.NonNull;
 import android.util.Log;
+import androidx.annotation.NonNull;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.Options;
@@ -13,15 +13,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-/**
- * Loads {@link java.nio.ByteBuffer}s using NIO for {@link java.io.File}.
- */
+/** Loads {@link java.nio.ByteBuffer}s using NIO for {@link java.io.File}. */
 public class ByteBufferFileLoader implements ModelLoader<File, ByteBuffer> {
   private static final String TAG = "ByteBufferFileLoader";
 
   @Override
-  public LoadData<ByteBuffer> buildLoadData(@NonNull File file, int width, int height,
-      @NonNull Options options) {
+  public LoadData<ByteBuffer> buildLoadData(
+      @NonNull File file, int width, int height, @NonNull Options options) {
     return new LoadData<>(new ObjectKey(file), new ByteBufferFetcher(file));
   }
 
@@ -30,9 +28,7 @@ public class ByteBufferFileLoader implements ModelLoader<File, ByteBuffer> {
     return true;
   }
 
-  /**
-   * Factory for {@link com.bumptech.glide.load.model.ByteBufferFileLoader}.
-   */
+  /** Factory for {@link com.bumptech.glide.load.model.ByteBufferFileLoader}. */
   public static class Factory implements ModelLoaderFactory<File, ByteBuffer> {
 
     @NonNull
@@ -58,8 +54,8 @@ public class ByteBufferFileLoader implements ModelLoader<File, ByteBuffer> {
     }
 
     @Override
-    public void loadData(@NonNull Priority priority,
-        @NonNull DataCallback<? super ByteBuffer> callback) {
+    public void loadData(
+        @NonNull Priority priority, @NonNull DataCallback<? super ByteBuffer> callback) {
       ByteBuffer result;
       try {
         result = ByteBufferUtil.fromFile(file);

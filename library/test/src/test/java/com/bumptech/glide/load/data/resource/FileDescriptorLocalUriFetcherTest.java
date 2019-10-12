@@ -1,7 +1,7 @@
 package com.bumptech.glide.load.data.resource;
 
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,11 +27,12 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadow.api.Shadow;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18, shadows = { ContentResolverShadow.class })
+@Config(
+    sdk = 18,
+    shadows = {ContentResolverShadow.class})
 public class FileDescriptorLocalUriFetcherTest {
 
-  @Mock
-  private DataFetcher.DataCallback<ParcelFileDescriptor> callback;
+  @Mock private DataFetcher.DataCallback<ParcelFileDescriptor> callback;
 
   @Before
   public void setUp() {

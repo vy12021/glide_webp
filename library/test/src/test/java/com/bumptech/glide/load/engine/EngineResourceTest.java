@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -21,7 +21,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class EngineResourceTest {
   private EngineResource<Object> engineResource;
   @Mock private EngineResource.ResourceListener listener;
@@ -32,8 +32,8 @@ public class EngineResourceTest {
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     engineResource =
-        new EngineResource<>(resource, /*isCacheable=*/ true, /*isRecyclable=*/ true);
-    engineResource.setResourceListener(cacheKey, listener);
+        new EngineResource<>(
+            resource, /*isMemoryCacheable=*/ true, /*isRecyclable=*/ true, cacheKey, listener);
   }
 
   @Test
@@ -101,17 +101,19 @@ public class EngineResourceTest {
 
   @Test
   public void testThrowsIfAcquiredOnBackgroundThread() throws InterruptedException {
-    Thread otherThread = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          engineResource.acquire();
-        } catch (IllegalThreadStateException e) {
-          return;
-        }
-        fail("Failed to receive expected IllegalThreadStateException");
-      }
-    });
+    Thread otherThread =
+        new Thread(
+            new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  engineResource.acquire();
+                } catch (IllegalThreadStateException e) {
+                  return;
+                }
+                fail("Failed to receive expected IllegalThreadStateException");
+              }
+            });
     otherThread.start();
     otherThread.join();
   }
@@ -119,17 +121,19 @@ public class EngineResourceTest {
   @Test
   public void testThrowsIfReleasedOnBackgroundThread() throws InterruptedException {
     engineResource.acquire();
-    Thread otherThread = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          engineResource.release();
-        } catch (IllegalThreadStateException e) {
-          return;
-        }
-        fail("Failed to receive expected IllegalThreadStateException");
-      }
-    });
+    Thread otherThread =
+        new Thread(
+            new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  engineResource.release();
+                } catch (IllegalThreadStateException e) {
+                  return;
+                }
+                fail("Failed to receive expected IllegalThreadStateException");
+              }
+            });
     otherThread.start();
     otherThread.join();
   }
@@ -143,24 +147,36 @@ public class EngineResourceTest {
 
   @Test(expected = NullPointerException.class)
   public void testThrowsIfWrappedResourceIsNull() {
-    new EngineResource<>(/*toWrap=*/ null, /*isCacheable=*/ false, /*isRecyclable=*/ true);
+    new EngineResource<>(
+        /*toWrap=*/ null, /*isMemoryCacheable=*/ false, /*isRecyclable=*/ true, cacheKey, listener);
   }
 
   @Test
   public void testCanSetAndGetIsCacheable() {
     engineResource =
-        new EngineResource<>(mockResource(), /*isCacheable=*/ true, /*isRecyclable=*/ true);
-    assertTrue(engineResource.isCacheable());
+        new EngineResource<>(
+            mockResource(),
+            /*isMemoryCacheable=*/ true,
+            /*isRecyclable=*/ true,
+            cacheKey,
+            listener);
+    assertTrue(engineResource.isMemoryCacheable());
     engineResource =
-        new EngineResource<>(mockResource(), /*isCacheable=*/ false, /*isRecyclable=*/ true);
-    assertFalse(engineResource.isCacheable());
+        new EngineResource<>(
+            mockResource(),
+            /*isMemoryCacheable=*/ false,
+            /*isRecyclable=*/ true,
+            cacheKey,
+            listener);
+    assertFalse(engineResource.isMemoryCacheable());
   }
 
   @Test
   public void release_whenNotRecycleable_doesNotRecycleResource() {
     resource = mockResource();
-    engineResource = new EngineResource<>(resource, /*isCacheable=*/ true, /*isRecyclable=*/ false);
-    engineResource.setResourceListener(cacheKey, listener);
+    engineResource =
+        new EngineResource<>(
+            resource, /*isMemoryCacheable=*/ true, /*isRecyclable=*/ false, cacheKey, listener);
     engineResource.recycle();
 
     verify(listener, never()).onResourceReleased(any(Key.class), any(EngineResource.class));

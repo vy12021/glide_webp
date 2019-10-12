@@ -2,7 +2,7 @@ package com.bumptech.glide.load.engine.cache;
 
 import static org.junit.Assert.assertTrue;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.bumptech.glide.load.Key;
 import java.security.MessageDigest;
 import java.util.regex.Matcher;
@@ -14,7 +14,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class SafeKeyGeneratorTest {
   private SafeKeyGenerator keyGenerator;
   private int nextId;

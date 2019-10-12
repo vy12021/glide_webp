@@ -1,6 +1,6 @@
 package com.bumptech.glide.load;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.bumptech.glide.load.Option.CacheKeyUpdater;
 import com.bumptech.glide.tests.KeyTester;
 import java.nio.ByteBuffer;
@@ -12,7 +12,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class OptionsTest {
   @Rule public final KeyTester keyTester = new KeyTester();
 
@@ -23,15 +23,17 @@ public class OptionsTest {
     Option<Object> secondMemoryOption = Option.memory("secondKey");
     Object secondValue = new Object();
 
-    CacheKeyUpdater<Integer> updater = new CacheKeyUpdater<Integer>() {
-      @Override
-      public void update(@NonNull byte[] keyBytes, @NonNull Integer value,
-          @NonNull MessageDigest messageDigest) {
-        messageDigest.update(keyBytes);
-        messageDigest.update(ByteBuffer.allocate(4).putInt(value).array());
-
-      }
-    };
+    CacheKeyUpdater<Integer> updater =
+        new CacheKeyUpdater<Integer>() {
+          @Override
+          public void update(
+              @NonNull byte[] keyBytes,
+              @NonNull Integer value,
+              @NonNull MessageDigest messageDigest) {
+            messageDigest.update(keyBytes);
+            messageDigest.update(ByteBuffer.allocate(4).putInt(value).array());
+          }
+        };
     Option<Integer> firstDiskOption = Option.disk("firstDisk", updater);
     Option<Integer> secondDiskOption = Option.disk("secondDisk", updater);
 
@@ -47,20 +49,14 @@ public class OptionsTest {
             new Options().set(firstMemoryOption, firstValue).set(secondMemoryOption, secondValue),
             new Options().set(firstMemoryOption, firstValue).set(secondMemoryOption, secondValue),
             new Options().set(secondMemoryOption, secondValue).set(firstMemoryOption, firstValue))
+        .addEquivalenceGroup(new Options().set(firstMemoryOption, secondValue))
+        .addEquivalenceGroup(new Options().set(secondMemoryOption, firstValue))
         .addEquivalenceGroup(
-            new Options().set(firstMemoryOption, secondValue))
+            new Options().set(firstDiskOption, 1), new Options().set(firstDiskOption, 1))
         .addEquivalenceGroup(
-            new Options().set(secondMemoryOption, firstValue))
-        .addEquivalenceGroup(
-            new Options().set(firstDiskOption, 1),
-            new Options().set(firstDiskOption, 1))
-        .addEquivalenceGroup(
-            new Options().set(secondDiskOption, 1),
-            new Options().set(secondDiskOption, 1))
-        .addEquivalenceGroup(
-            new Options().set(firstDiskOption, 2))
-        .addEquivalenceGroup(
-            new Options().set(secondDiskOption, 2))
+            new Options().set(secondDiskOption, 1), new Options().set(secondDiskOption, 1))
+        .addEquivalenceGroup(new Options().set(firstDiskOption, 2))
+        .addEquivalenceGroup(new Options().set(secondDiskOption, 2))
         .addEquivalenceGroup(
             new Options().set(firstDiskOption, 1).set(secondDiskOption, 2),
             new Options().set(secondDiskOption, 2).set(firstDiskOption, 1))

@@ -1,6 +1,6 @@
 package com.bumptech.glide.load.engine;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.Key;
 import com.bumptech.glide.load.Transformation;
@@ -14,8 +14,7 @@ import java.util.List;
  * Generates {@link com.bumptech.glide.load.data.DataFetcher DataFetchers} from cache files
  * containing downsampled/transformed resource data.
  */
-class ResourceCacheGenerator implements DataFetcherGenerator,
-    DataFetcher.DataCallback<Object> {
+class ResourceCacheGenerator implements DataFetcherGenerator, DataFetcher.DataCallback<Object> {
 
   private final FetcherReadyCallback cb;
   private final DecodeHelper<?> helper;
@@ -30,6 +29,7 @@ class ResourceCacheGenerator implements DataFetcherGenerator,
   // multiple calls to startNext.
   @SuppressWarnings("PMD.SingularField")
   private File cacheFile;
+
   private ResourceCacheKey currentKey;
 
   ResourceCacheGenerator(DecodeHelper<?> helper, FetcherReadyCallback cb) {
@@ -50,12 +50,11 @@ class ResourceCacheGenerator implements DataFetcherGenerator,
       if (File.class.equals(helper.getTranscodeClass())) {
         return false;
       }
-      // TODO(b/73882030): This case gets triggered when it shouldn't. With this assertion it causes
-      // all loads to fail. Without this assertion it causes loads to miss the disk cache
-      // unnecessarily
-      // throw new IllegalStateException(
-      //    "Failed to find any load path from " + helper.getModelClass() + " to "
-      //        + helper.getTranscodeClass());
+      throw new IllegalStateException(
+          "Failed to find any load path from "
+              + helper.getModelClass()
+              + " to "
+              + helper.getTranscodeClass());
     }
     while (modelLoaders == null || !hasNextModelLoader()) {
       resourceClassIndex++;
@@ -74,7 +73,7 @@ class ResourceCacheGenerator implements DataFetcherGenerator,
       // we only run until the first one succeeds, the loop runs for only a limited
       // number of iterations on the order of 10-20 in the worst case.
       currentKey =
-          new ResourceCacheKey(// NOPMD AvoidInstantiatingObjectsInLoops
+          new ResourceCacheKey( // NOPMD AvoidInstantiatingObjectsInLoops
               helper.getArrayPool(),
               sourceId,
               helper.getSignature(),
@@ -95,8 +94,9 @@ class ResourceCacheGenerator implements DataFetcherGenerator,
     boolean started = false;
     while (!started && hasNextModelLoader()) {
       ModelLoader<File, ?> modelLoader = modelLoaders.get(modelLoaderIndex++);
-      loadData = modelLoader.buildLoadData(cacheFile,
-          helper.getWidth(), helper.getHeight(), helper.getOptions());
+      loadData =
+          modelLoader.buildLoadData(
+              cacheFile, helper.getWidth(), helper.getHeight(), helper.getOptions());
       if (loadData != null && helper.hasLoadPath(loadData.fetcher.getDataClass())) {
         started = true;
         loadData.fetcher.loadData(helper.getPriority(), this);
@@ -120,8 +120,8 @@ class ResourceCacheGenerator implements DataFetcherGenerator,
 
   @Override
   public void onDataReady(Object data) {
-    cb.onDataFetcherReady(sourceKey, data, loadData.fetcher, DataSource.RESOURCE_DISK_CACHE,
-        currentKey);
+    cb.onDataFetcherReady(
+        sourceKey, data, loadData.fetcher, DataSource.RESOURCE_DISK_CACHE, currentKey);
   }
 
   @Override

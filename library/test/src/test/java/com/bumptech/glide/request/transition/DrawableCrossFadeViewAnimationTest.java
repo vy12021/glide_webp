@@ -2,7 +2,7 @@ package com.bumptech.glide.request.transition;
 
 import static com.bumptech.glide.request.transition.Transition.ViewAdapter;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,7 +18,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class DrawableCrossFadeViewAnimationTest {
   private CrossFadeHarness harness;
 
@@ -70,4 +70,3 @@ public class DrawableCrossFadeViewAnimationTest {
         new DrawableCrossFadeTransition(duration, true /*isCrossFadeEnabled*/);
   }
 }
-

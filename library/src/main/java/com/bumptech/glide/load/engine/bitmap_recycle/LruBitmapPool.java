@@ -2,12 +2,13 @@ package com.bumptech.glide.load.engine.bitmap_recycle;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.content.ComponentCallbacks2;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.bumptech.glide.util.Synthetic;
 import java.util.Arrays;
 import java.util.Collections;
@@ -57,15 +58,34 @@ public class LruBitmapPool implements BitmapPool {
   /**
    * Constructor for LruBitmapPool.
    *
-   * @param maxSize        The initial maximum size of the pool in bytes.
+   * @param maxSize The initial maximum size of the pool in bytes.
    * @param allowedConfigs A white listed put of {@link android.graphics.Bitmap.Config} that are
-   *                       allowed to be put into the pool. Configs not in the allowed put will be
-   *                       rejected.
+   *     allowed to be put into the pool. Configs not in the allowed put will be rejected.
    */
   // Public API.
   @SuppressWarnings("unused")
   public LruBitmapPool(long maxSize, Set<Bitmap.Config> allowedConfigs) {
     this(maxSize, getDefaultStrategy(), allowedConfigs);
+  }
+
+  /** Returns the number of cache hits for bitmaps in the pool. */
+  public long hitCount() {
+    return hits;
+  }
+
+  /** Returns the number of cache misses for bitmaps in the pool. */
+  public long missCount() {
+    return misses;
+  }
+
+  /** Returns the number of bitmaps that have been evicted from the pool. */
+  public long evictionCount() {
+    return evictions;
+  }
+
+  /** Returns the current size of the pool in bytes. */
+  public long getCurrentSize() {
+    return currentSize;
   }
 
   @Override
@@ -87,13 +107,19 @@ public class LruBitmapPool implements BitmapPool {
     if (bitmap.isRecycled()) {
       throw new IllegalStateException("Cannot pool recycled bitmap");
     }
-    if (!bitmap.isMutable() || strategy.getSize(bitmap) > maxSize
+    if (!bitmap.isMutable()
+        || strategy.getSize(bitmap) > maxSize
         || !allowedConfigs.contains(bitmap.getConfig())) {
       if (Log.isLoggable(TAG, Log.VERBOSE)) {
-        Log.v(TAG, "Reject bitmap from pool"
-                + ", bitmap: " + strategy.logBitmap(bitmap)
-                + ", is mutable: " + bitmap.isMutable()
-                + ", is allowed config: " + allowedConfigs.contains(bitmap.getConfig()));
+        Log.v(
+            TAG,
+            "Reject bitmap from pool"
+                + ", bitmap: "
+                + strategy.logBitmap(bitmap)
+                + ", is mutable: "
+                + bitmap.isMutable()
+                + ", is allowed config: "
+                + allowedConfigs.contains(bitmap.getConfig()));
       }
       bitmap.recycle();
       return;
@@ -157,9 +183,11 @@ public class LruBitmapPool implements BitmapPool {
     }
 
     if (config == Bitmap.Config.HARDWARE) {
-      throw new IllegalArgumentException("Cannot create a mutable Bitmap with config: " + config
-          + ". Consider setting Downsampler#ALLOW_HARDWARE_CONFIG to false in your RequestOptions"
-          + " and/or in GlideBuilder.setDefaultRequestOptions");
+      throw new IllegalArgumentException(
+          "Cannot create a mutable Bitmap with config: "
+              + config
+              + ". Consider setting Downsampler#ALLOW_HARDWARE_CONFIG to false in your"
+              + " RequestOptions and/or in GlideBuilder.setDefaultRequestOptions");
     }
   }
 
@@ -217,10 +245,12 @@ public class LruBitmapPool implements BitmapPool {
     if (Log.isLoggable(TAG, Log.DEBUG)) {
       Log.d(TAG, "trimMemory, level=" + level);
     }
-    if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_BACKGROUND) {
+    if ((level >= ComponentCallbacks2.TRIM_MEMORY_BACKGROUND)
+        || ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            && (level >= ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN))) {
       clearMemory();
-    } else if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN
-        || level == android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL) {
+    } else if ((level >= ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN)
+        || (level == ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL)) {
       trimToSize(getMaxSize() / 2);
     }
   }
@@ -255,8 +285,22 @@ public class LruBitmapPool implements BitmapPool {
   }
 
   private void dumpUnchecked() {
-    Log.v(TAG, "Hits=" + hits + ", misses=" + misses + ", puts=" + puts + ", evictions=" + evictions
-        + ", currentSize=" + currentSize + ", maxSize=" + maxSize + "\nStrategy=" + strategy);
+    Log.v(
+        TAG,
+        "Hits="
+            + hits
+            + ", misses="
+            + misses
+            + ", puts="
+            + puts
+            + ", evictions="
+            + evictions
+            + ", currentSize="
+            + currentSize
+            + ", maxSize="
+            + maxSize
+            + "\nStrategy="
+            + strategy);
   }
 
   private static LruPoolStrategy getDefaultStrategy() {
@@ -299,8 +343,13 @@ public class LruBitmapPool implements BitmapPool {
     public void add(Bitmap bitmap) {
       if (bitmaps.contains(bitmap)) {
         throw new IllegalStateException(
-            "Can't add already added bitmap: " + bitmap + " [" + bitmap.getWidth() + "x" + bitmap
-                .getHeight() + "]");
+            "Can't add already added bitmap: "
+                + bitmap
+                + " ["
+                + bitmap.getWidth()
+                + "x"
+                + bitmap.getHeight()
+                + "]");
       }
       bitmaps.add(bitmap);
     }
@@ -317,7 +366,7 @@ public class LruBitmapPool implements BitmapPool {
   private static final class NullBitmapTracker implements BitmapTracker {
 
     @Synthetic
-    NullBitmapTracker() { }
+    NullBitmapTracker() {}
 
     @Override
     public void add(Bitmap bitmap) {

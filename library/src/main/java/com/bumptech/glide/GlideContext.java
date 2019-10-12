@@ -2,16 +2,19 @@ package com.bumptech.glide;
 
 import android.content.Context;
 import android.content.ContextWrapper;
-import android.os.Handler;
-import android.os.Looper;
-import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
 import android.widget.ImageView;
+import androidx.annotation.GuardedBy;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
+import com.bumptech.glide.Glide.RequestOptionsFactory;
 import com.bumptech.glide.load.engine.Engine;
 import com.bumptech.glide.load.engine.bitmap_recycle.ArrayPool;
+import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.ImageViewTargetFactory;
 import com.bumptech.glide.request.target.ViewTarget;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -23,37 +26,53 @@ public class GlideContext extends ContextWrapper {
   @VisibleForTesting
   static final TransitionOptions<?, ?> DEFAULT_TRANSITION_OPTIONS =
       new GenericTransitionOptions<>();
-  private final Handler mainHandler;
+
   private final ArrayPool arrayPool;
   private final Registry registry;
   private final ImageViewTargetFactory imageViewTargetFactory;
-  private final RequestOptions defaultRequestOptions;
+  private final RequestOptionsFactory defaultRequestOptionsFactory;
+  private final List<RequestListener<Object>> defaultRequestListeners;
   private final Map<Class<?>, TransitionOptions<?, ?>> defaultTransitionOptions;
   private final Engine engine;
+  private final boolean isLoggingRequestOriginsEnabled;
   private final int logLevel;
+
+  @Nullable
+  @GuardedBy("this")
+  private RequestOptions defaultRequestOptions;
 
   public GlideContext(
       @NonNull Context context,
       @NonNull ArrayPool arrayPool,
       @NonNull Registry registry,
       @NonNull ImageViewTargetFactory imageViewTargetFactory,
-      @NonNull RequestOptions defaultRequestOptions,
+      @NonNull RequestOptionsFactory defaultRequestOptionsFactory,
       @NonNull Map<Class<?>, TransitionOptions<?, ?>> defaultTransitionOptions,
+      @NonNull List<RequestListener<Object>> defaultRequestListeners,
       @NonNull Engine engine,
+      boolean isLoggingRequestOriginsEnabled,
       int logLevel) {
     super(context.getApplicationContext());
     this.arrayPool = arrayPool;
     this.registry = registry;
     this.imageViewTargetFactory = imageViewTargetFactory;
-    this.defaultRequestOptions = defaultRequestOptions;
+    this.defaultRequestOptionsFactory = defaultRequestOptionsFactory;
+    this.defaultRequestListeners = defaultRequestListeners;
     this.defaultTransitionOptions = defaultTransitionOptions;
     this.engine = engine;
+    this.isLoggingRequestOriginsEnabled = isLoggingRequestOriginsEnabled;
     this.logLevel = logLevel;
-
-    mainHandler = new Handler(Looper.getMainLooper());
   }
 
-  public RequestOptions getDefaultRequestOptions() {
+  public List<RequestListener<Object>> getDefaultRequestListeners() {
+    return defaultRequestListeners;
+  }
+
+  public synchronized RequestOptions getDefaultRequestOptions() {
+    if (defaultRequestOptions == null) {
+      defaultRequestOptions = defaultRequestOptionsFactory.build().lock();
+    }
+
     return defaultRequestOptions;
   }
 
@@ -81,11 +100,6 @@ public class GlideContext extends ContextWrapper {
   }
 
   @NonNull
-  public Handler getMainHandler() {
-    return mainHandler;
-  }
-
-  @NonNull
   public Engine getEngine() {
     return engine;
   }
@@ -102,5 +116,15 @@ public class GlideContext extends ContextWrapper {
   @NonNull
   public ArrayPool getArrayPool() {
     return arrayPool;
+  }
+
+  /**
+   * Returns {@code true} if Glide should populate {@link
+   * com.bumptech.glide.load.engine.GlideException#setOrigin(Exception)} for failed requests.
+   *
+   * <p>This is an experimental API that may be removed in the future.
+   */
+  public boolean isLoggingRequestOriginsEnabled() {
+    return isLoggingRequestOriginsEnabled;
   }
 }

@@ -1,6 +1,6 @@
 package com.bumptech.glide.util;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -68,7 +68,8 @@ public class MarkEnforcingInputStream extends FilterInputStream {
 
   @Override
   public int available() throws IOException {
-    return availableBytes == UNSET ? super.available()
+    return availableBytes == UNSET
+        ? super.available()
         : Math.min(availableBytes, super.available());
   }
 

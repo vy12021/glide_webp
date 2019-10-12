@@ -1,5 +1,5 @@
-import se.bjurr.violations.gradle.plugin.ViolationsTask
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import se.bjurr.violations.gradle.plugin.ViolationsTask
 
 buildscript {
     repositories {
@@ -19,6 +19,7 @@ buildscript {
             classpath "net.ltgt.gradle:gradle-errorprone-plugin:${ERROR_PRONE_PLUGIN_VERSION}"
         }
         classpath "se.bjurr.violations:violations-gradle-plugin:${VIOLATIONS_PLUGIN_VERSION}"
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:3.23.0"
     }
 }
 
@@ -48,7 +49,8 @@ subprojects { project ->
         options.setBootstrapClasspath(files("${System.getProperty('java.home')}/lib/rt.jar"))
         // gifencoder is a legacy project that has a ton of warnings and is basically never
         // modified, so we're not going to worry about cleaning it up.
-        if ("gifencoder" != project.getName()) {
+        // Imgur uses generated code from dagger that has warnings.
+        if ("gifencoder" != project.getName() && "imgur" != project.getName()) {
           options.compilerArgs \
                 /*
                  * Treat all warnings as errors.
@@ -67,7 +69,16 @@ subprojects { project ->
                  * See https://github.com/google/dagger/issues/945
                  * and https://bugs.openjdk.java.net/browse/JDK-8190452
                  */ \
-                << "-Xlint:-classfile"
+                << "-Xlint:-classfile" \
+                /*
+                 * Disable deprecation warnings for ViewTarget/BaseTarget for now.
+                 */ \
+                << "-Xlint:-deprecation"
+
+            if (project.plugins.hasPlugin('net.ltgt.errorprone')) {
+                // It's often useful to track individual objects when debugging object pooling.
+                options.compilerArgs << "-Xep:ObjectToString:OFF"
+            }
         }
     }
 
@@ -80,6 +91,23 @@ subprojects { project ->
     // Avoid issues like #2452.
     tasks.withType(Jar) {
         duplicatesStrategy = DuplicatesStrategy.FAIL
+    }
+
+    def isDisallowedProject =
+            project.name in ["third_party", "gif_decoder", "gif_encoder", "disklrucache"]
+    if (!isDisallowedProject) {
+        apply plugin: "com.diffplug.gradle.spotless"
+
+        spotless {
+            java {
+                target fileTree('.') {
+                    include '**/*.java'
+                    exclude '**/resources/**'
+                    exclude '**/build/**'
+                }
+                googleJavaFormat()
+            }
+        }
     }
 
     apply plugin: 'checkstyle'
@@ -145,6 +173,12 @@ subprojects { project ->
                 if(variant.buildType.name == 'release') {
                     // variant.setIgnore(true)
                 }
+            }
+        }
+
+        if (project.plugins.hasPlugin('com.android.library')) {
+            android.libraryVariants.all {
+                it.generateBuildConfigProvider.configure { enabled = false }
             }
         }
     }

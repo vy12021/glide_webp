@@ -1,14 +1,11 @@
 package com.bumptech.glide.load.resource.gif;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.bumptech.glide.load.engine.Initializable;
 import com.bumptech.glide.load.resource.drawable.DrawableResource;
 
-/**
- * A resource wrapping an {@link com.bumptech.glide.load.resource.gif.GifDrawable}.
- */
-public class GifDrawableResource extends DrawableResource<GifDrawable>
-    implements Initializable {
+/** A resource wrapping an {@link com.bumptech.glide.load.resource.gif.GifDrawable}. */
+public class GifDrawableResource extends DrawableResource<GifDrawable> implements Initializable {
   // Public API.
   @SuppressWarnings("WeakerAccess")
   public GifDrawableResource(GifDrawable drawable) {

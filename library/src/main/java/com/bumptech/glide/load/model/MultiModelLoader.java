@@ -1,8 +1,8 @@
 package com.bumptech.glide.load.model;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.util.Pools.Pool;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.util.Pools.Pool;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.Key;
@@ -18,26 +18,27 @@ import java.util.List;
 /**
  * Allows attempting multiple ModelLoaders registered for a given model and data class.
  *
- * <p> TODO: we should try to find a way to remove this class. It exists to allow individual
+ * <p>TODO: we should try to find a way to remove this class. It exists to allow individual
  * ModelLoaders to delegate to multiple ModelLoaders without having to duplicate this logic
  * everywhere. We have very similar logic in the {@link
  * com.bumptech.glide.load.engine.DataFetcherGenerator} implementations and should try to avoid this
- * duplication. </p>
+ * duplication.
  */
 class MultiModelLoader<Model, Data> implements ModelLoader<Model, Data> {
 
   private final List<ModelLoader<Model, Data>> modelLoaders;
   private final Pool<List<Throwable>> exceptionListPool;
 
-  MultiModelLoader(@NonNull List<ModelLoader<Model, Data>> modelLoaders,
+  MultiModelLoader(
+      @NonNull List<ModelLoader<Model, Data>> modelLoaders,
       @NonNull Pool<List<Throwable>> exceptionListPool) {
     this.modelLoaders = modelLoaders;
     this.exceptionListPool = exceptionListPool;
   }
 
   @Override
-  public LoadData<Data> buildLoadData(@NonNull Model model, int width, int height,
-      @NonNull Options options) {
+  public LoadData<Data> buildLoadData(
+      @NonNull Model model, int width, int height, @NonNull Options options) {
     Key sourceKey = null;
     int size = modelLoaders.size();
     List<DataFetcher<Data>> fetchers = new ArrayList<>(size);
@@ -53,7 +54,8 @@ class MultiModelLoader<Model, Data> implements ModelLoader<Model, Data> {
       }
     }
     return !fetchers.isEmpty() && sourceKey != null
-        ? new LoadData<>(sourceKey, new MultiFetcher<>(fetchers, exceptionListPool)) : null;
+        ? new LoadData<>(sourceKey, new MultiFetcher<>(fetchers, exceptionListPool))
+        : null;
   }
 
   @Override
@@ -78,8 +80,8 @@ class MultiModelLoader<Model, Data> implements ModelLoader<Model, Data> {
     private int currentIndex;
     private Priority priority;
     private DataCallback<? super Data> callback;
-    @Nullable
-    private List<Throwable> exceptions;
+    @Nullable private List<Throwable> exceptions;
+    private boolean isCancelled;
 
     MultiFetcher(
         @NonNull List<DataFetcher<Data>> fetchers,
@@ -91,12 +93,19 @@ class MultiModelLoader<Model, Data> implements ModelLoader<Model, Data> {
     }
 
     @Override
-    public void loadData(
-        @NonNull Priority priority, @NonNull DataCallback<? super Data> callback) {
+    public void loadData(@NonNull Priority priority, @NonNull DataCallback<? super Data> callback) {
       this.priority = priority;
       this.callback = callback;
       exceptions = throwableListPool.acquire();
       fetchers.get(currentIndex).loadData(priority, this);
+
+      // If a race occurred where we cancelled the fetcher in cancel() and then called loadData here
+      // immediately after, make sure that we cancel the newly started fetcher. We don't bother
+      // checking cancelled before loadData because it's not required for correctness and would
+      // require an unlikely race to be useful.
+      if (isCancelled) {
+        cancel();
+      }
     }
 
     @Override
@@ -112,6 +121,7 @@ class MultiModelLoader<Model, Data> implements ModelLoader<Model, Data> {
 
     @Override
     public void cancel() {
+      isCancelled = true;
       for (DataFetcher<Data> fetcher : fetchers) {
         fetcher.cancel();
       }
@@ -145,6 +155,10 @@ class MultiModelLoader<Model, Data> implements ModelLoader<Model, Data> {
     }
 
     private void startNextOrFail() {
+      if (isCancelled) {
+        return;
+      }
+
       if (currentIndex < fetchers.size() - 1) {
         currentIndex++;
         loadData(priority, callback);

@@ -1,9 +1,9 @@
 package com.bumptech.glide.load.model;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.VisibleForTesting;
-import android.support.v4.util.Pools.Pool;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
+import androidx.core.util.Pools.Pool;
 import com.bumptech.glide.Registry.NoModelLoaderAvailableException;
 import com.bumptech.glide.load.Options;
 import com.bumptech.glide.util.Preconditions;
@@ -33,8 +33,8 @@ public class MultiModelLoaderFactory {
   }
 
   @VisibleForTesting
-  MultiModelLoaderFactory(@NonNull Pool<List<Throwable>> throwableListPool,
-      @NonNull Factory factory) {
+  MultiModelLoaderFactory(
+      @NonNull Pool<List<Throwable>> throwableListPool, @NonNull Factory factory) {
     this.throwableListPool = throwableListPool;
     this.factory = factory;
   }
@@ -75,8 +75,7 @@ public class MultiModelLoaderFactory {
 
   @NonNull
   synchronized <Model, Data> List<ModelLoaderFactory<? extends Model, ? extends Data>> remove(
-      @NonNull Class<Model> modelClass,
-      @NonNull Class<Data> dataClass) {
+      @NonNull Class<Model> modelClass, @NonNull Class<Data> dataClass) {
     List<ModelLoaderFactory<? extends Model, ? extends Data>> factories = new ArrayList<>();
     for (Iterator<Entry<?, ?>> iterator = entries.iterator(); iterator.hasNext(); ) {
       Entry<?, ?> entry = iterator.next();
@@ -126,8 +125,8 @@ public class MultiModelLoaderFactory {
   }
 
   @NonNull
-  public synchronized <Model, Data> ModelLoader<Model, Data> build(@NonNull Class<Model> modelClass,
-      @NonNull Class<Data> dataClass) {
+  public synchronized <Model, Data> ModelLoader<Model, Data> build(
+      @NonNull Class<Model> modelClass, @NonNull Class<Data> dataClass) {
     try {
       List<ModelLoader<Model, Data>> loaders = new ArrayList<>();
       boolean ignoredAnyEntries = false;
@@ -219,12 +218,12 @@ public class MultiModelLoaderFactory {
 
   private static class EmptyModelLoader implements ModelLoader<Object, Object> {
     @Synthetic
-    EmptyModelLoader() { }
+    EmptyModelLoader() {}
 
     @Nullable
     @Override
-    public LoadData<Object> buildLoadData(@NonNull Object o, int width, int height,
-        @NonNull Options options) {
+    public LoadData<Object> buildLoadData(
+        @NonNull Object o, int width, int height, @NonNull Options options) {
       return null;
     }
 

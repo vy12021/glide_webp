@@ -1,10 +1,10 @@
 package com.bumptech.glide;
 
 import static com.bumptech.glide.tests.BackgroundUtil.testInBackground;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -36,7 +36,7 @@ import org.robolectric.annotation.Config;
 
 @SuppressWarnings("unchecked")
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class RequestBuilderTest {
   @Rule public TearDownGlide tearDownGlide = new TearDownGlide();
 
@@ -103,23 +103,25 @@ public class RequestBuilderTest {
   @Test(expected = RuntimeException.class)
   public void testThrowsIfIntoViewCalledOnBackgroundThread() throws InterruptedException {
     final ImageView imageView = new ImageView(RuntimeEnvironment.application);
-    testInBackground(new BackgroundTester() {
-      @Override
-      public void runTest() {
-       getNullModelRequest().into(imageView);
-      }
-    });
+    testInBackground(
+        new BackgroundTester() {
+          @Override
+          public void runTest() {
+            getNullModelRequest().into(imageView);
+          }
+        });
   }
 
-  @Test(expected = RuntimeException.class)
-  public void testThrowsIfIntoTargetCalledOnBackgroundThread() throws InterruptedException {
+  @Test
+  public void doesNotThrowIfIntoTargetCalledOnBackgroundThread() throws InterruptedException {
     final Target<Object> target = mock(Target.class);
-    testInBackground(new BackgroundTester() {
-      @Override
-      public void runTest() {
-         getNullModelRequest().into(target);
-      }
-    });
+    testInBackground(
+        new BackgroundTester() {
+          @Override
+          public void runTest() {
+            getNullModelRequest().into(target);
+          }
+        });
   }
 
   @Test
@@ -129,11 +131,9 @@ public class RequestBuilderTest {
     requestCaptor.getValue().onResourceReady(new SimpleResource<>(new Object()), DataSource.LOCAL);
 
     verify(listener1)
-        .onResourceReady(
-            any(), any(), isA(Target.class), isA(DataSource.class), anyBoolean());
+        .onResourceReady(any(), any(), isA(Target.class), isA(DataSource.class), anyBoolean());
     verify(listener2)
-        .onResourceReady(
-            any(), any(), isA(Target.class), isA(DataSource.class), anyBoolean());
+        .onResourceReady(any(), any(), isA(Target.class), isA(DataSource.class), anyBoolean());
   }
 
   @Test
@@ -144,22 +144,18 @@ public class RequestBuilderTest {
 
     // The #listener API removes any previous listeners, so the first listener should not be called.
     verify(listener1, never())
-        .onResourceReady(
-            any(), any(), isA(Target.class), isA(DataSource.class), anyBoolean());
+        .onResourceReady(any(), any(), isA(Target.class), isA(DataSource.class), anyBoolean());
     verify(listener2)
-        .onResourceReady(
-            any(), any(), isA(Target.class), isA(DataSource.class), anyBoolean());
+        .onResourceReady(any(), any(), isA(Target.class), isA(DataSource.class), anyBoolean());
   }
 
   private RequestBuilder<Object> getNullModelRequest() {
     when(glideContext.buildImageViewTarget(isA(ImageView.class), isA(Class.class)))
         .thenReturn(mock(ViewTarget.class));
     when(glideContext.getDefaultRequestOptions()).thenReturn(new RequestOptions());
-    when(requestManager.getDefaultRequestOptions())
-        .thenReturn(new RequestOptions());
+    when(requestManager.getDefaultRequestOptions()).thenReturn(new RequestOptions());
     when(requestManager.getDefaultTransitionOptions(any(Class.class)))
         .thenReturn(new GenericTransitionOptions<>());
-    return new RequestBuilder<>(glide, requestManager, Object.class, context)
-        .load((Object) null);
+    return new RequestBuilder<>(glide, requestManager, Object.class, context).load((Object) null);
   }
 }

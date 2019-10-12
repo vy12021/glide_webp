@@ -7,11 +7,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Process;
 import android.os.StrictMode;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -20,6 +15,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
 import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.viewpager.widget.ViewPager;
 import com.bumptech.glide.load.engine.prefill.PreFillType;
 import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.samples.flickr.api.Api;
@@ -66,6 +66,7 @@ public class FlickrSearchActivity extends AppCompatActivity
   }
 
   private static final Map<Page, Integer> PAGE_TO_TITLE;
+
   static {
     Map<Page, Integer> temp = new HashMap<>();
     temp.put(Page.SMALL, R.string.small);
@@ -111,16 +112,12 @@ public class FlickrSearchActivity extends AppCompatActivity
     return false;
   }
 
-  /**
-   * Called when the activity is first created.
-   */
+  /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
-        .detectAll()
-        .penaltyLog()
-        .build());
+    StrictMode.setThreadPolicy(
+        new StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog().build());
 
     backgroundThread = new HandlerThread("BackgroundThumbnailHandlerThread");
     backgroundThread.start();
@@ -154,10 +151,11 @@ public class FlickrSearchActivity extends AppCompatActivity
     if (savedInstanceState == null) {
       // Weight values determined experimentally by measuring the number of incurred GCs while
       // scrolling through the various photo grids/lists.
-      GlideApp.get(this).preFillBitmapPool(
-          new PreFillType.Builder(smallGridSize).setWeight(1),
-          new PreFillType.Builder(mediumGridSize).setWeight(1),
-          new PreFillType.Builder(screenWidth / 2, listHeightSize).setWeight(6));
+      GlideApp.get(this)
+          .preFillBitmapPool(
+              new PreFillType.Builder(smallGridSize).setWeight(1),
+              new PreFillType.Builder(mediumGridSize).setWeight(1),
+              new PreFillType.Builder(screenWidth / 2, listHeightSize).setWeight(6));
     }
   }
 
@@ -335,10 +333,11 @@ public class FlickrSearchActivity extends AppCompatActivity
           return;
         }
 
-        FutureTarget<File> futureTarget = GlideApp.with(context)
-            .downloadOnly()
-            .load(photo)
-            .submit(Api.SQUARE_THUMB_SIZE, Api.SQUARE_THUMB_SIZE);
+        FutureTarget<File> futureTarget =
+            GlideApp.with(context)
+                .downloadOnly()
+                .load(photo)
+                .submit(Api.SQUARE_THUMB_SIZE, Api.SQUARE_THUMB_SIZE);
 
         try {
           futureTarget.get();

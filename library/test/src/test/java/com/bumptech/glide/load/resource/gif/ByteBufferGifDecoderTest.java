@@ -3,9 +3,9 @@ package com.bumptech.glide.load.resource.gif;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,9 +33,9 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18, shadows = GlideShadowLooper.class)
+@Config(sdk = 18, shadows = GlideShadowLooper.class)
 public class ByteBufferGifDecoderTest {
-  private static final byte[] GIF_HEADER = new byte[] { 0x47, 0x49, 0x46 };
+  private static final byte[] GIF_HEADER = new byte[] {0x47, 0x49, 0x46};
   private static final int ARRAY_POOL_SIZE_BYTES = 4 * 1024 * 1024;
 
   private ByteBufferGifDecoder decoder;
@@ -56,8 +56,8 @@ public class ByteBufferGifDecoderTest {
     when(parser.parseHeader()).thenReturn(gifHeader);
     when(parserPool.obtain(isA(ByteBuffer.class))).thenReturn(parser);
 
-    when(decoderFactory.build(isA(GifDecoder.BitmapProvider.class),
-        eq(gifHeader), isA(ByteBuffer.class), anyInt()))
+    when(decoderFactory.build(
+            isA(GifDecoder.BitmapProvider.class), eq(gifHeader), isA(ByteBuffer.class), anyInt()))
         .thenReturn(gifDecoder);
 
     List<ImageHeaderParser> parsers = new ArrayList<>();

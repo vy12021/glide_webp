@@ -2,7 +2,7 @@ package com.bumptech.glide.load.engine.executor;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,7 +13,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class GlideExecutorTest {
 
   @Test
@@ -21,12 +21,15 @@ public class GlideExecutorTest {
     final List<Integer> resultPriorities = Collections.synchronizedList(new ArrayList<Integer>());
     GlideExecutor executor = GlideExecutor.newDiskCacheExecutor();
     for (int i = 5; i > 0; i--) {
-      executor.execute(new MockRunnable(i, new MockRunnable.OnRun() {
-        @Override
-        public void onRun(int priority) {
-          resultPriorities.add(priority);
-        }
-      }));
+      executor.execute(
+          new MockRunnable(
+              i,
+              new MockRunnable.OnRun() {
+                @Override
+                public void onRun(int priority) {
+                  resultPriorities.add(priority);
+                }
+              }));
     }
 
     executor.shutdown();
@@ -37,8 +40,7 @@ public class GlideExecutorTest {
     assertThat(resultPriorities).containsExactly(5, 1, 2, 3, 4).inOrder();
   }
 
-  private static final class MockRunnable implements Runnable,
-      Comparable<MockRunnable> {
+  private static final class MockRunnable implements Runnable, Comparable<MockRunnable> {
     private final int priority;
     private final OnRun onRun;
 

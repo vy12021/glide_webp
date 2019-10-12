@@ -1,7 +1,7 @@
 package com.bumptech.glide.util;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Queue;
@@ -12,7 +12,7 @@ import java.util.Queue;
  * framework issue where exceptions during reads while decoding bitmaps in {@link
  * android.graphics.BitmapFactory} can return partially decoded bitmaps.
  *
- * See https://github.com/bumptech/glide/issues/126.
+ * <p>See https://github.com/bumptech/glide/issues/126.
  */
 public class ExceptionCatchingInputStream extends InputStream {
 

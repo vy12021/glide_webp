@@ -1,12 +1,12 @@
 package com.bumptech.glide.load.model;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 /**
  * An interface for lazily creating headers that allows expensive to calculate headers (oauth for
  * example) to be generated in the background during the first fetch.
  *
- * <p> Implementations should implement equals() and hashcode() </p> .
+ * <p>Implementations should implement equals() and hashcode() .
  */
 public interface LazyHeaderFactory {
   /**

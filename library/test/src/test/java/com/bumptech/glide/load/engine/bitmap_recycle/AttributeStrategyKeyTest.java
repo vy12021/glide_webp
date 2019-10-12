@@ -16,7 +16,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class AttributeStrategyKeyTest {
 
   private AttributeStrategy.KeyPool keyPool;
@@ -42,8 +42,12 @@ public class AttributeStrategyKeyTest {
     Key fifth = new Key(keyPool);
     fifth.init(100, 100, Bitmap.Config.RGB_565);
 
-    new EqualsTester().addEqualityGroup(first, second).addEqualityGroup(third)
-        .addEqualityGroup(fourth).addEqualityGroup(fifth).testEquals();
+    new EqualsTester()
+        .addEqualityGroup(first, second)
+        .addEqualityGroup(third)
+        .addEqualityGroup(fourth)
+        .addEqualityGroup(fifth)
+        .testEquals();
   }
 
   @Test

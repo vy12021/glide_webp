@@ -3,9 +3,9 @@ package com.bumptech.glide.load.resource.gif;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -16,7 +16,7 @@ import static org.mockito.Mockito.when;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Message;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.RequestManager;
@@ -43,7 +43,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class GifFrameLoaderTest {
   @Rule public TearDownGlide tearDownGlide = new TearDownGlide();
 
@@ -75,14 +75,15 @@ public class GifFrameLoaderTest {
   @NonNull
   private GifFrameLoader createGifFrameLoader(Handler handler) {
     Glide glide = getGlideSingleton();
-    GifFrameLoader result = new GifFrameLoader(
-        glide.getBitmapPool(),
-        requestManager,
-        gifDecoder,
-        handler,
-        requestBuilder,
-        transformation,
-        firstFrame);
+    GifFrameLoader result =
+        new GifFrameLoader(
+            glide.getBitmapPool(),
+            requestManager,
+            gifDecoder,
+            handler,
+            requestBuilder,
+            transformation,
+            firstFrame);
     result.subscribe(callback);
     return result;
   }
@@ -187,10 +188,11 @@ public class GifFrameLoaderTest {
     // Force the loader to create a real Handler.
     loader = createGifFrameLoader(null);
 
-    DelayTarget previous = mock(DelayTarget.class);
+    DelayTarget previous = newDelayTarget();
     Request previousRequest = mock(Request.class);
-    when(previous.getRequest()).thenReturn(previousRequest);
-    when(previous.getResource()).thenReturn(Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888));
+    previous.setRequest(previousRequest);
+    previous.onResourceReady(
+        Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888), /*transition=*/ null);
 
     DelayTarget current = mock(DelayTarget.class);
     when(current.getResource()).thenReturn(Bitmap.createBitmap(100, 100, Bitmap.Config.RGB_565));
@@ -205,10 +207,10 @@ public class GifFrameLoaderTest {
     // Force the loader to create a real Handler by passing null.
     loader = createGifFrameLoader(null);
 
-    DelayTarget previous = mock(DelayTarget.class);
+    DelayTarget previous = newDelayTarget();
     Request previousRequest = mock(Request.class);
-    when(previous.getRequest()).thenReturn(previousRequest);
-    when(previous.getResource()).thenReturn(Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888));
+    previous.setRequest(previousRequest);
+    previous.onResourceReady(Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888), null);
 
     DelayTarget current = mock(DelayTarget.class);
     when(current.getResource()).thenReturn(null);
@@ -222,8 +224,9 @@ public class GifFrameLoaderTest {
   public void testDelayTargetSendsMessageWithHandlerDelayed() {
     long targetTime = 1234;
     DelayTarget delayTarget = new DelayTarget(handler, 1, targetTime);
-    delayTarget.onResourceReady(Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888), null
-    /*glideAnimation*/);
+    delayTarget.onResourceReady(
+        Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888), null
+        /*glideAnimation*/ );
     verify(handler).sendMessageAtTime(isA(Message.class), eq(targetTime));
   }
 
@@ -241,9 +244,9 @@ public class GifFrameLoaderTest {
     // Force the loader to create a real Handler by passing null;
     loader = createGifFrameLoader(null);
     loader.clear();
-    DelayTarget delayTarget = mock(DelayTarget.class);
+    DelayTarget delayTarget = newDelayTarget();
     Request request = mock(Request.class);
-    when(delayTarget.getRequest()).thenReturn(request);
+    delayTarget.setRequest(request);
 
     loader.onFrameReady(delayTarget);
 
@@ -252,7 +255,7 @@ public class GifFrameLoaderTest {
 
   @Test
   public void
-  testDoesNotReturnResourceForCompletedFrameInGetCurrentFrameIfLoadCompletesWhileCleared() {
+      testDoesNotReturnResourceForCompletedFrameInGetCurrentFrameIfLoadCompletesWhileCleared() {
     loader.clear();
     DelayTarget delayTarget = mock(DelayTarget.class);
     Bitmap bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
@@ -323,8 +326,7 @@ public class GifFrameLoaderTest {
 
     DelayTarget nextFrame = mock(DelayTarget.class);
     Bitmap expected = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888);
-    when(nextFrame.getResource())
-        .thenReturn(expected);
+    when(nextFrame.getResource()).thenReturn(expected);
     loader.onFrameReady(nextFrame);
 
     verify(callback, times(1)).onFrameReady();
@@ -343,8 +345,7 @@ public class GifFrameLoaderTest {
 
     DelayTarget nextFrame = mock(DelayTarget.class);
     Bitmap expected = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888);
-    when(nextFrame.getResource())
-        .thenReturn(expected);
+    when(nextFrame.getResource()).thenReturn(expected);
     loader.onFrameReady(nextFrame);
 
     loader.setNextStartFromFirstFrame();
@@ -352,6 +353,10 @@ public class GifFrameLoaderTest {
 
     loader.subscribe(callback);
     verify(callback, times(1)).onFrameReady();
+  }
+
+  private DelayTarget newDelayTarget() {
+    return new DelayTarget(handler, /*index=*/ 0, /*targetTime=*/ 0);
   }
 
   @SuppressWarnings("unchecked")

@@ -1,14 +1,12 @@
 package com.bumptech.glide.test;
 
-import static org.mockito.Mockito.any;
+import static org.mockito.ArgumentMatchers.any;
 
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import com.bumptech.glide.request.target.Target;
 
-/**
- * Mockito matchers for various common classes.
- */
+/** Mockito matchers for various common classes. */
 public final class Matchers {
 
   private Matchers() {

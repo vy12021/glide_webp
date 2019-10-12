@@ -1,7 +1,7 @@
 package com.bumptech.glide.provider;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.bumptech.glide.load.ResourceEncoder;
 import com.bumptech.glide.util.Synthetic;
 import java.util.ArrayList;
@@ -15,13 +15,13 @@ public class ResourceEncoderRegistry {
   // TODO: this should probably be a put.
   private final List<Entry<?>> encoders = new ArrayList<>();
 
-  public synchronized <Z> void append(@NonNull Class<Z> resourceClass,
-      @NonNull ResourceEncoder<Z> encoder) {
+  public synchronized <Z> void append(
+      @NonNull Class<Z> resourceClass, @NonNull ResourceEncoder<Z> encoder) {
     encoders.add(new Entry<>(resourceClass, encoder));
   }
 
-  public synchronized <Z> void prepend(@NonNull Class<Z> resourceClass,
-      @NonNull ResourceEncoder<Z> encoder) {
+  public synchronized <Z> void prepend(
+      @NonNull Class<Z> resourceClass, @NonNull ResourceEncoder<Z> encoder) {
     encoders.add(0, new Entry<>(resourceClass, encoder));
   }
 

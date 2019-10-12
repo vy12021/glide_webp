@@ -1,7 +1,7 @@
 package com.bumptech.glide.load.engine;
 
-import android.support.annotation.NonNull;
-import android.support.v4.util.Pools;
+import androidx.annotation.NonNull;
+import androidx.core.util.Pools;
 import com.bumptech.glide.util.Preconditions;
 import com.bumptech.glide.util.Synthetic;
 import com.bumptech.glide.util.pool.FactoryPools;
@@ -14,15 +14,16 @@ import com.bumptech.glide.util.pool.StateVerifier;
  * <p>If the resource was recycled prior to {@link #unlock()}, then {@link #unlock()} will also
  * recycle the resource.
  */
-final class LockedResource<Z> implements Resource<Z>,
-    FactoryPools.Poolable {
-  private static final Pools.Pool<LockedResource<?>> POOL = FactoryPools.threadSafe(20,
-      new FactoryPools.Factory<LockedResource<?>>() {
-        @Override
-        public LockedResource<?> create() {
-          return new LockedResource<Object>();
-        }
-      });
+final class LockedResource<Z> implements Resource<Z>, FactoryPools.Poolable {
+  private static final Pools.Pool<LockedResource<?>> POOL =
+      FactoryPools.threadSafe(
+          20,
+          new FactoryPools.Factory<LockedResource<?>>() {
+            @Override
+            public LockedResource<?> create() {
+              return new LockedResource<Object>();
+            }
+          });
   private final StateVerifier stateVerifier = StateVerifier.newInstance();
   private Resource<Z> toWrap;
   private boolean isLocked;
@@ -38,7 +39,7 @@ final class LockedResource<Z> implements Resource<Z>,
 
   @SuppressWarnings("WeakerAccess")
   @Synthetic
-  LockedResource() { }
+  LockedResource() {}
 
   private void init(Resource<Z> toWrap) {
     isRecycled = false;

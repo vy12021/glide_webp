@@ -3,8 +3,8 @@ package com.bumptech.glide;
 import static com.bumptech.glide.tests.BackgroundUtil.testInBackground;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -13,16 +13,15 @@ import static org.mockito.Mockito.when;
 import android.app.Application;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.bumptech.glide.manager.ConnectivityMonitor;
 import com.bumptech.glide.manager.ConnectivityMonitor.ConnectivityListener;
 import com.bumptech.glide.manager.ConnectivityMonitorFactory;
 import com.bumptech.glide.manager.Lifecycle;
 import com.bumptech.glide.manager.RequestManagerTreeNode;
 import com.bumptech.glide.manager.RequestTracker;
-import com.bumptech.glide.request.target.BaseTarget;
-import com.bumptech.glide.request.target.SizeReadyCallback;
+import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.bumptech.glide.tests.BackgroundUtil;
 import com.bumptech.glide.tests.GlideShadowLooper;
@@ -44,7 +43,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18, shadows = GlideShadowLooper.class)
+@Config(sdk = 18, shadows = GlideShadowLooper.class)
 public class RequestManagerTest {
   @Rule public TearDownGlide tearDownGlide = new TearDownGlide();
 
@@ -56,7 +55,7 @@ public class RequestManagerTest {
   private RequestTracker requestTracker;
   private ConnectivityListener connectivityListener;
   private Application context;
-  private BaseTarget<Drawable> target;
+  private CustomTarget<Drawable> target;
 
   @Before
   public void setUp() {
@@ -65,31 +64,26 @@ public class RequestManagerTest {
     connectivityMonitor = mock(ConnectivityMonitor.class);
     ConnectivityMonitorFactory factory = mock(ConnectivityMonitorFactory.class);
     when(factory.build(isA(Context.class), isA(ConnectivityMonitor.ConnectivityListener.class)))
-        .thenAnswer(new Answer<ConnectivityMonitor>() {
+        .thenAnswer(
+            new Answer<ConnectivityMonitor>() {
+              @Override
+              public ConnectivityMonitor answer(InvocationOnMock invocation) {
+                connectivityListener = (ConnectivityListener) invocation.getArguments()[1];
+                return connectivityMonitor;
+              }
+            });
+
+    target =
+        new CustomTarget<Drawable>() {
           @Override
-          public ConnectivityMonitor answer(InvocationOnMock invocation) {
-            connectivityListener = (ConnectivityListener) invocation.getArguments()[1];
-            return connectivityMonitor;
+          public void onResourceReady(
+              @NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+            // Empty.
           }
-        });
 
-    target = new BaseTarget<Drawable>() {
-      @Override
-      public void onResourceReady(@NonNull Drawable resource,
-          @Nullable Transition<? super Drawable> transition) {
-        // Empty.
-      }
-
-      @Override
-      public void getSize(@NonNull SizeReadyCallback cb) {
-        // Empty.
-      }
-
-      @Override
-      public void removeCallback(@NonNull SizeReadyCallback cb) {
-        // Empty.
-      }
-    };
+          @Override
+          public void onLoadCleared(@Nullable Drawable placeholder) {}
+        };
 
     requestTracker = mock(RequestTracker.class);
     manager =
@@ -162,24 +156,28 @@ public class RequestManagerTest {
     verify(requestTracker, never()).restartRequests();
   }
 
-  @Test(expected = RuntimeException.class)
-  public void testThrowsIfResumeCalledOnBackgroundThread() throws InterruptedException {
-    testInBackground(new BackgroundUtil.BackgroundTester() {
-      @Override
-      public void runTest() {
-        manager.resumeRequests();
-      }
-    });
+  @Test
+  public void resumeRequests_whenCalledOnBackgroundThread_doesNotThrow()
+      throws InterruptedException {
+    testInBackground(
+        new BackgroundUtil.BackgroundTester() {
+          @Override
+          public void runTest() {
+            manager.resumeRequests();
+          }
+        });
   }
 
-  @Test(expected = RuntimeException.class)
-  public void testThrowsIfPauseCalledOnBackgroundThread() throws InterruptedException {
-    testInBackground(new BackgroundUtil.BackgroundTester() {
-      @Override
-      public void runTest() {
-        manager.pauseRequests();
-      }
-    });
+  @Test
+  public void pauseRequests_whenCalledOnBackgroundThread_doesNotThrow()
+      throws InterruptedException {
+    testInBackground(
+        new BackgroundUtil.BackgroundTester() {
+          @Override
+          public void runTest() {
+            manager.pauseRequests();
+          }
+        });
   }
 
   @Test
@@ -192,30 +190,41 @@ public class RequestManagerTest {
 
   @Test
   public void clear_withRequestStartedInSiblingManager_doesNotThrow() {
-    final RequestManager child1 = new RequestManager(Glide.get(context), lifecycle,
-        new RequestManagerTreeNode() {
-          @NonNull
-          @Override
-          public Set<RequestManager> getDescendants() {
-            return Collections.emptySet();
-          }
-        }, context);
-    final RequestManager child2 = new RequestManager(Glide.get(context), lifecycle,
-        new RequestManagerTreeNode() {
-          @NonNull
-          @Override
-          public Set<RequestManager> getDescendants() {
-            return Collections.emptySet();
-          }
-        }, context);
-    new RequestManager(Glide.get(context), lifecycle,
+    final RequestManager child1 =
+        new RequestManager(
+            Glide.get(context),
+            lifecycle,
+            new RequestManagerTreeNode() {
+              @NonNull
+              @Override
+              public Set<RequestManager> getDescendants() {
+                return Collections.emptySet();
+              }
+            },
+            context);
+    final RequestManager child2 =
+        new RequestManager(
+            Glide.get(context),
+            lifecycle,
+            new RequestManagerTreeNode() {
+              @NonNull
+              @Override
+              public Set<RequestManager> getDescendants() {
+                return Collections.emptySet();
+              }
+            },
+            context);
+    new RequestManager(
+        Glide.get(context),
+        lifecycle,
         new RequestManagerTreeNode() {
           @NonNull
           @Override
           public Set<RequestManager> getDescendants() {
             return new HashSet<>(java.util.Arrays.asList(child1, child2));
           }
-        }, context);
+        },
+        context);
 
     File file = new File("fake");
     child1.load(file).into(target);
@@ -224,22 +233,30 @@ public class RequestManagerTest {
 
   @Test
   public void clear_withRequestStartedInChildManager_doesNotThrow() {
-    final RequestManager child = new RequestManager(Glide.get(context), lifecycle,
-        new RequestManagerTreeNode() {
-          @NonNull
-          @Override
-          public Set<RequestManager> getDescendants() {
-            return Collections.emptySet();
-          }
-        }, context);
-    RequestManager parent = new RequestManager(Glide.get(context), lifecycle,
-        new RequestManagerTreeNode() {
-          @NonNull
-          @Override
-          public Set<RequestManager> getDescendants() {
-            return Collections.singleton(child);
-          }
-        }, context);
+    final RequestManager child =
+        new RequestManager(
+            Glide.get(context),
+            lifecycle,
+            new RequestManagerTreeNode() {
+              @NonNull
+              @Override
+              public Set<RequestManager> getDescendants() {
+                return Collections.emptySet();
+              }
+            },
+            context);
+    RequestManager parent =
+        new RequestManager(
+            Glide.get(context),
+            lifecycle,
+            new RequestManagerTreeNode() {
+              @NonNull
+              @Override
+              public Set<RequestManager> getDescendants() {
+                return Collections.singleton(child);
+              }
+            },
+            context);
 
     File file = new File("fake");
     child.load(file).into(target);
@@ -248,22 +265,30 @@ public class RequestManagerTest {
 
   @Test
   public void clear_withRequestStartedInParentManager_doesNotThrow() {
-    final RequestManager child = new RequestManager(Glide.get(context), lifecycle,
-        new RequestManagerTreeNode() {
-          @NonNull
-          @Override
-          public Set<RequestManager> getDescendants() {
-            return Collections.emptySet();
-          }
-        }, context);
-    RequestManager parent = new RequestManager(Glide.get(context), lifecycle,
-        new RequestManagerTreeNode() {
-          @NonNull
-          @Override
-          public Set<RequestManager> getDescendants() {
-            return Collections.singleton(child);
-          }
-        }, context);
+    final RequestManager child =
+        new RequestManager(
+            Glide.get(context),
+            lifecycle,
+            new RequestManagerTreeNode() {
+              @NonNull
+              @Override
+              public Set<RequestManager> getDescendants() {
+                return Collections.emptySet();
+              }
+            },
+            context);
+    RequestManager parent =
+        new RequestManager(
+            Glide.get(context),
+            lifecycle,
+            new RequestManagerTreeNode() {
+              @NonNull
+              @Override
+              public Set<RequestManager> getDescendants() {
+                return Collections.singleton(child);
+              }
+            },
+            context);
 
     File file = new File("fake");
 

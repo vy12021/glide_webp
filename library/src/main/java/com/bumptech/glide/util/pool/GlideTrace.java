@@ -1,10 +1,8 @@
 package com.bumptech.glide.util.pool;
 
-import android.support.v4.os.TraceCompat;
+import androidx.core.os.TraceCompat;
 
-/**
- * Systracing utilities for Glide.
- */
+/** Systracing utilities for Glide. */
 public final class GlideTrace {
 
   // Enable this locally to see tracing statements.

@@ -15,14 +15,13 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class ExifOrientationStreamTest {
   private ArrayPool byteArrayPool;
 
   private InputStream openOrientationExample(boolean isLandscape, int item) {
     String filePrefix = isLandscape ? "Landscape" : "Portrait";
-    return TestResourceUtil.openResource(getClass(),
-        "exif-orientation-examples/" + filePrefix + "_" + item + ".jpg");
+    return TestResourceUtil.openResource(getClass(), filePrefix + "_" + item + ".jpg");
   }
 
   @Before

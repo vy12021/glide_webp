@@ -6,8 +6,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.test.BitmapRegressionTester;
 import com.bumptech.glide.test.CanonicalBitmap;
@@ -42,7 +42,7 @@ public class RoundedCornersRegressionTest {
 
   @Before
   public void setUp() throws Exception {
-    context = InstrumentationRegistry.getTargetContext();
+    context = ApplicationProvider.getApplicationContext();
     bitmapRegressionTester = new BitmapRegressionTester(getClass(), testName);
     canonicalBitmap = new CanonicalBitmap();
   }
@@ -69,12 +69,13 @@ public class RoundedCornersRegressionTest {
 
     Glide.get(context).getBitmapPool().put(redRect);
 
-    Bitmap roundedRect = bitmapRegressionTester.test(
-        GlideApp.with(context)
-            .asBitmap()
-            .load(canonicalBitmap.getBitmap())
-            .override(canonicalBitmap.getWidth(), canonicalBitmap.getHeight())
-            .transform(new RoundedCorners(5)));
+    Bitmap roundedRect =
+        bitmapRegressionTester.test(
+            GlideApp.with(context)
+                .asBitmap()
+                .load(canonicalBitmap.getBitmap())
+                .override(canonicalBitmap.getWidth(), canonicalBitmap.getHeight())
+                .transform(new RoundedCorners(5)));
 
     assertThat(roundedRect).isEqualTo(redRect);
   }

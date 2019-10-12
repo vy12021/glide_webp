@@ -2,9 +2,9 @@ package com.bumptech.glide.manager;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 
 /**
  * A factory class that produces a functional {@link com.bumptech.glide.manager.ConnectivityMonitor}
@@ -19,8 +19,7 @@ public class DefaultConnectivityMonitorFactory implements ConnectivityMonitorFac
   @NonNull
   @Override
   public ConnectivityMonitor build(
-      @NonNull Context context,
-      @NonNull ConnectivityMonitor.ConnectivityListener listener) {
+      @NonNull Context context, @NonNull ConnectivityMonitor.ConnectivityListener listener) {
     int permissionResult = ContextCompat.checkSelfPermission(context, NETWORK_PERMISSION);
     boolean hasPermission = permissionResult == PackageManager.PERMISSION_GRANTED;
     if (Log.isLoggable(TAG, Log.DEBUG)) {
@@ -31,6 +30,7 @@ public class DefaultConnectivityMonitorFactory implements ConnectivityMonitorFac
               : "ACCESS_NETWORK_STATE permission missing, cannot register connectivity monitor");
     }
     return hasPermission
-        ? new DefaultConnectivityMonitor(context, listener) : new NullConnectivityMonitor();
+        ? new DefaultConnectivityMonitor(context, listener)
+        : new NullConnectivityMonitor();
   }
 }

@@ -13,7 +13,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class GifDrawableResourceTest {
   private GifDrawable drawable;
   private GifDrawableResource resource;
@@ -40,5 +40,4 @@ public class GifDrawableResourceTest {
     inOrder.verify(drawable).stop();
     inOrder.verify(drawable).recycle();
   }
-
 }

@@ -4,8 +4,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -32,8 +32,9 @@ import org.robolectric.annotation.Implements;
 import org.robolectric.shadows.ShadowBitmap;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18, shadows = {
-    TransformationUtilsTest.AlphaShadowBitmap.class })
+@Config(
+    sdk = 28,
+    shadows = {TransformationUtilsTest.AlphaShadowBitmap.class})
 public class TransformationUtilsTest {
 
   @Mock private BitmapPool bitmapPool;
@@ -130,8 +131,8 @@ public class TransformationUtilsTest {
   @Test
   public void testFitCenterReturnsGivenBitmapIfGivenBitmapMatchesExactly() {
     Bitmap toFit = Bitmap.createBitmap(100, 200, Bitmap.Config.ARGB_4444);
-    Bitmap transformed = TransformationUtils.fitCenter(bitmapPool, toFit, toFit.getWidth(),
-        toFit.getHeight());
+    Bitmap transformed =
+        TransformationUtils.fitCenter(bitmapPool, toFit, toFit.getWidth(), toFit.getHeight());
     assertTrue(toFit == transformed);
   }
 
@@ -154,8 +155,8 @@ public class TransformationUtilsTest {
   @Test
   public void testCenterCropReturnsGivenBitmapIfGivenBitmapExactlyMatchesGivenDimensions() {
     Bitmap toCrop = Bitmap.createBitmap(200, 300, Bitmap.Config.ARGB_8888);
-    Bitmap transformed = TransformationUtils
-        .centerCrop(bitmapPool, toCrop, toCrop.getWidth(), toCrop.getHeight());
+    Bitmap transformed =
+        TransformationUtils.centerCrop(bitmapPool, toCrop, toCrop.getWidth(), toCrop.getHeight());
 
     // Robolectric incorrectly implements equals() for Bitmaps, we want the original object not
     // just an equivalent.
@@ -163,9 +164,10 @@ public class TransformationUtilsTest {
   }
 
   @Test
+  @Config(sdk = 19)
   public void testFitCenterHandlesBitmapsWithNullConfigs() {
     Bitmap toFit = Bitmap.createBitmap(100, 100, Bitmap.Config.RGB_565);
-    Shadows.shadowOf(toFit).setConfig(null);
+    toFit.setConfig(null);
     Bitmap transformed = TransformationUtils.fitCenter(bitmapPool, toFit, 50, 50);
     assertEquals(Bitmap.Config.ARGB_8888, transformed.getConfig());
   }
@@ -176,14 +178,14 @@ public class TransformationUtilsTest {
 
     Bitmap toReuse = Bitmap.createBitmap(50, 50, Bitmap.Config.ARGB_8888);
     reset(bitmapPool);
-    when(bitmapPool.get(eq(50), eq(50), eq(Bitmap.Config.ARGB_8888)))
-        .thenReturn(toReuse);
+    when(bitmapPool.get(eq(50), eq(50), eq(Bitmap.Config.ARGB_8888))).thenReturn(toReuse);
 
     toReuse.setHasAlpha(false);
     toTransform.setHasAlpha(true);
 
-    Bitmap result = TransformationUtils.centerCrop(bitmapPool, toTransform, toReuse.getWidth(),
-        toReuse.getHeight());
+    Bitmap result =
+        TransformationUtils.centerCrop(
+            bitmapPool, toTransform, toReuse.getWidth(), toReuse.getHeight());
 
     assertEquals(toReuse, result);
     assertTrue(result.hasAlpha());
@@ -191,7 +193,7 @@ public class TransformationUtilsTest {
 
   @Test
   public void
-  testCenterCropSetsOutBitmapToNotHaveAlphaIfInBitmapDoesNotHaveAlphaAndOutBitmapIsReused() {
+      testCenterCropSetsOutBitmapToNotHaveAlphaIfInBitmapDoesNotHaveAlphaAndOutBitmapIsReused() {
     Bitmap toTransform = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
 
     Bitmap toReuse = Bitmap.createBitmap(50, 50, Bitmap.Config.ARGB_8888);
@@ -201,8 +203,9 @@ public class TransformationUtilsTest {
     toReuse.setHasAlpha(true);
     toTransform.setHasAlpha(false);
 
-    Bitmap result = TransformationUtils.centerCrop(bitmapPool, toTransform, toReuse.getWidth(),
-        toReuse.getHeight());
+    Bitmap result =
+        TransformationUtils.centerCrop(
+            bitmapPool, toTransform, toReuse.getWidth(), toReuse.getHeight());
 
     assertEquals(toReuse, result);
     assertFalse(result.hasAlpha());
@@ -214,16 +217,18 @@ public class TransformationUtilsTest {
 
     toTransform.setHasAlpha(true);
 
-    Bitmap result = TransformationUtils.centerCrop(bitmapPool, toTransform,
-        toTransform.getWidth() / 2, toTransform.getHeight() / 2);
+    Bitmap result =
+        TransformationUtils.centerCrop(
+            bitmapPool, toTransform, toTransform.getWidth() / 2, toTransform.getHeight() / 2);
 
     assertTrue(result.hasAlpha());
   }
 
   @Test
+  @Config(sdk = 19)
   public void testCenterCropHandlesBitmapsWithNullConfigs() {
     Bitmap toTransform = Bitmap.createBitmap(100, 100, Bitmap.Config.RGB_565);
-    Shadows.shadowOf(toTransform).setConfig(null);
+    toTransform.setConfig(null);
 
     Bitmap transformed = TransformationUtils.centerCrop(bitmapPool, toTransform, 50, 50);
 
@@ -236,8 +241,9 @@ public class TransformationUtilsTest {
 
     toTransform.setHasAlpha(false);
 
-    Bitmap result = TransformationUtils.centerCrop(bitmapPool, toTransform,
-        toTransform.getWidth() / 2, toTransform.getHeight() / 2);
+    Bitmap result =
+        TransformationUtils.centerCrop(
+            bitmapPool, toTransform, toTransform.getWidth() / 2, toTransform.getHeight() / 2);
 
     assertFalse(result.hasAlpha());
   }
@@ -254,8 +260,9 @@ public class TransformationUtilsTest {
     toReuse.setHasAlpha(false);
     toTransform.setHasAlpha(true);
 
-    Bitmap result = TransformationUtils.fitCenter(bitmapPool, toTransform, toReuse.getWidth(),
-        toReuse.getHeight());
+    Bitmap result =
+        TransformationUtils.fitCenter(
+            bitmapPool, toTransform, toReuse.getWidth(), toReuse.getHeight());
 
     assertEquals(toReuse, result);
     assertTrue(result.hasAlpha());
@@ -263,7 +270,7 @@ public class TransformationUtilsTest {
 
   @Test
   public void
-  testFitCenterSetsOutBitmapToNotHaveAlphaIfInBitmapDoesNotHaveAlphaAndOutBitmapIsReused() {
+      testFitCenterSetsOutBitmapToNotHaveAlphaIfInBitmapDoesNotHaveAlphaAndOutBitmapIsReused() {
     Bitmap toTransform = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
 
     Bitmap toReuse = Bitmap.createBitmap(50, 50, Bitmap.Config.ARGB_8888);
@@ -274,8 +281,9 @@ public class TransformationUtilsTest {
     toReuse.setHasAlpha(true);
     toTransform.setHasAlpha(false);
 
-    Bitmap result = TransformationUtils.fitCenter(bitmapPool, toTransform, toReuse.getWidth(),
-        toReuse.getHeight());
+    Bitmap result =
+        TransformationUtils.fitCenter(
+            bitmapPool, toTransform, toReuse.getWidth(), toReuse.getHeight());
 
     assertEquals(toReuse, result);
     assertFalse(result.hasAlpha());
@@ -287,8 +295,9 @@ public class TransformationUtilsTest {
 
     toTransform.setHasAlpha(true);
 
-    Bitmap result = TransformationUtils.fitCenter(bitmapPool, toTransform,
-        toTransform.getWidth() / 2, toTransform.getHeight() / 2);
+    Bitmap result =
+        TransformationUtils.fitCenter(
+            bitmapPool, toTransform, toTransform.getWidth() / 2, toTransform.getHeight() / 2);
 
     assertTrue(result.hasAlpha());
   }
@@ -299,8 +308,9 @@ public class TransformationUtilsTest {
 
     toTransform.setHasAlpha(false);
 
-    Bitmap result = TransformationUtils.fitCenter(bitmapPool, toTransform,
-        toTransform.getWidth() / 2, toTransform.getHeight() / 2);
+    Bitmap result =
+        TransformationUtils.fitCenter(
+            bitmapPool, toTransform, toTransform.getWidth() / 2, toTransform.getHeight() / 2);
 
     assertFalse(result.hasAlpha());
   }
@@ -326,20 +336,21 @@ public class TransformationUtilsTest {
 
   @Test
   public void testGetExifOrientationDegrees() {
-    assertEquals(0,
-        TransformationUtils.getExifOrientationDegrees(ExifInterface.ORIENTATION_NORMAL));
-    assertEquals(90,
-        TransformationUtils.getExifOrientationDegrees(ExifInterface.ORIENTATION_TRANSPOSE));
-    assertEquals(90,
-        TransformationUtils.getExifOrientationDegrees(ExifInterface.ORIENTATION_ROTATE_90));
-    assertEquals(180,
-        TransformationUtils.getExifOrientationDegrees(ExifInterface.ORIENTATION_ROTATE_180));
-    assertEquals(180,
+    assertEquals(
+        0, TransformationUtils.getExifOrientationDegrees(ExifInterface.ORIENTATION_NORMAL));
+    assertEquals(
+        90, TransformationUtils.getExifOrientationDegrees(ExifInterface.ORIENTATION_TRANSPOSE));
+    assertEquals(
+        90, TransformationUtils.getExifOrientationDegrees(ExifInterface.ORIENTATION_ROTATE_90));
+    assertEquals(
+        180, TransformationUtils.getExifOrientationDegrees(ExifInterface.ORIENTATION_ROTATE_180));
+    assertEquals(
+        180,
         TransformationUtils.getExifOrientationDegrees(ExifInterface.ORIENTATION_FLIP_VERTICAL));
-    assertEquals(270,
-        TransformationUtils.getExifOrientationDegrees(ExifInterface.ORIENTATION_TRANSVERSE));
-    assertEquals(270,
-        TransformationUtils.getExifOrientationDegrees(ExifInterface.ORIENTATION_ROTATE_270));
+    assertEquals(
+        270, TransformationUtils.getExifOrientationDegrees(ExifInterface.ORIENTATION_TRANSVERSE));
+    assertEquals(
+        270, TransformationUtils.getExifOrientationDegrees(ExifInterface.ORIENTATION_ROTATE_270));
   }
 
   @Test
@@ -369,8 +380,9 @@ public class TransformationUtilsTest {
     Bitmap toRotate = Bitmap.createBitmap(100, 100, Bitmap.Config.RGB_565);
     // Use assertTrue because Robolectric incorrectly implements equality for Bitmaps. We want
     // not just an identical Bitmap, but our original Bitmap object back.
-    Bitmap rotated = TransformationUtils.rotateImageExif(bitmapPool, toRotate,
-        ExifInterface.ORIENTATION_UNDEFINED);
+    Bitmap rotated =
+        TransformationUtils.rotateImageExif(
+            bitmapPool, toRotate, ExifInterface.ORIENTATION_UNDEFINED);
     assertTrue(toRotate == rotated);
   }
 
@@ -384,27 +396,29 @@ public class TransformationUtilsTest {
   }
 
   @Test
+  @Config(sdk = 19)
   public void testRotateImageExifHandlesBitmapsWithNullConfigs() {
     Bitmap toRotate = Bitmap.createBitmap(100, 100, Bitmap.Config.RGB_565);
-    Shadows.shadowOf(toRotate).setConfig(null);
-    Bitmap rotated = TransformationUtils.rotateImageExif(bitmapPool, toRotate,
-        ExifInterface.ORIENTATION_ROTATE_180);
+    toRotate.setConfig(null);
+    Bitmap rotated =
+        TransformationUtils.rotateImageExif(
+            bitmapPool, toRotate, ExifInterface.ORIENTATION_ROTATE_180);
     assertEquals(Bitmap.Config.ARGB_8888, rotated.getConfig());
   }
 
   @Test
   public void testInitializeMatrixSetsScaleIfFlipHorizontal() {
     Matrix matrix = mock(Matrix.class);
-    TransformationUtils
-        .initializeMatrixForRotation(ExifInterface.ORIENTATION_FLIP_HORIZONTAL, matrix);
+    TransformationUtils.initializeMatrixForRotation(
+        ExifInterface.ORIENTATION_FLIP_HORIZONTAL, matrix);
     verify(matrix).setScale(-1, 1);
   }
 
   @Test
   public void testInitializeMatrixSetsScaleAndRotateIfFlipVertical() {
     Matrix matrix = mock(Matrix.class);
-    TransformationUtils
-        .initializeMatrixForRotation(ExifInterface.ORIENTATION_FLIP_VERTICAL, matrix);
+    TransformationUtils.initializeMatrixForRotation(
+        ExifInterface.ORIENTATION_FLIP_VERTICAL, matrix);
     verify(matrix).setRotate(180);
     verify(matrix).postScale(-1, 1);
   }

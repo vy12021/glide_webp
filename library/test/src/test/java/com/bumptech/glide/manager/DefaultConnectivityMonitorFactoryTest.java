@@ -12,7 +12,7 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowApplication;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class DefaultConnectivityMonitorFactoryTest {
   private ConnectivityMonitorFactory factory;
 
@@ -24,15 +24,17 @@ public class DefaultConnectivityMonitorFactoryTest {
   @Test
   public void testReturnsDefaultConnectivityMonitorWhenHasPermission() {
     ShadowApplication.getInstance().grantPermissions("android.permission.ACCESS_NETWORK_STATE");
-    ConnectivityMonitor connectivityMonitor = factory.build(RuntimeEnvironment.application,
-        mock(ConnectivityMonitor.ConnectivityListener.class));
+    ConnectivityMonitor connectivityMonitor =
+        factory.build(
+            RuntimeEnvironment.application, mock(ConnectivityMonitor.ConnectivityListener.class));
     assertThat(connectivityMonitor).isInstanceOf(DefaultConnectivityMonitor.class);
   }
 
   @Test
   public void testReturnsNullConnectivityMonitorWhenDoesNotHavePermission() {
-    ConnectivityMonitor connectivityMonitor = factory.build(RuntimeEnvironment.application,
-        mock(ConnectivityMonitor.ConnectivityListener.class));
+    ConnectivityMonitor connectivityMonitor =
+        factory.build(
+            RuntimeEnvironment.application, mock(ConnectivityMonitor.ConnectivityListener.class));
     assertThat(connectivityMonitor).isInstanceOf(NullConnectivityMonitor.class);
   }
 }

@@ -1,7 +1,7 @@
 package com.bumptech.glide.util;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.bumptech.glide.ListPreloader;
 
 /**
@@ -16,11 +16,11 @@ public class FixedPreloadSizeProvider<T> implements ListPreloader.PreloadSizePro
   /**
    * Constructor for a PreloadSizeProvider with a fixed size.
    *
-   * @param width  The width of the preload size in pixels.
+   * @param width The width of the preload size in pixels.
    * @param height The height of the preload size in pixels.
    */
   public FixedPreloadSizeProvider(int width, int height) {
-    this.size = new int[] { width, height };
+    this.size = new int[] {width, height};
   }
 
   @Nullable

@@ -1,7 +1,7 @@
 package com.bumptech.glide.load.engine.cache;
 
-import android.support.annotation.NonNull;
-import android.support.v4.util.Pools;
+import androidx.annotation.NonNull;
+import androidx.core.util.Pools;
 import com.bumptech.glide.load.Key;
 import com.bumptech.glide.util.LruCache;
 import com.bumptech.glide.util.Preconditions;
@@ -20,17 +20,19 @@ import java.security.NoSuchAlgorithmException;
 @SuppressWarnings("WeakerAccess")
 public class SafeKeyGenerator {
   private final LruCache<Key, String> loadIdToSafeHash = new LruCache<>(1000);
-  private final Pools.Pool<PoolableDigestContainer> digestPool = FactoryPools.threadSafe(10,
-      new FactoryPools.Factory<PoolableDigestContainer>() {
-        @Override
-        public PoolableDigestContainer create() {
-          try {
-            return new PoolableDigestContainer(MessageDigest.getInstance("SHA-256"));
-          } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-          }
-        }
-      });
+  private final Pools.Pool<PoolableDigestContainer> digestPool =
+      FactoryPools.threadSafe(
+          10,
+          new FactoryPools.Factory<PoolableDigestContainer>() {
+            @Override
+            public PoolableDigestContainer create() {
+              try {
+                return new PoolableDigestContainer(MessageDigest.getInstance("SHA-256"));
+              } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+              }
+            }
+          });
 
   public String getSafeKey(Key key) {
     String safeKey;

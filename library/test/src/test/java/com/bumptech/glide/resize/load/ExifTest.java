@@ -16,21 +16,21 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class ExifTest {
 
   private ArrayPool byteArrayPool;
 
   private InputStream open(String imageName) {
-    return TestResourceUtil.openResource(getClass(), "exif-orientation-examples/" + imageName);
+    return TestResourceUtil.openResource(getClass(), imageName);
   }
 
   private void assertOrientation(String filePrefix, int expectedOrientation) {
     InputStream is = null;
     try {
       is = open(filePrefix + "_" + expectedOrientation + ".jpg");
-      assertEquals(new DefaultImageHeaderParser().getOrientation(is, byteArrayPool),
-          expectedOrientation);
+      assertEquals(
+          new DefaultImageHeaderParser().getOrientation(is, byteArrayPool), expectedOrientation);
     } catch (IOException e) {
       throw new RuntimeException(e);
     } finally {

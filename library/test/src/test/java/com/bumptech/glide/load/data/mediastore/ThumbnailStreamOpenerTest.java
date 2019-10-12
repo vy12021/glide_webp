@@ -1,9 +1,11 @@
 package com.bumptech.glide.load.data.mediastore;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -32,7 +34,7 @@ import org.robolectric.annotation.Config;
 import org.robolectric.fakes.RoboCursor;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class ThumbnailStreamOpenerTest {
   private Harness harness;
 
@@ -56,7 +58,7 @@ public class ThumbnailStreamOpenerTest {
   @Test
   public void testReturnsNullIfCursorHasEmptyPath() throws FileNotFoundException {
     MatrixCursor cursor = new MatrixCursor(new String[1]);
-    cursor.addRow(new Object[] { "" });
+    cursor.addRow(new Object[] {""});
     when(harness.query.query(eq(harness.uri))).thenReturn(cursor);
     assertNull(harness.get().open(harness.uri));
   }
@@ -87,6 +89,12 @@ public class ThumbnailStreamOpenerTest {
     Shadows.shadowOf(RuntimeEnvironment.application.getContentResolver())
         .registerInputStream(harness.uri, expected);
     assertEquals(expected, harness.get().open(harness.uri));
+  }
+
+  @Test
+  public void open_returnsNull_whenQueryThrowsSecurityException() throws FileNotFoundException {
+    when(harness.query.query(any(Uri.class))).thenThrow(new SecurityException());
+    assertThat(harness.get().open(harness.uri)).isNull();
   }
 
   @Test
@@ -123,8 +131,8 @@ public class ThumbnailStreamOpenerTest {
     final FileService service = mock(FileService.class);
     final ArrayPool byteArrayPool = new LruArrayPool();
 
-    public Harness() {
-      cursor.addRow(new String[] { file.getAbsolutePath() });
+    Harness() {
+      cursor.addRow(new String[] {file.getAbsolutePath()});
       when(query.query(eq(uri))).thenReturn(cursor);
       when(service.get(eq(file.getAbsolutePath()))).thenReturn(file);
       when(service.exists(eq(file))).thenReturn(true);

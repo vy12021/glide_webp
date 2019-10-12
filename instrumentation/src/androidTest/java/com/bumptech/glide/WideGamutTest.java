@@ -10,8 +10,8 @@ import android.graphics.Bitmap.Config;
 import android.graphics.ColorSpace;
 import android.graphics.ColorSpace.Named;
 import android.os.Build;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.load.engine.bitmap_recycle.LruBitmapPool;
 import com.bumptech.glide.load.resource.bitmap.Downsampler;
@@ -31,7 +31,7 @@ import org.junit.runner.RunWith;
 public class WideGamutTest {
   @Rule public final TestRule tearDownGlide = new TearDownGlide();
   private final ConcurrencyHelper concurrency = new ConcurrencyHelper();
-  private final Context context = InstrumentationRegistry.getTargetContext();
+  private final Context context = ApplicationProvider.getApplicationContext();
 
   @Before
   public void setUp() {
@@ -42,10 +42,7 @@ public class WideGamutTest {
   public void load_withWideGamutImage_returnsWideGamutBitmap() {
     Bitmap bitmap =
         concurrency.get(
-            Glide.with(context)
-                .asBitmap()
-                .load(ResourceIds.raw.webkit_logo_p3)
-                .submit());
+            Glide.with(context).asBitmap().load(ResourceIds.raw.webkit_logo_p3).submit());
     assertThat(bitmap.getConfig()).isEqualTo(Bitmap.Config.RGBA_F16);
   }
 
@@ -58,17 +55,12 @@ public class WideGamutTest {
             .setBitmapPool(new LruBitmapPool(bitmapDimension * bitmapDimension * 8 * 4)));
     Bitmap expected = Bitmap.createBitmap(bitmapDimension, bitmapDimension, Bitmap.Config.RGBA_F16);
 
-    Glide.get(context)
-        .getBitmapPool()
-        .put(expected);
+    Glide.get(context).getBitmapPool().put(expected);
 
     Bitmap bitmap =
         concurrency.get(
-            Glide.with(context)
-                .asBitmap()
-                .load(ResourceIds.raw.webkit_logo_p3)
-                .submit());
-    assertThat(bitmap).isSameAs(expected);
+            Glide.with(context).asBitmap().load(ResourceIds.raw.webkit_logo_p3).submit());
+    assertThat(bitmap).isSameInstanceAs(expected);
   }
 
   // TODO: Even with hardware allowed, we get a wide F16. Attempting to decode the resource with
@@ -94,12 +86,7 @@ public class WideGamutTest {
 
     byte[] data = asPng(toCompress);
 
-    Bitmap bitmap =
-        concurrency.get(
-            Glide.with(context)
-                .asBitmap()
-                .load(data)
-                .submit());
+    Bitmap bitmap = concurrency.get(Glide.with(context).asBitmap().load(data).submit());
     assertThat(bitmap.getConfig()).isEqualTo(Bitmap.Config.RGBA_F16);
   }
 
@@ -114,12 +101,7 @@ public class WideGamutTest {
 
     byte[] data = asJpeg(toCompress);
 
-    Bitmap bitmap =
-        concurrency.get(
-            Glide.with(context)
-                .asBitmap()
-                .load(data)
-                .submit());
+    Bitmap bitmap = concurrency.get(Glide.with(context).asBitmap().load(data).submit());
     assertThat(bitmap.getConfig()).isEqualTo(Bitmap.Config.ARGB_8888);
   }
 
@@ -131,12 +113,7 @@ public class WideGamutTest {
 
     byte[] data = asWebp(toCompress);
 
-    Bitmap bitmap =
-        concurrency.get(
-            Glide.with(context)
-                .asBitmap()
-                .load(data)
-                .submit());
+    Bitmap bitmap = concurrency.get(Glide.with(context).asBitmap().load(data).submit());
     assertThat(bitmap.getConfig()).isEqualTo(Bitmap.Config.ARGB_8888);
   }
 
@@ -150,12 +127,7 @@ public class WideGamutTest {
 
     Bitmap wideGamut = Bitmap.createBitmap(300, 300, Config.RGBA_F16);
     byte[] data = asPng(wideGamut);
-    Bitmap bitmap =
-        concurrency.get(
-            Glide.with(context)
-                .asBitmap()
-                .load(data)
-                .submit());
+    Bitmap bitmap = concurrency.get(Glide.with(context).asBitmap().load(data).submit());
     assertThat(bitmap).isNotNull();
   }
 
@@ -165,12 +137,7 @@ public class WideGamutTest {
     byte[] data = asPng(bitmap);
 
     Bitmap result =
-        concurrency.get(
-            GlideApp.with(context)
-                .asBitmap()
-                .load(data)
-                .circleCrop()
-                .submit());
+        concurrency.get(GlideApp.with(context).asBitmap().load(data).circleCrop().submit());
     assertThat(result).isNotNull();
     assertThat(result.getConfig()).isEqualTo(Config.RGBA_F16);
   }
@@ -197,18 +164,15 @@ public class WideGamutTest {
     byte[] data = asPng(wideGamut);
 
     Bitmap argb8888 = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
-    Glide.init(context, new GlideBuilder()
-        .setBitmapPool(new LruBitmapPool(wideGamut.getAllocationByteCount() * 5)));
+    Glide.init(
+        context,
+        new GlideBuilder()
+            .setBitmapPool(new LruBitmapPool(wideGamut.getAllocationByteCount() * 5)));
     Glide.get(context).getBitmapPool().put(argb8888);
 
-    Bitmap result =
-        concurrency.get(
-            Glide.with(context)
-                .asBitmap()
-                .load(data)
-                .submit());
+    Bitmap result = concurrency.get(Glide.with(context).asBitmap().load(data).submit());
 
-    assertThat(result).isSameAs(argb8888);
+    assertThat(result).isSameInstanceAs(argb8888);
   }
 
   private static byte[] asJpeg(Bitmap bitmap) {

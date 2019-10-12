@@ -1,8 +1,9 @@
 package com.bumptech.glide.request.target;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -19,6 +20,7 @@ import com.bumptech.glide.request.transition.Transition;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -27,7 +29,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class ImageViewTargetTest {
 
   @Mock private AnimatedDrawable animatedDrawable;
@@ -81,7 +83,8 @@ public class ImageViewTargetTest {
 
   @Test
   public void testSetsDrawableOnViewInOnResourceReadyWhenAnimationReturnsFalse() {
-    @SuppressWarnings("unchecked") Transition<Drawable> animation = mock(Transition.class);
+    @SuppressWarnings("unchecked")
+    Transition<Drawable> animation = mock(Transition.class);
     when(animation.transition(any(Drawable.class), eq(target))).thenReturn(false);
     Drawable resource = new ColorDrawable(Color.GRAY);
     target.onResourceReady(resource, animation);
@@ -92,7 +95,8 @@ public class ImageViewTargetTest {
   @Test
   public void testDoesNotSetDrawableOnViewInOnResourceReadyWhenAnimationReturnsTrue() {
     Drawable resource = new ColorDrawable(Color.RED);
-    @SuppressWarnings("unchecked") Transition<Drawable> animation = mock(Transition.class);
+    @SuppressWarnings("unchecked")
+    Transition<Drawable> animation = mock(Transition.class);
     when(animation.transition(eq(resource), eq(target))).thenReturn(true);
     target.onResourceReady(resource, animation);
 
@@ -104,11 +108,14 @@ public class ImageViewTargetTest {
     Drawable placeholder = new ColorDrawable(Color.BLACK);
     view.setImageDrawable(placeholder);
 
-    @SuppressWarnings("unchecked") Transition<Drawable> animation = mock(Transition.class);
+    @SuppressWarnings("unchecked")
+    Transition<Drawable> animation = mock(Transition.class);
 
     target.onResourceReady(new ColorDrawable(Color.GREEN), animation);
 
-    verify(animation).transition(eq(placeholder), eq(target));
+    ArgumentCaptor<Drawable> drawableCaptor = ArgumentCaptor.forClass(Drawable.class);
+    verify(animation).transition(drawableCaptor.capture(), eq(target));
+    assertThat(((ColorDrawable) drawableCaptor.getValue()).getColor()).isEqualTo(Color.GREEN);
   }
 
   @Test

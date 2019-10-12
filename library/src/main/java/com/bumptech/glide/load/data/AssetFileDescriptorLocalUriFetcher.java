@@ -3,13 +3,11 @@ package com.bumptech.glide.load.data;
 import android.content.ContentResolver;
 import android.content.res.AssetFileDescriptor;
 import android.net.Uri;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-/**
- * Fetches an {@link AssetFileDescriptor} for a local {@link android.net.Uri}.
- */
+/** Fetches an {@link AssetFileDescriptor} for a local {@link android.net.Uri}. */
 public final class AssetFileDescriptorLocalUriFetcher extends LocalUriFetcher<AssetFileDescriptor> {
 
   public AssetFileDescriptorLocalUriFetcher(ContentResolver contentResolver, Uri uri) {

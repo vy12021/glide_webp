@@ -2,7 +2,7 @@ package com.bumptech.glide.request.transition;
 
 import static com.bumptech.glide.request.transition.Transition.ViewAdapter;
 import static org.junit.Assert.assertFalse;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -19,7 +19,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE, sdk = 18)
+@Config(sdk = 18)
 public class ViewPropertyAnimationTest {
   private ViewPropertyTransition.Animator animator;
   private ViewPropertyTransition<Object> animation;

@@ -1,13 +1,13 @@
 package com.bumptech.glide.annotation.compiler;
 
 import static com.bumptech.glide.annotation.compiler.test.Util.appResource;
-import static com.bumptech.glide.annotation.compiler.test.Util.asUnixChars;
 import static com.bumptech.glide.annotation.compiler.test.Util.emptyAppModule;
 import static com.bumptech.glide.annotation.compiler.test.Util.glide;
 import static com.bumptech.glide.annotation.compiler.test.Util.subpackage;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
 
+import com.bumptech.glide.annotation.compiler.test.CompilationProvider;
 import com.bumptech.glide.annotation.compiler.test.ReferencedResource;
 import com.bumptech.glide.annotation.compiler.test.RegenerateResourcesRule;
 import com.bumptech.glide.annotation.compiler.test.Util;
@@ -22,13 +22,14 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /**
- * Verifies the output of the processor with a simple single extension option in the new
- * option style where extension methods always return values.
+ * Verifies the output of the processor with a simple single extension option in the new option
+ * style where extension methods always return values.
  */
 @RunWith(JUnit4.class)
-public class GlideExtensionWithOptionTest {
-  @Rule public final RegenerateResourcesRule regenerateResourcesRule =
-      new RegenerateResourcesRule(getClass());
+public class GlideExtensionWithOptionTest implements CompilationProvider {
+  @Rule
+  public final RegenerateResourcesRule regenerateResourcesRule = new RegenerateResourcesRule(this);
+
   private Compilation compilation;
 
   @Before
@@ -36,9 +37,7 @@ public class GlideExtensionWithOptionTest {
     compilation =
         javac()
             .withProcessors(new GlideAnnotationProcessor())
-            .compile(
-                emptyAppModule(),
-                forResource("ExtensionWithOption.java"));
+            .compile(emptyAppModule(), forResource("ExtensionWithOption.java"));
     assertThat(compilation).succeededWithoutWarnings();
   }
 
@@ -51,16 +50,14 @@ public class GlideExtensionWithOptionTest {
   public void compilation_generatesExpectedGlideOptionsClass() throws IOException {
     assertThat(compilation)
         .generatedSourceFile(subpackage("GlideOptions"))
-        .contentsAsUtf8String()
-        .isEqualTo(asUnixChars(forResource("GlideOptions.java").getCharContent(true)));
+        .hasSourceEquivalentTo(forResource("GlideOptions.java"));
   }
 
   @Test
   public void compilation_generatesExpectedGlideRequestClass() throws IOException {
     assertThat(compilation)
         .generatedSourceFile(subpackage("GlideRequest"))
-        .contentsAsUtf8String()
-        .isEqualTo(asUnixChars(forResource("GlideRequest.java").getCharContent(true)));
+        .hasSourceEquivalentTo(forResource("GlideRequest.java"));
   }
 
   @Test
@@ -68,8 +65,7 @@ public class GlideExtensionWithOptionTest {
   public void compilation_generatesExpectedGlideRequestsClass() throws IOException {
     assertThat(compilation)
         .generatedSourceFile(subpackage("GlideRequests"))
-        .contentsAsUtf8String()
-        .isEqualTo(asUnixChars(appResource("GlideRequests.java").getCharContent(true)));
+        .hasSourceEquivalentTo(appResource("GlideRequests.java"));
   }
 
   @Test
@@ -77,8 +73,7 @@ public class GlideExtensionWithOptionTest {
   public void compilationGeneratesExpectedGlideAppClass() throws IOException {
     assertThat(compilation)
         .generatedSourceFile(subpackage("GlideApp"))
-        .contentsAsUtf8String()
-        .isEqualTo(asUnixChars(appResource("GlideApp.java").getCharContent(true)));
+        .hasSourceEquivalentTo(appResource("GlideApp.java"));
   }
 
   @Test
@@ -86,9 +81,7 @@ public class GlideExtensionWithOptionTest {
   public void compilation_generatesExpectedGeneratedAppGlideModuleImpl() throws IOException {
     assertThat(compilation)
         .generatedSourceFile(glide("GeneratedAppGlideModuleImpl"))
-        .contentsAsUtf8String()
-        .isEqualTo(
-            asUnixChars(appResource("GeneratedAppGlideModuleImpl.java").getCharContent(true)));
+        .hasSourceEquivalentTo(appResource("GeneratedAppGlideModuleImpl.java"));
   }
 
   @Test
@@ -96,12 +89,15 @@ public class GlideExtensionWithOptionTest {
   public void compilation_generatesExpectedGeneratedRequestManagerFactory() throws IOException {
     assertThat(compilation)
         .generatedSourceFile(glide("GeneratedRequestManagerFactory"))
-        .contentsAsUtf8String()
-        .isEqualTo(
-            asUnixChars(appResource("GeneratedRequestManagerFactory.java").getCharContent(true)));
+        .hasSourceEquivalentTo(appResource("GeneratedRequestManagerFactory.java"));
   }
 
   private JavaFileObject forResource(String name) {
     return Util.forResource(getClass().getSimpleName(), name);
+  }
+
+  @Override
+  public Compilation getCompilation() {
+    return compilation;
   }
 }

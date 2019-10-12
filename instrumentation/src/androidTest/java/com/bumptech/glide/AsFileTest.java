@@ -1,12 +1,11 @@
 package com.bumptech.glide;
 
-
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.test.ConcurrencyHelper;
 import com.bumptech.glide.test.GlideApp;
@@ -28,7 +27,7 @@ public class AsFileTest {
   private static final String URL = "https://imgs.xkcd.com/comics/mc_hammer_age.png";
   @Rule public final TearDownGlide tearDownGlide = new TearDownGlide();
   private final ConcurrencyHelper concurrency = new ConcurrencyHelper();
-  private final Context context = InstrumentationRegistry.getTargetContext();
+  private final Context context = ApplicationProvider.getApplicationContext();
 
   @Before
   public void setUp() {
@@ -37,10 +36,17 @@ public class AsFileTest {
 
   @Test
   public void asFile_withUrl_succeeds() {
+    File file = concurrency.get(GlideApp.with(context).asFile().load(URL).submit());
+    assertThat(file).isNotNull();
+  }
+
+  @Test
+  public void asFile_withUrlAndDiskCacheStrategyAutomatic_succeeds() {
     File file =
         concurrency.get(
             GlideApp.with(context)
                 .asFile()
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .load(URL)
                 .submit());
     assertThat(file).isNotNull();

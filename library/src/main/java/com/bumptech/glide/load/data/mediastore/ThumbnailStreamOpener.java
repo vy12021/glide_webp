@@ -3,10 +3,10 @@ package com.bumptech.glide.load.data.mediastore;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.bumptech.glide.load.ImageHeaderParser;
 import com.bumptech.glide.load.ImageHeaderParserUtils;
 import com.bumptech.glide.load.engine.bitmap_recycle.ArrayPool;
@@ -27,7 +27,9 @@ class ThumbnailStreamOpener {
   private final List<ImageHeaderParser> parsers;
 
   ThumbnailStreamOpener(
-      List<ImageHeaderParser> parsers, ThumbnailQuery query, ArrayPool byteArrayPool,
+      List<ImageHeaderParser> parsers,
+      ThumbnailQuery query,
+      ArrayPool byteArrayPool,
       ContentResolver contentResolver) {
     this(parsers, DEFAULT_SERVICE, query, byteArrayPool, contentResolver);
   }
@@ -82,7 +84,9 @@ class ThumbnailStreamOpener {
     try {
       return contentResolver.openInputStream(thumbnailUri);
       // PMD.AvoidCatchingNPE framework method openInputStream can throw NPEs.
-    } catch (@SuppressWarnings("PMD.AvoidCatchingNPE") NullPointerException e) {
+    } catch (
+        @SuppressWarnings("PMD.AvoidCatchingNPE")
+        NullPointerException e) {
       throw (FileNotFoundException)
           new FileNotFoundException("NPE opening uri: " + uri + " -> " + thumbnailUri).initCause(e);
     }
@@ -90,13 +94,19 @@ class ThumbnailStreamOpener {
 
   @Nullable
   private String getPath(@NonNull Uri uri) {
-    final Cursor cursor = query.query(uri);
+    Cursor cursor = null;
     try {
+      cursor = query.query(uri);
       if (cursor != null && cursor.moveToFirst()) {
         return cursor.getString(0);
       } else {
         return null;
       }
+    } catch (SecurityException e) {
+      if (Log.isLoggable(TAG, Log.DEBUG)) {
+        Log.d(TAG, "Failed to query for thumbnail for Uri: " + uri, e);
+      }
+      return null;
     } finally {
       if (cursor != null) {
         cursor.close();

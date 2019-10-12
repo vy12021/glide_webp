@@ -4,8 +4,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.bumptech.glide.test.BitmapRegressionTester;
 import com.bumptech.glide.test.CanonicalBitmap;
 import com.bumptech.glide.test.GlideApp;
@@ -33,7 +33,7 @@ public class CenterCropRegressionTest {
 
   @Before
   public void setUp() {
-    context = InstrumentationRegistry.getTargetContext();
+    context = ApplicationProvider.getApplicationContext();
     bitmapRegressionTester = new BitmapRegressionTester(getClass(), testName);
     canonical = new CanonicalBitmap();
   }
@@ -55,7 +55,7 @@ public class CenterCropRegressionTest {
   @Test
   public void centerCrop_withRectangleSmallerThanImage_returnsRectangularImage()
       throws ExecutionException, InterruptedException {
-     Bitmap result =
+    Bitmap result =
         bitmapRegressionTester.test(
             GlideApp.with(context)
                 .asBitmap()
@@ -70,7 +70,7 @@ public class CenterCropRegressionTest {
   public void centerCrop_withSquareLargerThanImage_returnsUpscaledRectangularImage()
       throws ExecutionException, InterruptedException {
     Bitmap result =
-          bitmapRegressionTester.test(
+        bitmapRegressionTester.test(
             GlideApp.with(context)
                 .asBitmap()
                 .load(canonical.getBitmap())

@@ -3,9 +3,9 @@ package com.bumptech.glide.load.engine.bitmap_recycle;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.os.Build;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.annotation.VisibleForTesting;
 import com.bumptech.glide.util.Synthetic;
 import com.bumptech.glide.util.Util;
 import java.util.Arrays;
@@ -15,27 +15,27 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 
 /**
- * Keys {@link android.graphics.Bitmap Bitmaps} using both
- * {@link android.graphics.Bitmap#getAllocationByteCount()} and the
- * {@link android.graphics.Bitmap.Config} returned from
- * {@link android.graphics.Bitmap#getConfig()}.
+ * Keys {@link android.graphics.Bitmap Bitmaps} using both {@link
+ * android.graphics.Bitmap#getAllocationByteCount()} and the {@link android.graphics.Bitmap.Config}
+ * returned from {@link android.graphics.Bitmap#getConfig()}.
  *
- * <p> Using both the config and the byte size allows us to safely re-use a greater variety of
- * {@link android.graphics.Bitmap Bitmaps}, which increases the hit rate of the pool and therefore
- * the performance of applications. This class works around #301 by only allowing re-use of
- * {@link android.graphics.Bitmap Bitmaps} with a matching number of bytes per pixel. </p>
+ * <p>Using both the config and the byte size allows us to safely re-use a greater variety of {@link
+ * android.graphics.Bitmap Bitmaps}, which increases the hit rate of the pool and therefore the
+ * performance of applications. This class works around #301 by only allowing re-use of {@link
+ * android.graphics.Bitmap Bitmaps} with a matching number of bytes per pixel.
  */
 @RequiresApi(Build.VERSION_CODES.KITKAT)
 public class SizeConfigStrategy implements LruPoolStrategy {
   private static final int MAX_SIZE_MULTIPLE = 8;
 
   private static final Bitmap.Config[] ARGB_8888_IN_CONFIGS;
+
   static {
     Bitmap.Config[] result =
         new Bitmap.Config[] {
-            Bitmap.Config.ARGB_8888,
-            // The value returned by Bitmaps with the hidden Bitmap config.
-            null,
+          Bitmap.Config.ARGB_8888,
+          // The value returned by Bitmaps with the hidden Bitmap config.
+          null,
         };
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       result = Arrays.copyOf(result, result.length + 1);
@@ -43,16 +43,17 @@ public class SizeConfigStrategy implements LruPoolStrategy {
     }
     ARGB_8888_IN_CONFIGS = result;
   }
+
   private static final Bitmap.Config[] RGBA_F16_IN_CONFIGS = ARGB_8888_IN_CONFIGS;
 
   // We probably could allow ARGB_4444 and RGB_565 to decode into each other, but ARGB_4444 is
   // deprecated and we'd rather be safe.
   private static final Bitmap.Config[] RGB_565_IN_CONFIGS =
-      new Bitmap.Config[] { Bitmap.Config.RGB_565 };
+      new Bitmap.Config[] {Bitmap.Config.RGB_565};
   private static final Bitmap.Config[] ARGB_4444_IN_CONFIGS =
-      new Bitmap.Config[] { Bitmap.Config.ARGB_4444 };
+      new Bitmap.Config[] {Bitmap.Config.ARGB_4444};
   private static final Bitmap.Config[] ALPHA_8_IN_CONFIGS =
-      new Bitmap.Config[] { Bitmap.Config.ALPHA_8 };
+      new Bitmap.Config[] {Bitmap.Config.ALPHA_8};
 
   private final KeyPool keyPool = new KeyPool();
   private final GroupedLinkedMap<Key, Bitmap> groupedMap = new GroupedLinkedMap<>();
@@ -80,8 +81,7 @@ public class SizeConfigStrategy implements LruPoolStrategy {
     if (result != null) {
       // Decrement must be called before reconfigure.
       decrementBitmapOfSize(bestKey.size, result);
-      result.reconfigure(width, height,
-          result.getConfig() != null ? result.getConfig() : Bitmap.Config.ARGB_8888);
+      result.reconfigure(width, height, config);
     }
     return result;
   }
@@ -119,10 +119,14 @@ public class SizeConfigStrategy implements LruPoolStrategy {
     NavigableMap<Integer, Integer> sizes = getSizesForConfig(config);
     Integer current = sizes.get(size);
     if (current == null) {
-      throw new NullPointerException("Tried to decrement empty size"
-          + ", size: " + size
-          + ", removed: " + logBitmap(removed)
-          + ", this: " + this);
+      throw new NullPointerException(
+          "Tried to decrement empty size"
+              + ", size: "
+              + size
+              + ", removed: "
+              + logBitmap(removed)
+              + ", this: "
+              + this);
     }
 
     if (current == 1) {
@@ -225,8 +229,7 @@ public class SizeConfigStrategy implements LruPoolStrategy {
     public boolean equals(Object o) {
       if (o instanceof Key) {
         Key other = (Key) o;
-        return size == other.size
-            && Util.bothNullOrEqual(config, other.config);
+        return size == other.size && Util.bothNullOrEqual(config, other.config);
       }
       return false;
     }
@@ -261,7 +264,7 @@ public class SizeConfigStrategy implements LruPoolStrategy {
       case ALPHA_8:
         return ALPHA_8_IN_CONFIGS;
       default:
-        return new Bitmap.Config[] { requested };
+        return new Bitmap.Config[] {requested};
     }
   }
 }

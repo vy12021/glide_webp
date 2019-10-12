@@ -1,13 +1,13 @@
 package com.bumptech.glide.manager;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * A {@link com.bumptech.glide.manager.Lifecycle} implementation for tracking and notifying
  * listeners of {@link android.app.Application} lifecycle events.
  *
- * <p> Since there are essentially no {@link android.app.Application} lifecycle events, this class
- * simply defaults to notifying new listeners that they are started. </p>
+ * <p>Since there are essentially no {@link android.app.Application} lifecycle events, this class
+ * simply defaults to notifying new listeners that they are started.
  */
 class ApplicationLifecycle implements Lifecycle {
   @Override
