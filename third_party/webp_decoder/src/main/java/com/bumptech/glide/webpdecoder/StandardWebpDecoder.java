@@ -367,8 +367,8 @@ public class StandardWebpDecoder implements WebpDecoder {
     logw("nativeGetWebpFrame cost: " + ((System.nanoTime() - before) / 1000000f) + " ms");
 
     if (null != scratchBitmap) {
-      if (((null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) ||
-              currentFrame.blend == WebpFrame.BLEND_NONE)) {
+      if ((null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) ||
+              currentFrame.blend == WebpFrame.BLEND_NONE) {
         int windowX, windowY;
         int frameW, frameH;
         if (null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) {

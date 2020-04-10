@@ -11,7 +11,7 @@ dependencies {
     testImplementation "org.mockito:mockito-core:${MOCKITO_VERSION}"
     testImplementation "org.robolectric:robolectric:${ROBOLECTRIC_VERSION}"
     testImplementation "com.squareup.okhttp3:mockwebserver:${MOCKWEBSERVER_VERSION}"
-    testImplementation "androidx.legacy:legacy-support-v4:${ANDROID_X_VERSION}"
+    testImplementation "androidx.legacy:legacy-support-v4:1.0.0"
     testImplementation "androidx.test:core:${ANDROID_X_VERSION}"
 }
 
