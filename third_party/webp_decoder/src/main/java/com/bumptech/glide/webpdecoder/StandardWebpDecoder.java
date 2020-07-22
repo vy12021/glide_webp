@@ -370,11 +370,14 @@ public class StandardWebpDecoder implements WebpDecoder {
       return result;
     }
 
-    if ((null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND)
-            || currentFrame.blend == WebpFrame.BLEND_NONE) {
+    boolean blendFrame = currentFrame.blend == WebpFrame.BLEND_MUX;
+    boolean backgroundFrame = null != previousFrame
+            && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND;
+    boolean keyFrame = currentFrame.blend == WebpFrame.BLEND_NONE;
+    if (backgroundFrame || keyFrame) {
       int windowX, windowY;
       int frameW, frameH;
-      if (null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) {
+      if (backgroundFrame) {
         // Clear the previous frame rectangle.
         windowX = previousFrame.offsetX;
         windowY = previousFrame.offsetY;
@@ -393,7 +396,7 @@ public class StandardWebpDecoder implements WebpDecoder {
       scratchCanvas.setBitmap(scratchBitmap);
       scratchCanvas.clipRect(windowX / sampleSize, windowY / sampleSize,
               (windowX + frameW) / sampleSize, (windowY + frameH) / sampleSize);
-      if (null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) {
+      if (backgroundFrame) {
         scratchCanvas.drawColor(header.bgColor, PorterDuff.Mode.CLEAR);
       } else {
         scratchCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
