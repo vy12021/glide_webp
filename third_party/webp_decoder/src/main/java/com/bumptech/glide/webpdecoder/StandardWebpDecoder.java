@@ -366,48 +366,50 @@ public class StandardWebpDecoder implements WebpDecoder {
     nativeGetWebpFrame(this.nativeWebpParserPointer, result, getCurrentFrameIndex() + 1);
     logw("nativeGetWebpFrame cost: " + ((System.nanoTime() - before) / 1000000f) + " ms");
 
-    if (null != scratchBitmap) {
-      if ((null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) ||
-              currentFrame.blend == WebpFrame.BLEND_NONE) {
-        int windowX, windowY;
-        int frameW, frameH;
-        if (null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) {
-          // Clear the previous frame rectangle.
-          windowX = previousFrame.offsetX;
-          windowY = previousFrame.offsetY;
-          frameW = previousFrame.width;
-          frameH = previousFrame.height;
-        } else {  // curr->blend_method == WEBP_MUX_NO_BLEND.
-          // We simulate no-blending behavior by first clearing the current frame
-          // rectangle (to a checker-board) and then alpha-blending against it.
-          windowX = currentFrame.offsetX;
-          windowY = currentFrame.offsetY;
-          frameW = currentFrame.width;
-          frameH = currentFrame.height;
-        }
-        // Only update the requested area, not the whole canvas.
-        scratchCanvas.setBitmap(scratchBitmap);
-        scratchCanvas.clipRect(windowX / sampleSize, windowY / sampleSize,
-                (windowX + frameW) / sampleSize, (windowY + frameH) / sampleSize);
-        if (null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) {
-          scratchCanvas.drawColor(header.bgColor, PorterDuff.Mode.CLEAR);
-        } else {
-          scratchCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-        }
-        scratchCanvas.drawBitmap(result, 0, 0, null);
-      } else {
-        src.set(0, 0, result.getWidth(), result.getHeight());
-        dst.set(currentFrame.offsetX / sampleSize, currentFrame.offsetY / sampleSize,
-                (currentFrame.offsetX + currentFrame.width) / sampleSize,
-                (currentFrame.offsetY + currentFrame.height) / sampleSize);
-        scratchCanvas.drawBitmap(result, src, dst, null);
-        scratchBitmap.getPixels(scratchPixels, 0, downsampledWidth,
-                0, 0, downsampledWidth, downsampledHeight);
-        result.setPixels(scratchPixels, 0, downsampledWidth,
-                0, 0, downsampledWidth, downsampledHeight);
-      }
+    if (null == scratchBitmap) {
+      return result;
     }
 
+    if ((null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND)
+            || currentFrame.blend == WebpFrame.BLEND_NONE) {
+      int windowX, windowY;
+      int frameW, frameH;
+      if (null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) {
+        // Clear the previous frame rectangle.
+        windowX = previousFrame.offsetX;
+        windowY = previousFrame.offsetY;
+        frameW = previousFrame.width;
+        frameH = previousFrame.height;
+      } else {
+        // curr->blend_method == WEBP_MUX_NO_BLEND.
+        // We simulate no-blending behavior by first clearing the current frame
+        // rectangle (to a checker-board) and then alpha-blending against it.
+        windowX = currentFrame.offsetX;
+        windowY = currentFrame.offsetY;
+        frameW = currentFrame.width;
+        frameH = currentFrame.height;
+      }
+      // Only update the requested area, not the whole canvas.
+      scratchCanvas.setBitmap(scratchBitmap);
+      scratchCanvas.clipRect(windowX / sampleSize, windowY / sampleSize,
+              (windowX + frameW) / sampleSize, (windowY + frameH) / sampleSize);
+      if (null != previousFrame && previousFrame.dispose == WebpFrame.DISPOSAL_BACKGROUND) {
+        scratchCanvas.drawColor(header.bgColor, PorterDuff.Mode.CLEAR);
+      } else {
+        scratchCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+      }
+      scratchCanvas.drawBitmap(result, 0, 0, null);
+    } else {
+      src.set(0, 0, result.getWidth(), result.getHeight());
+      dst.set(currentFrame.offsetX / sampleSize, currentFrame.offsetY / sampleSize,
+              (currentFrame.offsetX + currentFrame.width) / sampleSize,
+              (currentFrame.offsetY + currentFrame.height) / sampleSize);
+      scratchCanvas.drawBitmap(result, src, dst, null);
+      scratchBitmap.getPixels(scratchPixels, 0, downsampledWidth,
+              0, 0, downsampledWidth, downsampledHeight);
+      result.setPixels(scratchPixels, 0, downsampledWidth,
+              0, 0, downsampledWidth, downsampledHeight);
+    }
     return result;
   }
 

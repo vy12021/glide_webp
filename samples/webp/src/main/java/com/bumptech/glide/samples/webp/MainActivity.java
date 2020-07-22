@@ -22,13 +22,6 @@ public class MainActivity extends Activity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    Glide.with(MainActivity.this)
-            .load("https://img.zishuovideo.com/13dc191552e57b61c65528fc0dbd0be9.webp")
-            .apply(new RequestOptions()
-                    .transforms(new BitmapTransformation[] {new CenterCrop(), new RoundedCorners(100)}
-                    ))
-            .into((ImageView) findViewById(R.id.image_view));
-
     findViewById(R.id.btn_list).setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -36,6 +29,22 @@ public class MainActivity extends Activity {
         startActivity(intent);
       }
     });
+    findViewById(R.id.btn_reload).setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        reload();
+      }
+    });
+    reload();
+  }
+
+  private void reload() {
+    Glide.with(MainActivity.this)
+            .load("https://img-ws.doupai.cc/bhb/2020/07/22/18/a62b834071ae7bbef1edf78b58bc14e9.webp")
+            /*.apply(new RequestOptions()
+                    .transforms(new BitmapTransformation[] {new CenterCrop(), new RoundedCorners(100)}
+                    ))*/
+            .into((ImageView) findViewById(R.id.image_view));
   }
 
 }
