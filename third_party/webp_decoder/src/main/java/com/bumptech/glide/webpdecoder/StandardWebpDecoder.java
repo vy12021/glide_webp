@@ -6,17 +6,14 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
+import android.util.Log;
+
 import androidx.annotation.ColorInt;
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import android.util.Log;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
@@ -42,16 +39,12 @@ public class StandardWebpDecoder implements WebpDecoder {
   @ColorInt
   private static final int COLOR_TRANSPARENT_BLACK = 0x00000000;
 
-  private final WebpDecoder.BitmapProvider bitmapProvider;
+  private final BitmapProvider bitmapProvider;
 
   /**
    * Raw WEBP data from input source.
    */
   private ByteBuffer rawData;
-  /**
-   * Webp header parser.
-   */
-  private WebpHeaderParser parser;
   /**
    * Bitmap main pixels array
    */
@@ -86,24 +79,20 @@ public class StandardWebpDecoder implements WebpDecoder {
   private int downsampledHeight;
   private int downsampledWidth;
   @NonNull
-  private Bitmap.Config bitmapConfig = Config.ARGB_8888;
+  private Config bitmapConfig = Config.ARGB_8888;
 
   // Public API.
   @SuppressWarnings("unused")
-  public StandardWebpDecoder(@NonNull WebpDecoder.BitmapProvider provider,
-                             WebpHeader webpHeader, ByteBuffer byteBuffer) {
-    this(provider, webpHeader, byteBuffer, 1);
+  public StandardWebpDecoder(@NonNull BitmapProvider provider,
+                             WebpHeader header, ByteBuffer byteBuffer) {
+    this(provider, header, byteBuffer, 1);
   }
 
-  public StandardWebpDecoder(@NonNull WebpDecoder.BitmapProvider provider,
-                             WebpHeader webpHeader, ByteBuffer byteBuffer, int sampleSize) {
-    this(provider);
-    setData(webpHeader, byteBuffer, sampleSize);
-  }
-
-  public StandardWebpDecoder(@NonNull WebpDecoder.BitmapProvider provider) {
-    this.bitmapProvider = provider;
-    this.header = new WebpHeader();
+  public StandardWebpDecoder(@NonNull BitmapProvider provider,
+                             WebpHeader header, ByteBuffer byteBuffer, int sampleSize) {
+    rawData = byteBuffer;
+    bitmapProvider = provider;
+    setData(header, byteBuffer, sampleSize);
   }
 
   @Override
@@ -136,7 +125,7 @@ public class StandardWebpDecoder implements WebpDecoder {
   public int getDuration(@IntRange(from = 0) int index) {
     int delay = -1;
     if (index >= 0 && index < header.frameCount) {
-      delay = header.frames.get(index).duration;
+      delay = header.getFrame(index).duration;
     }
     return delay;
   }
@@ -216,47 +205,18 @@ public class StandardWebpDecoder implements WebpDecoder {
     }
     status = STATUS_OK;
 
-    WebpFrame currentFrame = header.frames.get(framePointer);
+    WebpFrame currentFrame = header.getFrame(framePointer);
     WebpFrame previousFrame = null;
     int previousIndex = framePointer - 1;
     if (previousIndex >= 0) {
-      previousFrame = header.frames.get(previousIndex);
+      previousFrame = header.getFrame(previousIndex);
     }
     WebpFrame nextFrame = null;
     if (framePointer < getFrameCount() - 1) {
-      nextFrame = header.frames.get(framePointer + 1);
+      nextFrame = header.getFrame(framePointer + 1);
     }
     // Transfer pixel data to image.
     return setPixels(currentFrame, previousFrame, nextFrame);
-  }
-
-  @Override
-  public int read(@Nullable InputStream is, int contentLength) {
-    if (is != null) {
-      try {
-        int capacity = (contentLength > 0) ? (contentLength + 4 * 1024) : 16 * 1024;
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream(capacity);
-        int nRead;
-        byte[] data = new byte[16 * 1024];
-        while ((nRead = is.read(data, 0, data.length)) != -1) {
-          buffer.write(data, 0, nRead);
-        }
-        buffer.flush();
-        read(buffer.toByteArray());
-      } catch (IOException e) {
-        logw("Error reading data from stream" + e.getLocalizedMessage());
-      }
-    } else {
-      status = STATUS_OPEN_ERROR;
-    }
-    try {
-      if (is != null) {
-        is.close();
-      }
-    } catch (IOException e) {
-      logw("Error closing stream: " + e.getLocalizedMessage());
-    }
-    return status;
   }
 
   @Override
@@ -278,7 +238,6 @@ public class StandardWebpDecoder implements WebpDecoder {
     nativeWebpParserPointer = 0;
     rawData.clear();
     rawData = null;
-    parser = null;
     header = null;
   }
 
@@ -293,27 +252,25 @@ public class StandardWebpDecoder implements WebpDecoder {
     if (sampleSize <= 0) {
       throw new IllegalArgumentException("Sample size must be >0, not: " + sampleSize);
     }
-    // Make sure sample size is a power of 2.
-    sampleSize = Integer.highestOneBit(sampleSize);
-    this.status = STATUS_OK;
     this.header = header;
+    // Make sure sample size is a power of 2.
+    this.sampleSize = Integer.highestOneBit(sampleSize);
+    status = STATUS_OK;
     framePointer = INITIAL_FRAME_POINTER;
     // Initialize the raw data buffer.
-    rawData = byteBuffer;
-    rawData.position(0);
-    rawData.order(ByteOrder.LITTLE_ENDIAN);
-    if (0 == (this.nativeWebpParserPointer = nativeInitWebpParser(rawData))) {
+    if (0 == (nativeWebpParserPointer = nativeInitWebpParser(byteBuffer))) {
       throw new RuntimeException("nativeInitWebpParser failed");
     }
     // No point in specially saving an old frame if we're never going to use it.
     boolean savePrevious = false;
-    for (WebpFrame frame : header.frames) {
+    WebpFrame frame;
+    for (int index = 0; index < header.frameCount; index++) {
+      frame = header.getFrame(index);
       if (frame.dispose == WebpFrame.DISPOSAL_BACKGROUND || frame.blend == WebpFrame.BLEND_MUX) {
         savePrevious = true;
         break;
       }
     }
-    this.sampleSize = sampleSize;
     downsampledWidth = header.getWidth() / this.sampleSize;
     downsampledHeight = header.getHeight() / this.sampleSize;
     if (savePrevious) {
@@ -323,29 +280,11 @@ public class StandardWebpDecoder implements WebpDecoder {
     }
   }
 
-  @NonNull
-  private WebpHeaderParser getHeaderParser() {
-    if (parser == null) {
-      parser = new WebpHeaderParser();
-    }
-    return parser;
-  }
-
   @Override
-  @WebpDecodeStatus
-  public synchronized int read(@Nullable byte[] data) {
-    this.header = getHeaderParser().setData(data).parseHeader();
-    if (data != null) {
-      setData(header, getHeaderParser().getRawData());
-    }
-    return status;
-  }
-
-  @Override
-  public void setDefaultBitmapConfig(@NonNull Bitmap.Config config) {
-    if (config != Bitmap.Config.ARGB_8888 && config != Bitmap.Config.RGB_565) {
+  public void setDefaultBitmapConfig(@NonNull Config config) {
+    if (config != Config.ARGB_8888 && config != Config.RGB_565) {
       throw new IllegalArgumentException("Unsupported format: " + config
-              + ", must be one of " + Bitmap.Config.ARGB_8888 + " or " + Bitmap.Config.RGB_565);
+              + ", must be one of " + Config.ARGB_8888 + " or " + Config.RGB_565);
     }
     bitmapConfig = config;
   }
@@ -363,7 +302,7 @@ public class StandardWebpDecoder implements WebpDecoder {
 
     Bitmap result = getNextBitmap();
     long before = System.nanoTime();
-    nativeGetWebpFrame(this.nativeWebpParserPointer, result, getCurrentFrameIndex() + 1);
+    nativeGetWebpFrame(nativeWebpParserPointer, result, getCurrentFrameIndex() + 1);
     logw("nativeGetWebpFrame cost: " + ((System.nanoTime() - before) / 1000000f) + " ms");
 
     if (null == scratchBitmap) {
@@ -417,7 +356,7 @@ public class StandardWebpDecoder implements WebpDecoder {
   }
 
   private Bitmap getNextBitmap() {
-    Bitmap.Config config = header.hasAlpha ? Bitmap.Config.ARGB_8888 : bitmapConfig;
+    Config config = header.hasAlpha ? Config.ARGB_8888 : bitmapConfig;
     Bitmap result = bitmapProvider.obtain(downsampledWidth, downsampledHeight, config);
     result.setHasAlpha(true);
     return result;

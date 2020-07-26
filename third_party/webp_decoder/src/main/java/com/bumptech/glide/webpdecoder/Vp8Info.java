@@ -49,7 +49,13 @@ class Vp8Info {
   // True if the bitstream is an animation.
   boolean hasAnimation;
   // 0 = undefined (/mixed), 1 = lossy, 2 = lossless
-  Vp8Format format = Vp8Format.Mixed;
+  CompressFormat format = CompressFormat.Mixed;
+
+  // vp8 lossy header
+  LossyInfo lossyInfo;
+  // vp8l lossless header
+  LosslessInfo losslessInfo;
+
   // padding for later use
   int pad[] = new int[5];
 
@@ -65,4 +71,88 @@ class Vp8Info {
             ", pad=" + Arrays.toString(pad) +
             '}';
   }
+
+  /**
+   * Alpha subchunk filter method
+   */
+  public enum AlphaFilter {
+
+    None,
+    Horizontal,
+    Vertical,
+    Gradient
+
+  }
+
+  /**
+   * Vp8 compression method
+   */
+  public enum CompressFormat {
+
+    Mixed,
+    Lossy,
+    Lossless;
+
+  }
+
+  /**
+   * ALPH subchunk compression format
+   */
+  public enum AlphaFormat {
+
+    // no compression
+    NoneCompression,
+    // compressed but lossless
+    Lossless,
+    Invalid
+
+  }
+
+  public static class LosslessInfo {
+    @Vp8ParseStatus
+    int status = VP8_STATUS_OK;
+
+    LosslessTransform transform;
+
+    /**
+     * Vp8 lossless transform
+     */
+    enum LosslessTransform {
+
+      Predictor,
+      CrossColor,
+      SubtractGreen,
+      ColorIndexing,
+      Unknown
+
+    }
+
+  }
+
+  public static class LossyInfo {
+
+    @Vp8ParseStatus
+    int status = VP8_STATUS_OK;
+
+    LossyFilter filter;
+
+    LossySegment segment;
+
+
+    public static class LossySegment {
+
+      @Vp8ParseStatus
+      int status = VP8_STATUS_OK;
+
+    }
+
+    public static class LossyFilter {
+
+      @Vp8ParseStatus
+      int status = VP8_STATUS_OK;
+
+    }
+
+  }
+
 }

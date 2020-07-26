@@ -9,10 +9,10 @@ import java.nio.ByteBuffer;
 
 public class WebpFetcher {
 
-  private long nativePointer;
-  private final WebpHeaderParser parser = new WebpHeaderParser();
-  private WebpHeader header;
   private final String webpFile;
+  private long nativePointer;
+  private WebpParser parser;
+  private WebpHeader header;
 
   public WebpFetcher(String webpFile) {
     this.webpFile = webpFile;
@@ -31,10 +31,10 @@ public class WebpFetcher {
     while (-1 != (len = raf.read(buffer))) {
       data.put(buffer, 0, len);
     }
-    parser.setData(data);
-    header = parser.parseHeader();
+    parser = new WebpParser(data);
+    header = parser.parse();
     if (WebpDecoder.STATUS_OK == header.status) {
-      nativePointer = StandardWebpDecoder.nativeInitWebpParser(parser.getRawData());
+      nativePointer = StandardWebpDecoder.nativeInitWebpParser(data);
     }
     return header;
   }

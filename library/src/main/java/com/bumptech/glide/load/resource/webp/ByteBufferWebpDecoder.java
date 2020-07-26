@@ -2,10 +2,11 @@ package com.bumptech.glide.load.resource.webp;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-import android.util.Log;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DecodeFormat;
@@ -23,7 +24,7 @@ import com.bumptech.glide.util.Util;
 import com.bumptech.glide.webpdecoder.StandardWebpDecoder;
 import com.bumptech.glide.webpdecoder.WebpDecoder;
 import com.bumptech.glide.webpdecoder.WebpHeader;
-import com.bumptech.glide.webpdecoder.WebpHeaderParser;
+import com.bumptech.glide.webpdecoder.WebpParser;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -86,15 +87,9 @@ public class ByteBufferWebpDecoder implements ResourceDecoder<ByteBuffer, WebpDr
   public WebpDrawableResource decode(@NonNull ByteBuffer source, int width, int height,
                                      @NonNull Options options) {
     if (!source.isDirect()) {
-      source.mark();
-      source.position(0);
-      ByteBuffer oldSource = source;
-      source = ByteBuffer.allocateDirect(source.capacity());
-      source = source.put(oldSource).asReadOnlyBuffer();
-      oldSource.reset();
-      source.position(oldSource.position());
+      source = source.duplicate();
     }
-    final WebpHeaderParser parser = parserPool.obtain(source);
+    final WebpParser parser = parserPool.obtain(source);
     try {
       return decode(source, width, height, parser, options);
     } finally {
@@ -104,11 +99,11 @@ public class ByteBufferWebpDecoder implements ResourceDecoder<ByteBuffer, WebpDr
 
   @Nullable
   private WebpDrawableResource decode(
-      ByteBuffer byteBuffer, int width, int height, WebpHeaderParser parser, Options options) {
+          ByteBuffer byteBuffer, int width, int height, WebpParser parser, Options options) {
     long startTime = LogTime.getLogTime();
     try {
-      final WebpHeader header = parser.parseHeader();
-      if (header.getNumFrames() <= 0 || header.getStatus() != WebpDecoder.STATUS_OK) {
+      final WebpHeader header = parser.parse();
+      if (header.getFrameCount() <= 0 || header.getStatus() != WebpDecoder.STATUS_OK) {
         // If we couldn't decode the WEBP, we will end up with a frame count of 0.
         return null;
       }
@@ -167,17 +162,17 @@ public class ByteBufferWebpDecoder implements ResourceDecoder<ByteBuffer, WebpDr
 
   @VisibleForTesting
   static class WebpHeaderParserPool {
-    private final Queue<WebpHeaderParser> pool = Util.createQueue(0);
+    private final Queue<WebpParser> pool = Util.createQueue(0);
 
-    synchronized WebpHeaderParser obtain(ByteBuffer buffer) {
-      WebpHeaderParser result = pool.poll();
+    synchronized WebpParser obtain(ByteBuffer buffer) {
+      WebpParser result = pool.poll();
       if (result == null) {
-        result = new WebpHeaderParser();
+        return new WebpParser(buffer);
       }
       return result.setData(buffer);
     }
 
-    synchronized void release(WebpHeaderParser parser) {
+    synchronized void release(WebpParser parser) {
       parser.clear();
       pool.offer(parser);
     }

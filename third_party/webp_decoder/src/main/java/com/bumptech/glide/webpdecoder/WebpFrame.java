@@ -97,19 +97,11 @@ public class WebpFrame {
   /**
    * Index in the raw buffer where we need to start reading to decode.
    */
-  public int bufferFrameStart;
+  public int bufferStart;
   /**
    * frame data size
    */
-  public int frameSize;
-
-  // Flags while parsing webp header.
-  // anim chunk process flag
-  boolean isProcessingAnimFrame;
-  boolean foundAlphaSubchunk;
-  boolean foundImageSubchunk;
-  // anmf subchunk flag for mark tag parsed
-  final boolean anmfSubchunksMark[] = new boolean[3];  // 0 VP8; 1 VP8L; 2 ALPH.
+  public int bufferSize;
 
   @Override
   public String toString() {
@@ -122,7 +114,8 @@ public class WebpFrame {
             ", dispose=" + dispose +
             ", blend=" + blend +
             ", duration=" + duration +
-            ", bufferFrameStart=" + bufferFrameStart +
+            ", bufferStart=" + bufferStart +
+            ", bufferSize=" + bufferSize +
             '}';
   }
 }

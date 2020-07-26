@@ -16,23 +16,36 @@ public enum ChunkId {
   XMP("XMP "),
   UNKNOWN("UNKN");
 
-  static final int CHUNK_ID_TYPES = 10;
-
   String tag;
 
   ChunkId(String tag) {
     this.tag = tag;
   }
 
-  public static ChunkId getByName(String name) {
-    ChunkId ret = UNKNOWN;
-    for (ChunkId tag : ChunkId.values()) {
-      if (tag.tag.equals(name)) {
-        ret = tag;
-        break;
+  static ChunkId getByTag(String tag) {
+    for (ChunkId id : ChunkId.values()) {
+      if (id.tag.equals(tag)) {
+        return id;
       }
     }
-    return ret;
+    return UNKNOWN;
   }
 
+  enum ANMFSubchunk {
+
+    VP8(ChunkId.VP8),
+    VP8L(ChunkId.VP8L),
+    ALPHA(ChunkId.ALPHA);
+
+    ChunkId id;
+
+    ANMFSubchunk(ChunkId id) {
+      this.id = id;
+    }
+
+    static ANMFSubchunk get(ChunkId id) {
+      return ANMFSubchunk.valueOf(id.name());
+    }
+
+  }
 }

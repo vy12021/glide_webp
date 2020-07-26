@@ -6,12 +6,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.bumptech.glide.webpdecoder.WebpHeaderParser.ALL_VALID_FLAGS;
+import static com.bumptech.glide.webpdecoder.WebpParser.ALL_VALID_FLAGS;
 
 /**
  * A header object containing the number of frames in an animated WEBP image as well as basic
  * metadata like width and height that can be used to decode each individual frame of the WEBP. Can
- * be shared by one or more {@link com.bumptech.glide.webpdecoder.WebpDecoder}s to play the same
+ * be shared by one or more {@link WebpDecoder}s to play the same
  * animated WEBP in multiple views.
  */
 public class WebpHeader {
@@ -26,15 +26,15 @@ public class WebpHeader {
   public static final int NETSCAPE_LOOP_COUNT_DOES_NOT_EXIST  = -1;
 
   // current frame
-  WebpFrame currentFrame = new WebpFrame(-1);
+  WebpFrame current;
   // frames container
-  final List<WebpFrame> frames = new ArrayList<>();
+  private List<WebpFrame> frames = new ArrayList<>();
 
   // decode status
   @WebpDecoder.WebpDecodeStatus
   int status = WebpDecoder.STATUS_OK;
   // riff chunk size
-  int riffSize;
+  long riffSize;
   // ALPH Chunk.
   boolean hasAlpha;
   // ANMF Chunk.
@@ -53,14 +53,36 @@ public class WebpHeader {
   int frameCount;
   // loop repeat times
   int loopCount = NETSCAPE_LOOP_COUNT_DOES_NOT_EXIST;
-  //
+  // canvas size
   int canvasWidth, canvasHeight;
   // flags for vp8x chunk
-  @WebpHeaderParser.WebpFeatureFlag
+  @WebpParser.WebpFeatureFlag
   int featureFlags = ALL_VALID_FLAGS;
 
   // chunk flag for mark tag parsed
-  boolean chunksMark[] = new boolean[ChunkId.CHUNK_ID_TYPES];
+  private boolean[] chunksMark = new boolean[ChunkId.values().length];
+  // anim chunk process flag
+  boolean isProcessingAnimFrame;
+  boolean foundAlphaSubchunk;
+  boolean foundImageSubchunk;
+  // anmf subchunk flag for mark tag parsed
+  private boolean[] anmfSubchunksMark = new boolean[ChunkId.ANMFSubchunk.values().length];  // 0 VP8; 1 VP8L; 2 ALPH.
+
+  void markANMFSubchunk(ChunkId id, boolean flag) {
+    anmfSubchunksMark[ChunkId.ANMFSubchunk.get(id).ordinal()] = flag;
+  }
+
+  boolean getANMFSubchunkMark(ChunkId id) {
+    return anmfSubchunksMark[ChunkId.ANMFSubchunk.get(id).ordinal()];
+  }
+
+  void markChunk(ChunkId id, boolean flag) {
+    chunksMark[id.ordinal()] = flag;
+  }
+
+  boolean getChunkMark(ChunkId id) {
+    return chunksMark[id.ordinal()];
+  }
 
   public int getHeight() {
     return canvasHeight;
@@ -70,16 +92,17 @@ public class WebpHeader {
     return canvasWidth;
   }
 
-  public int getNumFrames() {
+  public int getFrameCount() {
     return frameCount;
   }
 
-  public WebpFrame next() {
-    return this.frames.get(0);
+  public WebpFrame getFrame(int index) {
+    return frames.get(index);
   }
 
-  void newFrame() {
-    this.frames.add(this.currentFrame = new WebpFrame(frameCount));
+  WebpFrame newFrame() {
+    frames.add(current = new WebpFrame(frameCount));
+    return current;
   }
 
   /**

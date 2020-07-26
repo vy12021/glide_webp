@@ -1,12 +1,12 @@
 package com.bumptech.glide.webpdecoder;
 
 import android.graphics.Bitmap;
+
 import androidx.annotation.IntDef;
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.io.InputStream;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.nio.ByteBuffer;
@@ -30,11 +30,15 @@ public interface WebpDecoder {
   int STATUS_BITSTREAM_ERROR    = 5;
   /** MISS DATA */
   int STATUS_MISS_DATA          = 6;
+  /**
+   * need more data
+   */
+  int STATUS_NEED_MORE_DATA     = 7;
 
   /** Android Lint annotation for status codes that can be used with a WEBP decoder. */
   @Retention(RetentionPolicy.SOURCE)
   @IntDef(value = {STATUS_OK, STATUS_OPEN_ERROR, STATUS_PARSE_ERROR, STATUS_MISS_DATA,
-          STATUS_INVALID_PARAM, STATUS_TRUNCATED_DATA, STATUS_BITSTREAM_ERROR})
+          STATUS_INVALID_PARAM, STATUS_TRUNCATED_DATA, STATUS_BITSTREAM_ERROR, STATUS_NEED_MORE_DATA})
   @interface WebpDecodeStatus {
   }
 
@@ -42,17 +46,17 @@ public interface WebpDecoder {
   int TOTAL_ITERATION_COUNT_FOREVER = 0;
 
   /**
-   * An interface that can be used to provide reused {@link android.graphics.Bitmap}s to avoid GCs
-   * from constantly allocating {@link android.graphics.Bitmap}s for every frame.
+   * An interface that can be used to provide reused {@link Bitmap}s to avoid GCs
+   * from constantly allocating {@link Bitmap}s for every frame.
    */
   interface BitmapProvider {
     /**
      * Returns an {@link Bitmap} with exactly the given dimensions and config.
      *
-     * @param width  The width in pixels of the desired {@link android.graphics.Bitmap}.
-     * @param height The height in pixels of the desired {@link android.graphics.Bitmap}.
-     * @param config The {@link android.graphics.Bitmap.Config} of the desired {@link
-     *               android.graphics.Bitmap}.
+     * @param width  The width in pixels of the desired {@link Bitmap}.
+     * @param height The height in pixels of the desired {@link Bitmap}.
+     * @param config The {@link Bitmap.Config} of the desired {@link
+     *               Bitmap}.
      */
     @NonNull
     Bitmap obtain(int width, int height, @NonNull Bitmap.Config config);
@@ -212,15 +216,6 @@ public interface WebpDecoder {
   @Nullable
   Bitmap getNextFrame();
 
-  /**
-   * Reads WEBP image from stream.
-   *
-   * @param is containing WEBP file.
-   * @return read status code (0 = no errors).
-   */
-  @WebpDecodeStatus
-  int read(@Nullable InputStream is, int contentLength);
-
   void clear();
 
   void setData(@NonNull WebpHeader header, ByteBuffer byteBuffer);
@@ -228,27 +223,18 @@ public interface WebpDecoder {
   void setData(@NonNull WebpHeader header, ByteBuffer byteBuffer, int sampleSize);
 
   /**
-   * Reads WEBP image from byte array.
+   * Sets the default {@link Bitmap.Config} to use when decoding frames of a WEBP.
    *
-   * @param data containing WEBP file.
-   * @return read status code (0 = no errors).
-   */
-  @WebpDecodeStatus
-  int read(@Nullable byte[] data);
-
-  /**
-   * Sets the default {@link android.graphics.Bitmap.Config} to use when decoding frames of a WEBP.
+   * <p>Valid options are {@link Bitmap.Config#ARGB_8888} and
+   * {@link Bitmap.Config#RGB_565}.
+   * {@link Bitmap.Config#ARGB_8888} will produce higher quality frames, but will
+   * also use 2x the memory of {@link Bitmap.Config#RGB_565}.
    *
-   * <p>Valid options are {@link android.graphics.Bitmap.Config#ARGB_8888} and
-   * {@link android.graphics.Bitmap.Config#RGB_565}.
-   * {@link android.graphics.Bitmap.Config#ARGB_8888} will produce higher quality frames, but will
-   * also use 2x the memory of {@link android.graphics.Bitmap.Config#RGB_565}.
-   *
-   * <p>Defaults to {@link android.graphics.Bitmap.Config#ARGB_8888}
+   * <p>Defaults to {@link Bitmap.Config#ARGB_8888}
    *
    * <p>This value is not a guarantee. For example if set to
-   * {@link android.graphics.Bitmap.Config#RGB_565} and the WEBP contains transparent pixels,
-   * {@link android.graphics.Bitmap.Config#ARGB_8888} will be used anyway to support the
+   * {@link Bitmap.Config#RGB_565} and the WEBP contains transparent pixels,
+   * {@link Bitmap.Config#ARGB_8888} will be used anyway to support the
    * transparency.
    */
   void setDefaultBitmapConfig(@NonNull Bitmap.Config format);
