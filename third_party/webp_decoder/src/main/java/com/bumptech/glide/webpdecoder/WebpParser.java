@@ -1,5 +1,7 @@
 package com.bumptech.glide.webpdecoder;
 
+import android.util.Log;
+
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 
@@ -682,7 +684,7 @@ public class WebpParser {
     bytes = new byte[3];
     for (int i = 1, psize; i < numParts; ++i) {
       chunkData.get(bytes);
-      // fixme 2020/07/26数值问题，远大于预期???, webpinfo.c line 353
+      // fixme 2020/07/26, webpinfo.c line 353
       psize = (bytes[0] & 0xff) | ((bytes[1] & 0xff) << 8) | ((bytes[2] & 0xff) << 16);
       if (psize > partDataSize) {
         chunkData.restore();
@@ -1163,23 +1165,23 @@ public class WebpParser {
 
   private void loge(String msg) {
     System.err.println(msg);
-    /*if (Log.isLoggable(TAG, Log.ERROR)) {
+    if (Log.isLoggable(TAG, Log.ERROR)) {
       Log.e(TAG, msg);
-    }*/
+    }
   }
 
   private void logd(String msg) {
     System.out.println(msg);
-    /*if (Log.isLoggable(TAG, Log.DEBUG)) {
+    if (Log.isLoggable(TAG, Log.DEBUG)) {
       Log.d(TAG, msg);
-    }*/
+    }
   }
 
   private void logw(String msg) {
     System.out.println(msg);
-    /*if (Log.isLoggable(TAG, Log.WARN)) {
+    if (Log.isLoggable(TAG, Log.WARN)) {
       Log.w(TAG, msg);
-    }*/
+    }
   }
 
   private static int LLGetBits(ChunkData data, int size, int nb, Position position) {

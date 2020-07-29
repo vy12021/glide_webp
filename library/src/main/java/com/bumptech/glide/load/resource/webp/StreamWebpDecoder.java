@@ -51,7 +51,7 @@ public class StreamWebpDecoder implements ResourceDecoder<InputStream, WebpDrawa
     if (data == null) {
       return null;
     }
-    ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+    ByteBuffer byteBuffer = ByteBuffer.allocateDirect(data.length).put(data).asReadOnlyBuffer();
     return byteBufferDecoder.decode(byteBuffer, width, height, options);
   }
 

@@ -4,12 +4,14 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+
 import androidx.annotation.CheckResult;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.FloatRange;
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.DecodeFormat;
 import com.bumptech.glide.load.Key;
@@ -31,10 +33,13 @@ import com.bumptech.glide.load.resource.bitmap.VideoDecoder;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.load.resource.gif.GifDrawableTransformation;
 import com.bumptech.glide.load.resource.gif.GifOptions;
+import com.bumptech.glide.load.resource.webp.WebpDrawable;
+import com.bumptech.glide.load.resource.webp.WebpDrawableTransformation;
 import com.bumptech.glide.signature.EmptySignature;
 import com.bumptech.glide.util.CachedHashCodeArrayMap;
 import com.bumptech.glide.util.Preconditions;
 import com.bumptech.glide.util.Util;
+
 import java.util.Map;
 
 /**
@@ -976,6 +981,7 @@ public abstract class BaseRequestOptions<T extends BaseRequestOptions<T>> implem
     // affecting the functionality.
     transform(BitmapDrawable.class, drawableTransformation.asBitmapDrawable(), isRequired);
     transform(GifDrawable.class, new GifDrawableTransformation(transformation), isRequired);
+    transform(WebpDrawable.class, new WebpDrawableTransformation(transformation), isRequired);
     return selfOrThrowIfLocked();
   }
 

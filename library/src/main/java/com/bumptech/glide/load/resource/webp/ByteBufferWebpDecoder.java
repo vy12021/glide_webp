@@ -87,7 +87,13 @@ public class ByteBufferWebpDecoder implements ResourceDecoder<ByteBuffer, WebpDr
   public WebpDrawableResource decode(@NonNull ByteBuffer source, int width, int height,
                                      @NonNull Options options) {
     if (!source.isDirect()) {
-      source = source.duplicate();
+      source.mark();
+      source.position(0);
+      ByteBuffer oldSource = source;
+      source = ByteBuffer.allocateDirect(source.capacity());
+      source = source.put(oldSource).asReadOnlyBuffer();
+      oldSource.reset();
+      source.position(oldSource.position());
     }
     final WebpParser parser = parserPool.obtain(source);
     try {
