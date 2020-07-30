@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * vp8 decode from image chunk
  */
-class Vp8Info {
+public class Vp8Info {
 
   final static int VP8_STATUS_OK                  = 0;
   final static int VP8_STATUS_OUT_OF_MEMORY       = 1;
@@ -49,7 +49,7 @@ class Vp8Info {
   // True if the bitstream is an animation.
   boolean hasAnimation;
   // 0 = undefined (/mixed), 1 = lossy, 2 = lossless
-  CompressFormat format = CompressFormat.Mixed;
+  Format format = Format.Mixed;
 
   // vp8 lossy header
   LossyInfo lossyInfo;
@@ -68,43 +68,20 @@ class Vp8Info {
             ", hasAlpha=" + hasAlpha +
             ", hasAnimation=" + hasAnimation +
             ", format=" + format +
+            ", lossyInfo=" + lossyInfo +
+            ", losslessInfo=" + losslessInfo +
             ", pad=" + Arrays.toString(pad) +
             '}';
   }
 
   /**
-   * Alpha subchunk filter method
-   */
-  public enum AlphaFilter {
-
-    None,
-    Horizontal,
-    Vertical,
-    Gradient
-
-  }
-
-  /**
    * Vp8 compression method
    */
-  public enum CompressFormat {
+  public enum Format {
 
     Mixed,
     Lossy,
-    Lossless;
-
-  }
-
-  /**
-   * ALPH subchunk compression format
-   */
-  public enum AlphaFormat {
-
-    // no compression
-    NoneCompression,
-    // compressed but lossless
-    Lossless,
-    Invalid
+    Lossless
 
   }
 
@@ -113,6 +90,13 @@ class Vp8Info {
     int status = VP8_STATUS_OK;
 
     LosslessTransform transform;
+
+    @Override
+    public String toString() {
+      return "LosslessInfo{" +
+              " transform=" + transform +
+              '}';
+    }
 
     /**
      * Vp8 lossless transform
@@ -138,6 +122,13 @@ class Vp8Info {
 
     LossySegment segment;
 
+    @Override
+    public String toString() {
+      return "LossyInfo{" +
+              "filter=" + filter +
+              ", segment=" + segment +
+              '}';
+    }
 
     public static class LossySegment {
 

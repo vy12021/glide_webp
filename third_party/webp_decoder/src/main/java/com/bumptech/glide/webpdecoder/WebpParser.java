@@ -525,7 +525,7 @@ public class WebpParser {
   }
 
   private void processImageChunk(ChunkData chunkData) {
-    Vp8Info vp8Info = parseVp8Bitstream(chunkData);
+    Vp8Info vp8Info = header.current.vp8Info = parseVp8Bitstream(chunkData);
     if (vp8Info.status != Vp8Info.VP8_STATUS_OK) {
       loge("VP8/VP8L bitstream error.");
       header.status = STATUS_BITSTREAM_ERROR;
@@ -565,9 +565,8 @@ public class WebpParser {
         return;
       }
       if (header.getChunkMark(ChunkId.VP8X)) {
-        // FIXME: 2018/7/7 correct valid conditions of size?
-        if ((header.canvasWidth != vp8Info.width ||
-                header.canvasHeight != vp8Info.height)) {
+        if (header.canvasWidth != vp8Info.width ||
+                header.canvasHeight != vp8Info.height) {
           loge("Image size in VP8/VP8L chunk differs from VP8X chunk.");
           header.status = STATUS_PARSE_ERROR;
         }
@@ -585,7 +584,6 @@ public class WebpParser {
     }
     header.frameCount++;
     header.hasAlpha |= vp8Info.hasAlpha;
-    // FIXME: 2018/7/2 parse lossy or lossless header
     if (ChunkId.VP8 == chunkData.id) {
       // lossy
       vp8Info.lossyInfo = parseLossyHeader(chunkData);
@@ -769,30 +767,31 @@ public class WebpParser {
           (ChunkData chunkData, int dataSize, Position bitPosition) {
     boolean useTransform = LLGetBits(chunkData, dataSize, 1, bitPosition) != 0;
     logd("  Use transform:    " + (useTransform ? "Yes" : "No"));
-    if (useTransform) {
-      int type = LLGetBits(chunkData, dataSize, 2, bitPosition);
-      Vp8Info.LosslessInfo.LosslessTransform transform
-              = Vp8Info.LosslessInfo.LosslessTransform.values()[type];
-      logd(String.format(Locale.getDefault(),
-              "  1st transform:    %s (%d)", transform.name(), type));
-      switch (transform) {
-        case Predictor:
-        case CrossColor:
-          int blockSize = LLGetBits(chunkData, dataSize, 3, bitPosition);
-          blockSize = 1 << (blockSize + 2);
-          logd("  Tran. block size: " + blockSize);
-          break;
-        case ColorIndexing:
-          int nColors = LLGetBits(chunkData, dataSize, 8, bitPosition);
-          nColors += 1;
-          logd("  No. of colors:    " + nColors);
-          break;
-        default:
-          return Vp8Info.LosslessInfo.LosslessTransform.Unknown;
-      }
-      return transform;
+    if (!useTransform) {
+      return null;
     }
-    return null;
+
+    int type = LLGetBits(chunkData, dataSize, 2, bitPosition);
+    Vp8Info.LosslessInfo.LosslessTransform transform
+            = Vp8Info.LosslessInfo.LosslessTransform.values()[type];
+    logd(String.format(Locale.getDefault(),
+            "  1st transform:    %s (%d)", transform.name(), type));
+    switch (transform) {
+      case Predictor:
+      case CrossColor:
+        int blockSize = LLGetBits(chunkData, dataSize, 3, bitPosition);
+        blockSize = 1 << (blockSize + 2);
+        logd("  Tran. block size: " + blockSize);
+        break;
+      case ColorIndexing:
+        int nColors = LLGetBits(chunkData, dataSize, 8, bitPosition);
+        nColors += 1;
+        logd("  No. of colors:    " + nColors);
+        break;
+      default:
+        return Vp8Info.LosslessInfo.LosslessTransform.Unknown;
+    }
+    return transform;
   }
 
   private Vp8Info.LossyInfo.LossySegment parseLossySegmentHeader(
@@ -800,46 +799,48 @@ public class WebpParser {
     Vp8Info.LossyInfo.LossySegment lossySegment = new Vp8Info.LossyInfo.LossySegment();
     boolean useSegment = getBits(chunkData, dataSize, 1, bitPosition) != 0;
     logd("  Use segment:      " + (useSegment ? "Yes" : "No"));
-    if (useSegment) {
-      boolean updateMap = getBits(chunkData, dataSize, 1, bitPosition) != 0;
-      boolean updateData = getBits(chunkData, dataSize, 1, bitPosition) != 0;
-      logd(String.format(
-              "  Update map:       %s\n" +
-              "  Update data:      %s",
-              updateMap, updateData));
-      if (updateData) {
-        int[] quantizer = new int[4];
-        int[] filterStrength = new int[4];
-        int aDelta = getBits(chunkData, dataSize, 1, bitPosition);
-        logd("  Absolute delta:   " + aDelta);
-        for (int i = 0; i < 4; ++i) {
-          if (getBits(chunkData, dataSize, 1, bitPosition) != 0) {
-            quantizer[i] = getSignedBits(chunkData, dataSize, 7, bitPosition);
-          }
+    if (!useSegment) {
+      return lossySegment;
+    }
+
+    boolean updateMap = getBits(chunkData, dataSize, 1, bitPosition) != 0;
+    boolean updateData = getBits(chunkData, dataSize, 1, bitPosition) != 0;
+    logd(String.format(
+            "  Update map:       %s\n" +
+            "  Update data:      %s",
+            updateMap, updateData));
+    if (updateData) {
+      int[] quantizer = new int[4];
+      int[] filterStrength = new int[4];
+      int aDelta = getBits(chunkData, dataSize, 1, bitPosition);
+      logd("  Absolute delta:   " + aDelta);
+      for (int i = 0; i < 4; ++i) {
+        if (getBits(chunkData, dataSize, 1, bitPosition) != 0) {
+          quantizer[i] = getSignedBits(chunkData, dataSize, 7, bitPosition);
         }
-        for (int i = 0; i < 4; ++i) {
-          if (getBits(chunkData, dataSize, 1, bitPosition) != 0) {
-            filterStrength[i] = getSignedBits(chunkData, dataSize, 6, bitPosition);
-          }
-        }
-        logd(String.format(Locale.getDefault(),
-                "  Quantizer:        %d %d %d %d",
-                quantizer[0], quantizer[1], quantizer[2], quantizer[3]));
-        logd(String.format(Locale.getDefault(),
-                "  Filter strength:  %d %d %d %d",
-                filterStrength[0], filterStrength[1], filterStrength[2], filterStrength[3]));
       }
-      if (updateMap) {
-        int[] probSegment = {255, 255, 255};
-        for (int i = 0; i < 3; ++i) {
-          if (getBits(chunkData, dataSize, 1, bitPosition) != 0) {
-            probSegment[i] = getSignedBits(chunkData, dataSize, 8, bitPosition);
-          }
+      for (int i = 0; i < 4; ++i) {
+        if (getBits(chunkData, dataSize, 1, bitPosition) != 0) {
+          filterStrength[i] = getSignedBits(chunkData, dataSize, 6, bitPosition);
         }
-        logd(String.format(Locale.getDefault(),
-                "  Prob segment:     %d %d %d",
-                probSegment[0], probSegment[1], probSegment[2]));
       }
+      logd(String.format(Locale.getDefault(),
+              "  Quantizer:        %d %d %d %d",
+              quantizer[0], quantizer[1], quantizer[2], quantizer[3]));
+      logd(String.format(Locale.getDefault(),
+              "  Filter strength:  %d %d %d %d",
+              filterStrength[0], filterStrength[1], filterStrength[2], filterStrength[3]));
+    }
+    if (updateMap) {
+      int[] probSegment = {255, 255, 255};
+      for (int i = 0; i < 3; ++i) {
+        if (getBits(chunkData, dataSize, 1, bitPosition) != 0) {
+          probSegment[i] = getSignedBits(chunkData, dataSize, 8, bitPosition);
+        }
+      }
+      logd(String.format(Locale.getDefault(),
+              "  Prob segment:     %d %d %d",
+              probSegment[0], probSegment[1], probSegment[2]));
     }
     return lossySegment;
   }
@@ -917,13 +918,13 @@ public class WebpParser {
         info.status = Vp8Info.VP8_STATUS_NOT_ENOUGH_DATA;
         return info;
       }
-      info.format = ChunkId.VP8L == chunkData.id ? Vp8Info.CompressFormat.Lossless : Vp8Info.CompressFormat.Lossy;
+      info.format = ChunkId.VP8L == chunkData.id ? Vp8Info.Format.Lossless : Vp8Info.Format.Lossy;
       chunkData.skip2Data();
     } else {
       // Raw VP8/VP8L bitstream (no header).
       byte[] bytes = reader.getBytes(5);
       if (bytes[0] == VP8L_MAGIC_BYTE && (bytes[4] >> 5) == 0) {
-        info.format = Vp8Info.CompressFormat.Lossless;
+        info.format = Vp8Info.Format.Lossless;
       }
     }
 
@@ -932,7 +933,7 @@ public class WebpParser {
       info.status = Vp8Info.VP8_STATUS_BITSTREAM_ERROR;
       return info;
     }
-    if (info.format != Vp8Info.CompressFormat.Lossless) {
+    if (info.format != Vp8Info.Format.Lossless) {
       // vp8 chunk
       if (chunkData.size < VP8_FRAME_HEADER_SIZE) {
         loge("processVp8Bitstream: Not enough data");
@@ -1060,10 +1061,9 @@ public class WebpParser {
         reader.offset -= 8;
       }
       return val;
-    } else {
-      reader.eos = true;
-      return 0;
     }
+    reader.eos = true;
+    return 0;
   }
 
   private void processALPHChunk(ChunkData chunkData) {
@@ -1105,45 +1105,54 @@ public class WebpParser {
       header.markChunk(chunkData.id, true);
     }
     header.current.hasAlpha = true;
-    // FIXME: 2018/7/2 parse alpha subtrunk
-    parseAlphaHeader(chunkData);
+    header.current.alphaInfo = parseAlphaHeader(chunkData);
   }
 
-  private void parseAlphaHeader(ChunkData chunkData) {
+  private AlphaInfo parseAlphaHeader(ChunkData chunkData) {
     chunkData.skip2Start();
+    AlphaInfo alphaInfo = new AlphaInfo();
     int dataSize = chunkData.size - CHUNK_HEADER_SIZE;
     if (dataSize <= ALPHA_HEADER_LEN) {
       loge("Truncated ALPH chunk.");
-      header.status = STATUS_TRUNCATED_DATA;
-      return;
+      alphaInfo.status = STATUS_TRUNCATED_DATA;
+      return alphaInfo;
     }
     logd(" Parsing ALPH chunk...");
 
-    int next = reader.getIntFrom(chunkData.dataStart(), 1);
+    int nextByte = reader.getByteFrom(chunkData.dataStart()) & 0xff;
     // alpha compression method, diff from image compression method.
-    int compressionMethod = next & 0x03;
-    int alphaFilter = (next >> 2) & 0x03;
-    int preProcessingMethod = (next >> 4) & 0x03;
-    int reservedBits = (next >> 6) & 0x03;
-    logd(" \tCompression format:    " + Vp8Info.AlphaFormat.values()[compressionMethod].name());
-    logd(" \tFilter:                " + Vp8Info.AlphaFilter.values()[alphaFilter].name());
+    int compressionMethod = nextByte & 0x03;
+    int alphaFilter = (nextByte >>> 2) & 0x03;
+    int preProcessingMethod = (nextByte >>> 4) & 0x03;
+    int reservedBits = (nextByte >>> 6) & 0x03;
+    AlphaInfo.Format format = AlphaInfo.Format.getFormat(compressionMethod);
+    AlphaInfo.Filter filter = AlphaInfo.Filter.values()[alphaFilter];
+    logd(" \tCompression:           " + format.name());
+    logd(" \tFilter:                " + filter.name());
     logd(" \tPre-processing:        " + preProcessingMethod);
-    if (compressionMethod >= Vp8Info.AlphaFormat.Invalid.ordinal()) {
+    alphaInfo.format = format;
+    alphaInfo.filter = filter;
+    alphaInfo.preProcessingMethod = preProcessingMethod;
+    if (format == AlphaInfo.Format.Invalid) {
       loge("Invalid Alpha compression method.");
-      header.status = STATUS_BITSTREAM_ERROR;
-      return;
+      alphaInfo.status = STATUS_BITSTREAM_ERROR;
+      return alphaInfo;
     }
     if (preProcessingMethod > ALPHA_PREPROCESSED_LEVELS) {
       loge("Invalid Alpha pre-processing method");
-      header.status = STATUS_BITSTREAM_ERROR;
-      return;
+      alphaInfo.status = STATUS_BITSTREAM_ERROR;
+      return alphaInfo;
     }
     if (reservedBits != 0) {
       logw("Reserved bits in ALPH chunk header are not all 0.");
     }
-    if (compressionMethod == Vp8Info.AlphaFormat.Lossless.ordinal()) {
-      // FIXME: 7/3/2018 parse lossless transform
+    if (format == AlphaInfo.Format.Lossless) {
+      chunkData.skip(ALPHA_HEADER_LEN);
+      dataSize -= ALPHA_HEADER_LEN;
+      Position bitPosition = new Position();
+      alphaInfo.transform = parseLosslessTransform(chunkData, dataSize, bitPosition);
     }
+    return alphaInfo;
   }
 
   private void processICCPChunk(ChunkData chunkData) {
@@ -1165,23 +1174,23 @@ public class WebpParser {
 
   private void loge(String msg) {
     System.err.println(msg);
-    if (Log.isLoggable(TAG, Log.ERROR)) {
+    /*if (Log.isLoggable(TAG, Log.ERROR)) {
       Log.e(TAG, msg);
-    }
+    }*/
   }
 
   private void logd(String msg) {
     System.out.println(msg);
-    if (Log.isLoggable(TAG, Log.DEBUG)) {
+    /*if (Log.isLoggable(TAG, Log.DEBUG)) {
       Log.d(TAG, msg);
-    }
+    }*/
   }
 
   private void logw(String msg) {
     System.out.println(msg);
-    if (Log.isLoggable(TAG, Log.WARN)) {
+    /*if (Log.isLoggable(TAG, Log.WARN)) {
       Log.w(TAG, msg);
-    }
+    }*/
   }
 
   private static int LLGetBits(ChunkData data, int size, int nb, Position position) {

@@ -9,7 +9,7 @@ import java.nio.channels.FileChannel;
 
 public class HeaderParserTest {
 
-  File webpFile = new File("D:\\Develop\\Android\\project\\glide-webp-support\\samples\\webp\\src\\main\\assets\\anim_loading_dialog.webp");
+  File webpFile = new File("D:\\Develop\\Android\\project\\glide\\samples\\webp\\src\\main\\assets\\vip.webp");
 
   @Test
   public void parseHead() {

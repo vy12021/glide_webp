@@ -102,20 +102,32 @@ public class WebpFrame {
    * frame data size
    */
   public int bufferSize;
+  /**
+   * ALPH subtrunk info
+   */
+  public AlphaInfo alphaInfo;
+  /**
+   * VP8 subtrunk bitstream info
+   */
+  public Vp8Info vp8Info;
 
   @Override
   public String toString() {
     return "WebpFrame{" +
-            "frameIndex=" + index +
+            "index=" + index +
             ", offsetX=" + offsetX +
             ", offsetY=" + offsetY +
             ", width=" + width +
             ", height=" + height +
+            ", hasAlpha=" + hasAlpha +
+            ", transparency=" + transparency +
             ", dispose=" + dispose +
             ", blend=" + blend +
             ", duration=" + duration +
             ", bufferStart=" + bufferStart +
             ", bufferSize=" + bufferSize +
+            ", alphaInfo=" + alphaInfo +
+            ", vp8Info=" + vp8Info +
             '}';
   }
 }
