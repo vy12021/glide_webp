@@ -3,6 +3,7 @@ local.properties
 *.keystore
 *.DS_Store
 .externalNativeBuild
+.cxx
 
 # Gradle
 .gradle
@@ -26,7 +27,7 @@ docs/**/*
 *.iml
 *.ipr
 *.iws
-.idea/**
+.idea
 !.idea/codeStyleSettings.xml
 !.idea/inspectionProfiles
 !.idea/inspectionProfiles/Project_Default.xml

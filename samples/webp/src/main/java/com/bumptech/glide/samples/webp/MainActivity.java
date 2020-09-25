@@ -40,7 +40,8 @@ public class MainActivity extends Activity {
 
   private void reload() {
     Glide.with(MainActivity.this)
-            .load("https://img-ws.doupai.cc/bhb/2020/07/22/18/a62b834071ae7bbef1edf78b58bc14e9.webp")
+            .load("https://img-ws.doupai.cc/bhb/2020/09/09/14/316e5a9c848dd5d43af5c245e5194e0b.webp")
+            .skipMemoryCache(true)
             .apply(new RequestOptions()
                     .transforms(new BitmapTransformation[] {new FitCenter(), new RoundedCorners(100)}
                     ))
