@@ -8,7 +8,7 @@
 #include "src/webp/demux.h"
 #include "libwebp/jni_runtime.h"
 #include "libwebp/src/webp/mux_types.h"
-#include "libwebp/tools/webpinfo.h"
+#include "libwebp/example/webpinfo.h"
 #include "tag.h"
 
 #ifdef __cplusplus

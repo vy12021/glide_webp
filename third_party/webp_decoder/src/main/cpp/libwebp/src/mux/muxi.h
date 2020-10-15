@@ -28,7 +28,7 @@ extern "C" {
 // Defines and constants.
 
 #define MUX_MAJ_VERSION 1
-#define MUX_MIN_VERSION 0
+#define MUX_MIN_VERSION 1
 #define MUX_REV_VERSION 0
 
 // Chunk object.
@@ -127,11 +127,14 @@ WebPChunk* ChunkSearchList(WebPChunk* first, uint32_t nth, uint32_t tag);
 WebPMuxError ChunkAssignData(WebPChunk* chunk, const WebPData* const data,
                              int copy_data, uint32_t tag);
 
-// Sets 'chunk' at nth position in the 'chunk_list'.
-// nth = 0 has the special meaning "last of the list".
+// Sets 'chunk' as the only element in 'chunk_list' if it is empty.
 // On success ownership is transferred from 'chunk' to the 'chunk_list'.
-WebPMuxError ChunkSetNth(WebPChunk* chunk, WebPChunk** chunk_list,
-                         uint32_t nth);
+WebPMuxError ChunkSetHead(WebPChunk* const chunk, WebPChunk** const chunk_list);
+// Sets 'chunk' at last position in the 'chunk_list'.
+// On success ownership is transferred from 'chunk' to the 'chunk_list'.
+// *chunk_list also points towards the last valid element of the initial
+// *chunk_list.
+WebPMuxError ChunkAppend(WebPChunk* const chunk, WebPChunk*** const chunk_list);
 
 // Releases chunk and returns chunk->next_.
 WebPChunk* ChunkRelease(WebPChunk* const chunk);
@@ -228,4 +231,4 @@ WebPMuxError MuxValidate(const WebPMux* const mux);
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_MUX_MUXI_H_ */
+#endif  // WEBP_MUX_MUXI_H_

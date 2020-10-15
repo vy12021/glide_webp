@@ -491,8 +491,8 @@ public class WebpParser {
     width = 1 + reader.readInt(3);
     height = 1 + reader.readInt(3);
     duration = reader.readInt(3);
-    dispose = reader.getInt() & 1;
-    blend = (reader.getInt() >> 1) & 1;
+    dispose = reader.getByte() & 1;
+    blend = (reader.getByte() >> 1) & 1;
     header.markChunk(ChunkId.ANMF, true);
     if (duration > MAX_DURATION) {
       loge("Invalid duration parameter in ANMF chunk.");

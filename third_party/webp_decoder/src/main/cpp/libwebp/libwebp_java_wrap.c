@@ -135,7 +135,7 @@
 #include <jni.h>
 #include <stdlib.h>
 #include <string.h>
-#include "jni_runtime.h"
+
 
 /* Support for throwing Java exceptions */
 typedef enum {
@@ -925,7 +925,6 @@ static size_t ReturnedBufferSize(
 typedef size_t (*WebPEncodeFunction)(const uint8_t* rgb,
                                      int width, int height, int stride,
                                      float quality_factor, uint8_t** output);
-
 typedef size_t (*WebPEncodeLosslessFunction)(const uint8_t* rgb,
                                              int width, int height, int stride,
                                              uint8_t** output);
@@ -1009,21 +1008,19 @@ LOSSLESS_WRAPPER(WebPEncodeLosslessBGRA)
 extern "C" {
 #endif
 
-SWIGEXPORT jint JNICALL Java_com_google_webp_libwebpJNI_WebPGetDecoderVersion(
-        JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_com_google_webp_libwebpJNI_WebPGetDecoderVersion(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   int result;
 
   (void)jenv;
   (void)jcls;
-  result = WebPGetDecoderVersion();
+  result = (int)WebPGetDecoderVersion();
   jresult = (jint)result;
   return jresult;
 }
 
 
-SWIGEXPORT jint JNICALL Java_com_google_webp_libwebpJNI_WebPGetInfo(
-        JNIEnv *jenv, jclass jcls, jbyteArray jarg1, jlong jarg2, jintArray jarg3, jintArray jarg4) {
+SWIGEXPORT jint JNICALL Java_com_google_webp_libwebpJNI_WebPGetInfo(JNIEnv *jenv, jclass jcls, jbyteArray jarg1, jlong jarg2, jintArray jarg3, jintArray jarg4) {
   jint jresult = 0 ;
   uint8_t *arg1 = (uint8_t *) 0 ;
   size_t arg2 ;
@@ -1060,7 +1057,7 @@ SWIGEXPORT jint JNICALL Java_com_google_webp_libwebpJNI_WebPGetInfo(
     }
     arg4 = &temp4;
   }
-  result = WebPGetInfo((uint8_t const *)arg1, arg2, arg3, arg4);
+  result = (int)WebPGetInfo((uint8_t const *)arg1,arg2,arg3,arg4);
   jresult = (jint)result;
   SWIG_JavaArrayArgoutUint8(jenv, jarr1, arg1, jarg1);
   {
@@ -1078,8 +1075,7 @@ SWIGEXPORT jint JNICALL Java_com_google_webp_libwebpJNI_WebPGetInfo(
 }
 
 
-SWIGEXPORT jbyteArray JNICALL Java_com_google_webp_libwebpJNI_WebPDecodeRGB(
-        JNIEnv *jenv, jclass jcls, jbyteArray jarg1, jlong jarg2, jintArray jarg3, jintArray jarg4) {
+SWIGEXPORT jbyteArray JNICALL Java_com_google_webp_libwebpJNI_WebPDecodeRGB(JNIEnv *jenv, jclass jcls, jbyteArray jarg1, jlong jarg2, jintArray jarg3, jintArray jarg4) {
   jbyteArray jresult = 0 ;
   uint8_t *arg1 = (uint8_t *) 0 ;
   size_t arg2 ;
@@ -1116,7 +1112,7 @@ SWIGEXPORT jbyteArray JNICALL Java_com_google_webp_libwebpJNI_WebPDecodeRGB(
     }
     arg4 = &temp4;
   }
-  result = WebPDecodeRGB((uint8_t const *)arg1, arg2, arg3, arg4);
+  result = (uint8_t *)WebPDecodeRGB((uint8_t const *)arg1,arg2,arg3,arg4);
   jresult = SWIG_JavaArrayOutUint8(jenv, result, FillMeInAsSizeCannotBeDeterminedAutomatically);
   SWIG_JavaArrayArgoutUint8(jenv, jarr1, arg1, jarg1);
   {
@@ -1128,14 +1124,14 @@ SWIGEXPORT jbyteArray JNICALL Java_com_google_webp_libwebpJNI_WebPDecodeRGB(
     (*jenv)->SetIntArrayRegion(jenv, jarg4, 0, 1, &jvalue);
   }
   free(arg1);
+
 
   free(result);
   return jresult;
 }
 
 
-SWIGEXPORT jbyteArray JNICALL Java_com_google_webp_libwebpJNI_WebPDecodeRGBA(
-        JNIEnv *jenv, jclass jcls, jbyteArray jarg1, jlong jarg2, jintArray jarg3, jintArray jarg4) {
+SWIGEXPORT jbyteArray JNICALL Java_com_google_webp_libwebpJNI_WebPDecodeRGBA(JNIEnv *jenv, jclass jcls, jbyteArray jarg1, jlong jarg2, jintArray jarg3, jintArray jarg4) {
   jbyteArray jresult = 0 ;
   uint8_t *arg1 = (uint8_t *) 0 ;
   size_t arg2 ;
@@ -1172,10 +1168,7 @@ SWIGEXPORT jbyteArray JNICALL Java_com_google_webp_libwebpJNI_WebPDecodeRGBA(
     }
     arg4 = &temp4;
   }
-  result = WebPDecodeRGBA((uint8_t const *)arg1,arg2,arg3,arg4);
-    if (!result) {
-        LOGE("JAVA_WRAP", "WebPDecodeRGBA failed!");
-    }
+  result = (uint8_t *)WebPDecodeRGBA((uint8_t const *)arg1,arg2,arg3,arg4);
   jresult = SWIG_JavaArrayOutUint8(jenv, result, FillMeInAsSizeCannotBeDeterminedAutomatically);
   SWIG_JavaArrayArgoutUint8(jenv, jarr1, arg1, jarg1);
   {
@@ -1187,14 +1180,14 @@ SWIGEXPORT jbyteArray JNICALL Java_com_google_webp_libwebpJNI_WebPDecodeRGBA(
     (*jenv)->SetIntArrayRegion(jenv, jarg4, 0, 1, &jvalue);
   }
   free(arg1);
+
 
   free(result);
   return jresult;
 }
 
 
-SWIGEXPORT jbyteArray JNICALL Java_com_google_webp_libwebpJNI_WebPDecodeARGB(
-        JNIEnv *jenv, jclass jcls, jbyteArray jarg1, jlong jarg2, jintArray jarg3, jintArray jarg4) {
+SWIGEXPORT jbyteArray JNICALL Java_com_google_webp_libwebpJNI_WebPDecodeARGB(JNIEnv *jenv, jclass jcls, jbyteArray jarg1, jlong jarg2, jintArray jarg3, jintArray jarg4) {
   jbyteArray jresult = 0 ;
   uint8_t *arg1 = (uint8_t *) 0 ;
   size_t arg2 ;
@@ -1231,7 +1224,7 @@ SWIGEXPORT jbyteArray JNICALL Java_com_google_webp_libwebpJNI_WebPDecodeARGB(
     }
     arg4 = &temp4;
   }
-  result = WebPDecodeARGB((uint8_t const *)arg1,arg2,arg3,arg4);
+  result = (uint8_t *)WebPDecodeARGB((uint8_t const *)arg1,arg2,arg3,arg4);
   jresult = SWIG_JavaArrayOutUint8(jenv, result, FillMeInAsSizeCannotBeDeterminedAutomatically);
   SWIG_JavaArrayArgoutUint8(jenv, jarr1, arg1, jarg1);
   {
@@ -1243,6 +1236,7 @@ SWIGEXPORT jbyteArray JNICALL Java_com_google_webp_libwebpJNI_WebPDecodeARGB(
     (*jenv)->SetIntArrayRegion(jenv, jarg4, 0, 1, &jvalue);
   }
   free(arg1);
+
 
   free(result);
   return jresult;

@@ -41,20 +41,22 @@ set(WEBP_DSP_DEC_SRCS
     src/dsp/upsampling_msa.c
     src/dsp/upsampling_neon.c
     src/dsp/upsampling_sse2.c
+    src/dsp/upsampling_sse41.c
     src/dsp/yuv.c
     src/dsp/yuv_mips32.c
     src/dsp/yuv_mips_dsp_r2.c
     src/dsp/yuv_neon.c
     src/dsp/yuv_sse2.c
+    src/dsp/yuv_sse41.c
 )
 
 set(WEBP_DSP_ENC_SRCS
     src/dsp/cost.c
     src/dsp/cost_mips32.c
     src/dsp/cost_mips_dsp_r2.c
+    src/dsp/cost_neon.c
     src/dsp/cost_sse2.c
     src/dsp/enc.c
-    src/dsp/enc_avx2.c
     src/dsp/enc_mips32.c
     src/dsp/enc_mips_dsp_r2.c
     src/dsp/enc_msa.c
@@ -98,9 +100,9 @@ set(WEBP_EXTRA_SRCS
     extras/quality_estimate.c
 )
 
-set(WEBP_TOOLS_SRCS
-    tools/anim_util.c
-    tools/example_util.c
-    tools/webpinfo.c
-    tools/webpmux.c
+set(WEBP_EXAMPLE_SRCS
+    example/anim_util.c
+    example/example_util.c
+    example/webpinfo.c
+    example/webpmux.c
 )

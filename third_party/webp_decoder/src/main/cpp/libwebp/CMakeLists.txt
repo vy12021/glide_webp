@@ -86,7 +86,7 @@ add_library(webputils OBJECT
 
 add_library(webpimageio OBJECT ${WEBP_IMAGEIO_SRCS})
 add_library(webpextras OBJECT ${WEBP_EXTRA_SRCS})
-add_library(webptools OBJECT ${WEBP_TOOLS_SRCS})
+add_library(webpexample OBJECT ${WEBP_EXAMPLE_SRCS})
 
 # 聚合库
 add_library(webp SHARED
@@ -99,7 +99,7 @@ add_library(webp SHARED
             $<TARGET_OBJECTS:webputils>
             $<TARGET_OBJECTS:webpimageio>
             $<TARGET_OBJECTS:webpextras>
-            $<TARGET_OBJECTS:webptools>)
+            $<TARGET_OBJECTS:webpexample>)
 
 target_link_libraries(webp ${WEBP_DEP_LIBRARIES} android log)
 
@@ -110,5 +110,5 @@ set_target_properties(webpdecode
                       webputils
                       webpimageio
                       webpextras
-                      webptools
+                      webpexample
                       PROPERTIES POSITION_INDEPENDENT_CODE ON)

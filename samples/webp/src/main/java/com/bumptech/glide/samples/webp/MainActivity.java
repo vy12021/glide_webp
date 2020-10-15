@@ -7,10 +7,6 @@ import android.view.View;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;
-import com.bumptech.glide.load.resource.bitmap.FitCenter;
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
-import com.bumptech.glide.request.RequestOptions;
 
 /**
  * Displays an Webp image loaded from an android raw resource.
@@ -40,11 +36,8 @@ public class MainActivity extends Activity {
 
   private void reload() {
     Glide.with(MainActivity.this)
-            .load("https://img-ws.doupai.cc/bhb/2020/09/09/14/316e5a9c848dd5d43af5c245e5194e0b.webp")
+            .load("https://img-ws.doupai.cc/bhb/2020/10/13/09/3b77f0f5d5d28dc319359d18bbc6906c.webp")
             .skipMemoryCache(true)
-            .apply(new RequestOptions()
-                    .transforms(new BitmapTransformation[] {new FitCenter(), new RoundedCorners(100)}
-                    ))
             .into((ImageView) findViewById(R.id.image_view));
   }
 
