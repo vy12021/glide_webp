@@ -82,7 +82,6 @@ public class StandardWebpDecoder implements WebpDecoder {
   private Config bitmapConfig = Config.ARGB_8888;
 
   // Public API.
-  @SuppressWarnings("unused")
   public StandardWebpDecoder(@NonNull BitmapProvider provider,
                              WebpHeader header, ByteBuffer byteBuffer) {
     this(provider, header, byteBuffer, 1);
@@ -257,11 +256,9 @@ public class StandardWebpDecoder implements WebpDecoder {
     this.sampleSize = Integer.highestOneBit(sampleSize);
     status = STATUS_OK;
     framePointer = INITIAL_FRAME_POINTER;
-    // Initialize the raw data buffer.
     if (0 == (nativeWebpParserPointer = nativeInitWebpParser(byteBuffer))) {
       throw new RuntimeException("nativeInitWebpParser failed");
     }
-    // No point in specially saving an old frame if we're never going to use it.
     boolean savePrevious = false;
     WebpFrame frame;
     for (int index = 0; index < header.frameCount; index++) {
@@ -301,10 +298,7 @@ public class StandardWebpDecoder implements WebpDecoder {
     }
 
     Bitmap result = getNextBitmap();
-    long before = System.nanoTime();
     nativeGetWebpFrame(nativeWebpParserPointer, result, getCurrentFrameIndex() + 1);
-    logw("nativeGetWebpFrame cost: " + ((System.nanoTime() - before) / 1000000f) + " ms");
-
     if (null == scratchBitmap) {
       return result;
     }
