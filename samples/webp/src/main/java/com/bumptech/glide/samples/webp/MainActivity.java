@@ -2,6 +2,7 @@ package com.bumptech.glide.samples.webp;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -36,7 +37,8 @@ public class MainActivity extends Activity {
 
   private void reload() {
     Glide.with(MainActivity.this)
-            .load("https://img-ws.doupai.cc/bhb/2020/10/13/09/3b77f0f5d5d28dc319359d18bbc6906c.webp")
+            // .load("https://img-ws.doupai.cc/bhb/2020/12/14/14/a8f0ea530a15da2c1e0beb457b372d37.png?x-oss-process=image/format,webp")
+            .load(Uri.parse("file:///android_asset/vip.webp"))
             .skipMemoryCache(true)
             .into((ImageView) findViewById(R.id.image_view));
   }

@@ -18,7 +18,10 @@ android {
         minSdkVersion MIN_SDK_VERSION as int
         targetSdkVersion TARGET_SDK_VERSION as int
 
-        // This block is different from the one you use to link Gradle
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
+
         // to your CMake build script.
         externalNativeBuild {
             cmake {
@@ -30,8 +33,7 @@ android {
                         "-DANDROID_NATIVE_API_LEVEL=19",
                         // "-DANDROID_STL=gnustl_static",
                         "-DLIBCXX_FORCE_REBUILD=TRUE",
-                        "-DANDROID_ABI=armeabi-v7a",
-                        // "-DANDROID_ABI=arm64-v8a",
+                        // "-DANDROID_ABI=armeabi-v7a",
                         // "-G=Android Gradle - Ninja",
                         // "-DANDROID_NDK=",
                         // "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=",

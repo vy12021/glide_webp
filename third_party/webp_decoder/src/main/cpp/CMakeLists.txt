@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 3.6.0)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
@@ -31,7 +30,7 @@ include_directories(${ANDROID_NDK}/platforms/${ANDROID_PLATFORM}/${ARCH_DIR}/usr
 add_subdirectory(libwebp)
 
 add_library(webpparser SHARED
-webp_parser.c
+    webp_parser.c
 )
 
 target_link_libraries(webpparser webp android jnigraphics log)

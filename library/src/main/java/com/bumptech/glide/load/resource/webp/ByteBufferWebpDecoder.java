@@ -109,7 +109,7 @@ public class ByteBufferWebpDecoder implements ResourceDecoder<ByteBuffer, WebpDr
     long startTime = LogTime.getLogTime();
     try {
       final WebpHeader header = parser.parse();
-      if (header.getFrameCount() <= 0 || header.getStatus() != WebpDecoder.STATUS_OK) {
+      if (!header.isAvailable()) {
         // If we couldn't decode the WEBP, we will end up with a frame count of 0.
         return null;
       }

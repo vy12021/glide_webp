@@ -1,7 +1,5 @@
 package com.bumptech.glide.webpdecoder;
 
-import android.util.Log;
-
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 
@@ -208,7 +206,11 @@ public class WebpParser {
     while (STATUS_OK == header.status && reader.remaining() > 0) {
       ChunkData chunkData = parseChunk();
       if (null == chunkData) {
-        continue;
+        break;
+      }
+      if (!header.hasAnimation && (chunkData.id == ChunkId.VP8 || chunkData.id == ChunkId.VP8L)) {
+        header.status = WebpDecoder.STATUS_OPEN_ERROR;
+        break;
       }
       chunkData.save();
       if (STATUS_OK == header.status) {
@@ -222,7 +224,7 @@ public class WebpParser {
 
   private void validate() {
     if (header.frameCount < 1) {
-      loge("No image/frame detected.");
+      loge("No frame detected，may be a static image.");
       header.status = STATUS_MISS_DATA;
       return;
     }
@@ -525,7 +527,8 @@ public class WebpParser {
   }
 
   private void processImageChunk(ChunkData chunkData) {
-    Vp8Info vp8Info = header.current.vp8Info = parseVp8Bitstream(chunkData);
+    WebpFrame frame = header.current;
+    Vp8Info vp8Info = frame.vp8Info = parseVp8Bitstream(chunkData);
     if (vp8Info.status != Vp8Info.VP8_STATUS_OK) {
       loge("VP8/VP8L bitstream error.");
       header.status = STATUS_BITSTREAM_ERROR;
@@ -537,8 +540,7 @@ public class WebpParser {
         header.status = STATUS_PARSE_ERROR;
         return;
       }
-      if (header.current.width != vp8Info.width ||
-              header.current.height != vp8Info.height) {
+      if (frame.width != vp8Info.width || frame.height != vp8Info.height) {
         loge("Frame size in VP8/VP8L sub-chunk differs from ANMF header.");
         header.status = STATUS_PARSE_ERROR;
         return;
@@ -895,6 +897,7 @@ public class WebpParser {
    * The flag '*is_lossless' is set to 1 in case of VP8L chunk / raw VP8L data.
    */
   private Vp8Info parseVp8Bitstream(ChunkData chunkData) {
+    WebpFrame frame = header.current;
     chunkData.skip2Start();
     Vp8Info info = new Vp8Info();
     int width = 0, height = 0;
@@ -1007,7 +1010,7 @@ public class WebpParser {
         }
       }
     }
-    if (header.current.width != width || header.current.height != height) {
+    if (frame.width != width || frame.height != height) {
       loge("processVp8Bitstream:  Validates image size coherency failed!");
       info.status = Vp8Info.VP8_STATUS_BITSTREAM_ERROR;
       return info;
@@ -1015,8 +1018,8 @@ public class WebpParser {
     info.width = width;
     info.height = height;
     info.hasAlpha = hasAlpha && header.hasAlpha;
-    header.current.bufferStart = chunkData.dataStart();
-    header.current.bufferSize = chunkData.size;
+    frame.bufferStart = chunkData.dataStart();
+    frame.bufferSize = chunkData.size;
     return info;
   }
 
@@ -1068,6 +1071,7 @@ public class WebpParser {
 
   private void processALPHChunk(ChunkData chunkData) {
     chunkData.skip2Start();
+    WebpFrame frame = header.current;
     if (header.isProcessingAnimFrame) {
       header.markANMFSubchunk(chunkData.id, true);
       if (header.foundAlphaSubchunk) {
@@ -1104,8 +1108,8 @@ public class WebpParser {
       }
       header.markChunk(chunkData.id, true);
     }
-    header.current.hasAlpha = true;
-    header.current.alphaInfo = parseAlphaHeader(chunkData);
+    frame.hasAlpha = true;
+    frame.alphaInfo = parseAlphaHeader(chunkData);
   }
 
   private AlphaInfo parseAlphaHeader(ChunkData chunkData) {

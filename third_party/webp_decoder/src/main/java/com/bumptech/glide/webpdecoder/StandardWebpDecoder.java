@@ -4,7 +4,9 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.util.Log;
 
@@ -60,7 +62,8 @@ public class StandardWebpDecoder implements WebpDecoder {
   /**
    * Rects for blend frames to {@link #scratchCanvas}.
    */
-  private Rect src = new Rect(), dst = new Rect();
+  private final Rect src = new Rect(), dst = new Rect();
+  private final Paint paint = new Paint();
   /**
    * Current frame index;
    */
@@ -210,12 +213,8 @@ public class StandardWebpDecoder implements WebpDecoder {
     if (previousIndex >= 0) {
       previousFrame = header.getFrame(previousIndex);
     }
-    WebpFrame nextFrame = null;
-    if (framePointer < getFrameCount() - 1) {
-      nextFrame = header.getFrame(framePointer + 1);
-    }
     // Transfer pixel data to image.
-    return setPixels(currentFrame, previousFrame, nextFrame);
+    return setPixels(currentFrame, previousFrame);
   }
 
   @Override
@@ -290,15 +289,14 @@ public class StandardWebpDecoder implements WebpDecoder {
    * Creates new frame image from current data (and previous frames as specified by their
    * disposition codes).
    */
-  private Bitmap setPixels(WebpFrame currentFrame, WebpFrame previousFrame, WebpFrame nextFrame) {
+  private Bitmap setPixels(WebpFrame currentFrame, WebpFrame previousFrame) {
     // Clear all pixels when meet first frame and drop prev image from last loop
     if (null != scratchBitmap && previousFrame == null) {
-      Arrays.fill(scratchPixels, COLOR_TRANSPARENT_BLACK);
-      scratchCanvas.drawColor(COLOR_TRANSPARENT_BLACK, PorterDuff.Mode.CLEAR);
+      scratchBitmap.eraseColor(COLOR_TRANSPARENT_BLACK);
     }
 
     Bitmap result = getNextBitmap();
-    nativeGetWebpFrame(nativeWebpParserPointer, result, getCurrentFrameIndex() + 1);
+    nativeGetWebpFrame(nativeWebpParserPointer, result, currentFrame.index + 1);
     if (null == scratchBitmap) {
       return result;
     }
@@ -323,24 +321,28 @@ public class StandardWebpDecoder implements WebpDecoder {
       frameW = currentFrame.width;
       frameH = currentFrame.height;
     }
+    scratchCanvas.save();
     // Only update the requested area, not the whole canvas.
-    scratchCanvas.setBitmap(scratchBitmap);
     scratchCanvas.clipRect(windowX / sampleSize, windowY / sampleSize,
             (windowX + frameW) / sampleSize, (windowY + frameH) / sampleSize);
     if (backgroundFrame) {
-      scratchCanvas.drawColor(header.bgColor, PorterDuff.Mode.CLEAR);
-    } else if (!blendFrame) {
-      scratchCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+      scratchCanvas.drawColor(header.bgColor);
+    }
+    if (blendFrame) {
+      paint.setXfermode(null);
+    } else {
+      paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
     }
     src.set(0, 0, result.getWidth(), result.getHeight());
     dst.set(currentFrame.offsetX / sampleSize, currentFrame.offsetY / sampleSize,
             (currentFrame.offsetX + currentFrame.width) / sampleSize,
             (currentFrame.offsetY + currentFrame.height) / sampleSize);
-    scratchCanvas.drawBitmap(result, src, dst, null);
+    scratchCanvas.drawBitmap(result, src, dst, paint);
     scratchBitmap.getPixels(scratchPixels, 0, downsampledWidth,
             0, 0, downsampledWidth, downsampledHeight);
     result.setPixels(scratchPixels, 0, downsampledWidth,
             0, 0, downsampledWidth, downsampledHeight);
+    scratchCanvas.restore();
     return result;
   }
 

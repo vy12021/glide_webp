@@ -113,6 +113,12 @@ public class WebpHeader {
     return status;
   }
 
+  public boolean isAvailable() {
+    return hasAnimation
+            && frameCount > 0 && frameCount == frames.size()
+            && status == WebpDecoder.STATUS_OK;
+  }
+
   String printVp8XInfo() {
     return "Vp8XInfo{" +
             "\n riffSize=" + riffSize +

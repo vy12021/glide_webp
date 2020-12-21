@@ -19,6 +19,7 @@ struct WebpParser {
 
     WebPDemuxer *demuxer;
     WebPIterator iterator;
+    WebPDecoderConfig *config;
 
 };
 
@@ -55,12 +56,14 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeGetWebpFrame, jint)
         LOGE("webp_parser", "nativeGetWebpFrame: Invalid bitmap!");
         return 0;
     }
-    WebPDecoderConfig config;
-    WebPInitDecoderConfig(&config);
+
     if(!WebPDemuxGetFrame(webpParser->demuxer, index, &webpParser->iterator)) {
         LOGE("nativeGetWebpFrame", "WebPDemuxGetFrame() fail...");
         return 0;
     }
+
+    WebPDecoderConfig config;
+    WebPInitDecoderConfig(&config);
     VP8StatusCode status = WebPGetFeatures(webpParser->iterator.fragment.bytes,
                                            webpParser->iterator.fragment.size, &config.input);
     if(status != VP8_STATUS_OK) {
@@ -68,8 +71,8 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeGetWebpFrame, jint)
         return 0;
     }
 
-    config.options.flip = 0;
-    config.options.bypass_filtering = 1;
+    // config.options.flip = 0;
+    // config.options.bypass_filtering = 1;
     config.options.no_fancy_upsampling = 1;
     config.options.use_scaling = 1;
     config.options.scaled_width = bitmapInfo.width;
@@ -81,7 +84,6 @@ JNI_STATIC_METHOD(PACKAGE_ROOT, StandardWebpDecoder, nativeGetWebpFrame, jint)
     config.output.is_external_memory = 1;
     void *pixels;
     AndroidBitmap_lockPixels(env, bitmap, &pixels);
-    // config.output.private_memory = pixels;
     config.output.u.RGBA.stride = bitmapInfo.stride;
     config.output.u.RGBA.rgba   = pixels;
     config.output.u.RGBA.size   = bitmapInfo.height * bitmapInfo.stride;
