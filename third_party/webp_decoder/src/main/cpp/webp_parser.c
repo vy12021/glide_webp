@@ -19,7 +19,6 @@ struct WebpParser {
 
     WebPDemuxer *demuxer;
     WebPIterator iterator;
-    WebPDecoderConfig *config;
 
 };
 
