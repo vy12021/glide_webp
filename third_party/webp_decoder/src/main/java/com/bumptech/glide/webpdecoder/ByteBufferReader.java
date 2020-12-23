@@ -142,10 +142,21 @@ final class ByteBufferReader {
   public int getInt() {
     return getInt(4);
   }
+  
+  public long getUnsignedInt() {
+    return getUnsignedInt(4);
+  }
 
   public int getInt(int len) {
     rawData.mark();
     int ret = readIntFrom(rawData.position(), len);
+    rawData.reset();
+    return ret;
+  }
+
+  public long getUnsignedInt(int len) {
+    rawData.mark();
+    long ret = readUnsignedIntFrom(rawData.position(), len);
     rawData.reset();
     return ret;
   }

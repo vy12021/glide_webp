@@ -3,7 +3,6 @@ package com.bumptech.glide.webpdecoder;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
@@ -16,7 +15,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 /**
  * Reads frame data from a WEBP image source and decodes it into individual frames for animation
@@ -326,7 +324,7 @@ public class StandardWebpDecoder implements WebpDecoder {
     scratchCanvas.clipRect(windowX / sampleSize, windowY / sampleSize,
             (windowX + frameW) / sampleSize, (windowY + frameH) / sampleSize);
     if (backgroundFrame) {
-      scratchCanvas.drawColor(header.bgColor);
+      scratchCanvas.drawColor(header.bgColor, PorterDuff.Mode.CLEAR);
     }
     if (blendFrame) {
       paint.setXfermode(null);
