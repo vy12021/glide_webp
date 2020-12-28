@@ -208,8 +208,9 @@ public class WebpParser {
       if (null == chunkData) {
         break;
       }
-      if (!header.hasAnimation && (chunkData.id == ChunkId.VP8 || chunkData.id == ChunkId.VP8L)) {
-        header.status = WebpDecoder.STATUS_OPEN_ERROR;
+      if (!header.hasAnimation && (chunkData.id == ChunkId.VP8
+              || chunkData.id == ChunkId.VP8L || chunkData.id == ChunkId.ALPHA)) {
+        header.status = WebpDecoder.STATUS_MISS_DATA;
         break;
       }
       chunkData.save();
@@ -1108,8 +1109,10 @@ public class WebpParser {
       }
       header.markChunk(chunkData.id, true);
     }
-    frame.hasAlpha = true;
-    frame.alphaInfo = parseAlphaHeader(chunkData);
+    if (null != frame) {
+      frame.hasAlpha = true;
+      frame.alphaInfo = parseAlphaHeader(chunkData);
+    }
   }
 
   private AlphaInfo parseAlphaHeader(ChunkData chunkData) {
