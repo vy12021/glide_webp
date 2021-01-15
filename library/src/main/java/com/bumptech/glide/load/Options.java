@@ -2,17 +2,18 @@ package com.bumptech.glide.load;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.collection.ArrayMap;
-import androidx.collection.SimpleArrayMap;
-import com.bumptech.glide.util.CachedHashCodeArrayMap;
+
+import com.bumptech.glide.util.CachedHashCodeLinkedHashMap;
+
 import java.security.MessageDigest;
+import java.util.Map;
 
 /** A set of {@link Option Options} to apply to in memory and disk cache keys. */
 public final class Options implements Key {
-  private final ArrayMap<Option<?>, Object> values = new CachedHashCodeArrayMap<>();
+  private final Map<Option<?>, Object> values = new CachedHashCodeLinkedHashMap<>();
 
   public void putAll(@NonNull Options other) {
-    values.putAll((SimpleArrayMap<Option<?>, Object>) other.values);
+    values.putAll(other.values);
   }
 
   @NonNull
@@ -43,10 +44,8 @@ public final class Options implements Key {
 
   @Override
   public void updateDiskCacheKey(@NonNull MessageDigest messageDigest) {
-    for (int i = 0; i < values.size(); i++) {
-      Option<?> key = values.keyAt(i);
-      Object value = values.valueAt(i);
-      updateDiskCacheKey(key, value, messageDigest);
+    for (Map.Entry<Option<?>, Object> entry : values.entrySet()) {
+      updateDiskCacheKey(entry.getKey(), entry.getValue(), messageDigest);
     }
   }
 

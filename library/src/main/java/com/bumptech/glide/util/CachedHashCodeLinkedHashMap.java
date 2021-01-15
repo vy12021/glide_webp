@@ -1,10 +1,13 @@
 package com.bumptech.glide.util;
 
-import androidx.collection.ArrayMap;
-import androidx.collection.SimpleArrayMap;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
- * An {@link ArrayMap} that caches its hashCode to support efficient lookup.
+ * An {@link LinkedHashMap} that caches its hashCode to support efficient lookup.
  *
  * @param <K> the key type.
  * @param <V> the value type.
@@ -12,7 +15,8 @@ import androidx.collection.SimpleArrayMap;
 // We're overriding hashcode, but not in a way that changes the output, so we don't need to
 // override equals.
 @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
-public final class CachedHashCodeArrayMap<K, V> extends ArrayMap<K, V> {
+public final class CachedHashCodeLinkedHashMap<K, V> extends LinkedHashMap<K, V> {
+  private static final long serialVersionUID = 6811721733252226365L;
 
   private int hashCode;
 
@@ -23,27 +27,22 @@ public final class CachedHashCodeArrayMap<K, V> extends ArrayMap<K, V> {
   }
 
   @Override
-  public V setValueAt(int index, V value) {
-    hashCode = 0;
-    return super.setValueAt(index, value);
-  }
-
-  @Override
   public V put(K key, V value) {
     hashCode = 0;
     return super.put(key, value);
   }
 
   @Override
-  public void putAll(SimpleArrayMap<? extends K, ? extends V> simpleArrayMap) {
+  public void putAll(@NonNull Map<? extends K, ? extends V> m) {
     hashCode = 0;
-    super.putAll(simpleArrayMap);
+    super.putAll(m);
   }
 
+  @Nullable
   @Override
-  public V removeAt(int index) {
+  public V remove(@Nullable Object key) {
     hashCode = 0;
-    return super.removeAt(index);
+    return super.remove(key);
   }
 
   @Override

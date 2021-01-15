@@ -36,7 +36,7 @@ import com.bumptech.glide.load.resource.gif.GifOptions;
 import com.bumptech.glide.load.resource.webp.WebpDrawable;
 import com.bumptech.glide.load.resource.webp.WebpDrawableTransformation;
 import com.bumptech.glide.signature.EmptySignature;
-import com.bumptech.glide.util.CachedHashCodeArrayMap;
+import com.bumptech.glide.util.CachedHashCodeLinkedHashMap;
 import com.bumptech.glide.util.Preconditions;
 import com.bumptech.glide.util.Util;
 
@@ -93,7 +93,7 @@ public abstract class BaseRequestOptions<T extends BaseRequestOptions<T>> implem
   @NonNull private Options options = new Options();
 
   @NonNull
-  private Map<Class<?>, Transformation<?>> transformations = new CachedHashCodeArrayMap<>();
+  private Map<Class<?>, Transformation<?>> transformations = new CachedHashCodeLinkedHashMap<>();
 
   @NonNull private Class<?> resourceClass = Object.class;
   private boolean isLocked;
@@ -537,7 +537,7 @@ public abstract class BaseRequestOptions<T extends BaseRequestOptions<T>> implem
       BaseRequestOptions<?> result = (BaseRequestOptions<?>) super.clone();
       result.options = new Options();
       result.options.putAll(options);
-      result.transformations = new CachedHashCodeArrayMap<>();
+      result.transformations = new CachedHashCodeLinkedHashMap<>();
       result.transformations.putAll(transformations);
       result.isLocked = false;
       result.isAutoCloneEnabled = false;

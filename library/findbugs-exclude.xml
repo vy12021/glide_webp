@@ -50,7 +50,7 @@
 
     <!-- We just cache the value of hashcode, no need to also override equals. -->
     <Match>
-      <Class name="com.bumptech.glide.util.CachedHashCodeArrayMap" />
+      <Class name="com.bumptech.glide.util.CachedHashCodeLinkedHashMap" />
       <Bug pattern="EQ_DOESNT_OVERRIDE_EQUALS" />
     </Match>
 
